@@ -1,0 +1,44 @@
+.base_build_cocos:
+  stage: build-cocos-web
+  script:
+    - echo "====== Build Cocos Web Mobile ======"
+    - |
+        if [[ -d "./build/web-mobile" ]]; then
+          echo "Using cache with key $CI_COMMIT_SHA"
+          exit 0
+        fi
+    - echo $DEPLOY_ENV
+    - echo $STACK_NAME
+    - echo $CI_COMMIT_BRANCH
+    - echo $CI_COMMIT_REF_NAME
+    - |
+        if [ ! -d "node_modules" ]; then
+          npm set registry http://npm.lumigame.com
+          yarn install
+        fi
+    - if [ "$COCOS_VERSION" == "" ]; then
+      export COCOS_VERSION="2.4.0";
+      else
+      export COCOS_VERSION=$COCOS_VERSION;
+      fi
+    - if [ "$COCOS_VERSION" == "2.2.2" ]; then
+      /Applications/CocosCreator.app/Contents/MacOS/CocosCreator --path ./ --build "platform=web-mobile;inlineSpriteFrames=true;webOrientation=landscape;md5Cache=true";
+      else
+      /Applications/CocosCreator/Creator/$COCOS_VERSION/CocosCreator.app/Contents/MacOS/CocosCreator --path ./ --build "platform=web-mobile;inlineSpriteFrames=true;webOrientation=landscape;md5Cache=true";
+      fi
+  tags:
+    - cocos
+  artifacts:
+    paths:
+      - ./build/web-mobile
+    expire_in: 1 day
+  cache:
+    - key:
+        files:
+          - package.json
+          - yarn.lock
+      paths:
+        - node_modules
+    - key: $CI_COMMIT_SHORT_SHA
+      paths:
+        - build

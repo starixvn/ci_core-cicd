@@ -1,0 +1,59 @@
+include:
+  - cd/build_docker/linux/_definition.yml
+
+build_multistage_env:
+  extends:
+    - .build:default:image:multistage
+    - .env
+  needs: ["prepare_vars"]
+  rules: 
+    - !reference [.cd_rules, build_multistage]
+    - !reference [.cd_rules, build_env]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]
+
+build_multistage_noenv:
+  extends:
+    - .build:default:image:noenv:multistage
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, build_multistage]
+    - !reference [.cd_rules, build_noenv]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]
+
+build_noenv:
+  extends:
+    - .build:default:image:noenv
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, build_no_multistage]
+    - !reference [.cd_rules, build_noenv]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]
+
+build_env:
+  extends:
+    - .build:default:image
+    - .env
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, build_no_multistage]
+    - !reference [.cd_rules, build_env]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]
+
+post_build_noenv:
+  extends:
+    - .post_build
+    - .env
+  needs:
+    - "prepare_vars"
+    - job: "build_multistage_noenv"
+      optional: true
+    - job: "build_noenv"
+      optional: true
+  rules:
+    - !reference [.cd_rules, build_noenv]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]

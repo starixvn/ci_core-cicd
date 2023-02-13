@@ -1,0 +1,23 @@
+include:
+  - _mixing.yml
+  - cd/build_cocos/jobs.yml
+  - cd/transform_config/jobs.yml
+  - cd/deploy/luminet/jobs.yml
+  - cd/smoke_test/jobs.yml
+
+build_multistage_env:
+  needs:
+    - "prepare_vars"
+    - job: "transform_config"
+      artifacts: true
+      optional: true
+
+build_env:
+  needs:
+    - "prepare_vars"
+    - job: "transform_config"
+      artifacts: true
+      optional: true
+    - job: "build_cocos_env"
+      artifacts: true
+      optional: true

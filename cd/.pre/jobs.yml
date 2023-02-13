@@ -1,0 +1,6 @@
+include:
+  - cd/.pre/_definition.yml
+
+prepare_vars:
+  extends: .prepare_vars
+  rules: !reference [.cd_rules, prepare]

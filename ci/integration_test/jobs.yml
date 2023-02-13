@@ -1,0 +1,6 @@
+include:
+  - ci/integration_test/_definition.yml
+
+integration_test_js:
+  extends: .integration_test_js
+  rules: !reference [.ci_rules, integration_test_js]

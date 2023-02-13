@@ -1,0 +1,59 @@
+.unit_test_js:
+  stage: test
+  image: $NODEJS_IMAGE
+  tags:
+    - docker
+  before_script:
+    - npm set registry http://npm.lumigame.com
+    - yarn global add jest@28.1.3
+    - echo $SRC_PATH
+    - cd "$SRC_PATH"
+    - yarn install
+  script:
+    - npm run test-coverage
+  allow_failure: true
+  cache:
+    - key:
+        files:
+          - package.json
+          - yarn.lock
+      paths:
+        - node_modules
+  artifacts:
+    when: always
+    paths:
+      - ./**/lcov.info
+      - ./reports
+    expire_in: 1 day
+
+.unit_test_dotnet:
+  stage: test
+  image: $DOTNET_SDK_IMAGE
+  tags:
+    - docker
+  before_script:
+    - dotnet tool install --global coverlet.console --version 3.2.0
+    - export PATH="$PATH:/root/.dotnet/tools"
+    - export NUGET_PACKAGES=$CI_PROJECT_DIR/packages
+    - dotnet nuget add source http://nuget.nexdev.net/api/v2
+  script:
+    - echo $SOLUTION_NAME
+    - dotnet build $SOLUTION_NAME
+    - for path in $(find ./ -iname '*Tests.dll');
+      do
+      if echo $path | grep 'bin';
+      then
+      coverlet $path --target "dotnet" --targetargs "test $path --no-build --logger:trx" --format opencover --output "${path##*/}-$(date +%s).coverage.opencover.xml";      
+      fi
+      done
+  cache:
+    key: $CI_COMMIT_REF_SLUG
+    paths:
+      - packages/
+  artifacts:
+    when: always
+    paths:
+      - ./**/*.trx
+      - ./**/*coverage.opencover.xml
+    expire_in: 1 day
+  allow_failure: true

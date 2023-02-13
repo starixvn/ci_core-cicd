@@ -1,0 +1,355 @@
+########################################################################
+# File managed by Ansible - NexOps
+# Your changes will be overwritten.
+#######################################################################
+{% set service_name = services[0].name | replace('-','_') %}
+{% set platform = services[0].platform | default('linux') %}
+{% set env = '@DEPLOY_ENVIRONMENT' | lower %}
+{% set environment = env | upper ~ '@DEPLOY_VERSION' %}
+{% set domains = '@DOMAINS' %}
+{% set gluster_path = '/var/www/gluster/web/' %}
+{% set working_path = gluster_path ~ team_name ~ '/' ~ project_name ~ '/' ~ services[0].name | replace('-','_') %}
+{% set config_file_path = services[0].config_file_path | default(".") %}
+{% if services[0].config_file_name is defined %}
+{% if services[0].config_file_ext | length > 0 %}
+{% set config_file = services[0].config_file_name ~ '.' ~ services[0].config_file_ext %}
+{% else %}
+{% set config_file = services[0].config_file_name %}
+{% endif %}
+{% endif %}
+{% set config_container_path = services[0].config_container_path | default ('.') %}
+{% set container_root_path = services[0].container_root_path | default ('/app') %}
+{% if services[0].sp_file_name is defined and services[0].sp_file_name != '' %}
+{% set sp_file = services[0].sp_file_name ~ '.' ~ services[0].sp_file_extension | default("xml") %}
+{% set sp_container_path = services[0].sp_container_path | default ('App_Data') %}
+{% endif %}
+{% set storage_label = '_LOW_STORAGE' if high_storage is undefined or high_storage == false else '_HIGH_STORAGE'%}
+{% set org_node_label = org_name ~ storage_label if platform == "linux" else org_name ~ "_WINDOWS" %}
+{% set networks = {"luminet":{"local":"1","sit":"1","uat":"1","prod":"","aws":""},"nexcel":{"local":"2","nexprod":"","sit":"","uat":"1","prod":"","alphaprod":"","fpsprod":"","nexaws":"","gc":"","aws":""}} %}
+{% set network = org_name | lower ~ '_' ~ env | lower ~ networks[org_name][env] | default ('') %}
+{% set separator_char = '/' if platform == "linux" else '\\' %}
+version: '3.8'
+
+{% if config_file is defined %}
+configs:
+  {{service_name}}_{{ environment }}_config_@CONFIG_VERSION:
+    file: {{working_path}}/{{environment}}/configs/{{config_file}}
+    labels:
+{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
+{% else %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}"
+{% endif %}
+{% if sp_file is defined %}
+  {{service_name}}_{{ environment }}_sp_config_@CONFIG_VERSION:
+    file: {{working_path}}/{{environment}}/configs/{{sp_file}}
+    labels:
+{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
+{% else %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}"
+{% endif %}
+{% endif %}
+{% endif %}
+
+services:
+  {{service_name}}_{{environment}}:
+{% if team_name == "nex3" or team_name == "pentagon" %}
+{% if env == "local" or env == "nexaws" or env == "aws" %}
+    image: hub.lumigame.com/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
+{% else %}
+    image: lumhub.starixplay.com/kbt/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
+{% endif %}
+{% endif %}
+{% if team_name != "nex3" and team_name != "pentagon" %}
+{% if env == "local" or env == "nexprod" or env == "nexaws" or env == "gc" or env == "aws" %}
+    image: hub.nexdev.net/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
+{% else %}
+    image: nexhub.starixplay.com/kbt/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
+{% endif %}
+{% endif %}
+{% if platform == "linux" %}
+    hostname: "swarm-{{'{{'}}.Service.Name{{'}}'}}-{{'{{'}}.Task.Slot{{'}}'}}"
+{% else %}
+    hostname: "{{service_name | truncate(9, True, '') }}-{{'{{'}}.Task.ID{{'}}'}}"
+{% endif %}
+
+{% if config_file is defined %}
+    configs:
+      - source: {{service_name}}_{{ environment }}_config_@CONFIG_VERSION
+        target: {{container_root_path}}{{separator_char}}{{config_container_path}}{{separator_char}}{{config_file}}
+{% if sp_file is defined %}
+      - source: {{service_name}}_{{ environment }}_sp_config_@CONFIG_VERSION
+        target: {{container_root_path}}{{separator_char}}{{sp_container_path}}{{separator_char}}{{sp_file}}
+{% endif %}
+{% endif %}
+{% if services[0].volumes is defined %}
+    volumes:
+{% for volume in services[0].volumes %}
+      - {{volume.name}}_{{environment}}:{{volume.dest}}
+{% endfor %}
+{% endif %}
+    logging:
+      options:
+        max-size: 100m
+    deploy:
+      mode: replicated
+{% if services[0].traefik is defined and services[0].traefik == "true" %}
+      labels:
+        - "traefik.enable=true"
+{% if services[0].path_prefix is defined %}
+        - "traefik.http.routers.{{service_name}}_{{ environment }}.rule=Host({{domains}}) && PathPrefix(`/{{services[0].path_prefix}}`)"
+        - "traefik.http.routers.{{service_name}}_{{ environment }}.middlewares={{service_name}}_{{ environment }}_stripprefix"
+        - "traefik.http.middlewares.{{service_name}}_{{ environment }}_stripprefix.stripprefix.prefixes=/{{services[0].path_prefix}}"
+
+{% else %}
+        - "traefik.http.routers.{{service_name}}_{{ environment }}.rule=Host({{domains}})"
+{% endif %}
+        # http
+        - "traefik.http.routers.{{service_name}}_{{ environment }}.entrypoints=web"
+{% if env == "local"%}
+        # https
+        - "traefik.http.routers.{{service_name}}_{{ environment }}_https.entrypoints=websecure"
+        - "traefik.http.routers.{{service_name}}_{{ environment }}_https.tls=true"
+        - "traefik.http.routers.{{service_name}}_{{ environment }}_https.rule=Host({{domains}})"
+        - "traefik.http.routers.{{service_name}}_{{ environment }}.middlewares={{service_name}}_{{ environment }}_redirect_https"
+        - "traefik.http.middlewares.{{service_name}}_{{ environment }}_redirect_https.redirectscheme.permanent=true"
+        - "traefik.http.middlewares.{{service_name}}_{{ environment }}_redirect_https.redirectscheme.port=4400"
+        - "traefik.http.middlewares.{{service_name}}_{{ environment }}_redirect_https.redirectscheme.scheme=https"
+{% if services[0].path_prefix is defined %}
+        - "traefik.http.routers.{{service_name}}_{{ environment }}_https.rule=Host({{domains}}) && PathPrefix(`/{{services[0].path_prefix}}/`)"
+        - "traefik.http.routers.{{service_name}}_{{ environment }}_https.middlewares={{service_name}}_{{ environment }}_https_stripprefix"
+        - "traefik.http.middlewares.{{service_name}}_{{ environment }}_https_stripprefix.stripprefix.prefixes=/{{services[0].path_prefix}}"
+{% endif %}
+{% endif %}
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.server.port={{services[0].port | default('5000')}}"
+        ###healthcheck
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.path={{services[0].healthcheck_path | default('')}}"
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.port={{services[0].port | default('5000')}}"
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.interval={{services[0].interval | default('2s')}}"
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.timeout={{services[0].timeout | default('1s')}}"
+{% endif %}
+      resources:
+        limits:
+{% if services[0].max_memory is defined and services[0].max_memory | int > 12200 %}
+          memory: 12000M
+{% elif services[0].max_memory is defined and services[0].max_memory | int < 100 %}
+          memory: 1000M
+{% else %}
+          memory: {{ services[0].max_memory | default('2048') }}M
+{% endif %}
+{% if env == "prod" or env == "alphaprod" or env == "fpsprod"%}
+{% if services[0].number_of_replicas_prod is defined and services[0].number_of_replicas_prod | int > 6 %}
+      replicas: 6
+{% else %}
+      replicas: {{services[0].number_of_replicas_prod | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "aws"%}
+{% if services[0].number_of_replicas_aws is defined and services[0].number_of_replicas_aws | int > 2 %}
+      replicas: 2
+{% else %}
+      replicas: {{services[0].number_of_replicas_aws | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "nexaws"%}
+#nexaws
+{% if services[0].number_of_replicas_nexaws is defined and services[0].number_of_replicas_nexaws | int > 4 %}
+      replicas: 4
+{% else %}
+      replicas: {{services[0].number_of_replicas_nexaws | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "gc"%}
+#gc
+{% if services[0].number_of_replicas_gc is defined and services[0].number_of_replicas_gc | int > 4 %}
+      replicas: 4
+{% else %}
+      replicas: {{services[0].number_of_replicas_gc | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "uat"%}
+{% if services[0].number_of_replicas_uat is defined and services[0].number_of_replicas_uat | int > 2 %}
+      replicas: 2
+{% else %}
+      replicas: {{services[0].number_of_replicas_uat | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "sit"%}
+{% if services[0].number_of_replicas_sit is defined and services[0].number_of_replicas_sit | int > 2 %}
+      replicas: 2
+{% else %}
+      replicas: {{services[0].number_of_replicas_sit | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "local"%}
+{% if services[0].number_of_replicas_local is defined and services[0].number_of_replicas_local | int > 2 %}
+      replicas: 2
+{% else %}
+      replicas: {{services[0].number_of_replicas_local | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "nexprod"%}
+{% if services[0].number_of_replicas_nexprod is defined and services[0].number_of_replicas_nexprod | int > 2 %}
+      replicas: 2
+{% else %}
+      replicas: {{services[0].number_of_replicas_nexprod | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "local"%}
+{% if services[0].port_local is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "nexprod"%}
+{% if services[0].port_nexprod is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "uat"%}
+{% if services[0].port_uat is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "sit"%}
+{% if services[0].port_sit is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "prod" or env == "fpsprod" or env == "alphaprod"%}
+{% if services[0].port_prod is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "aws"%}
+{% if services[0].port_aws is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "nexaws"%}
+{% if services[0].port_nexaws is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "gc"%}
+{% if services[0].port_gc is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "prod" or env == "nexprod" %}
+      update_config:
+{% if services[0].update_order is defined and services[0].update_order == 'stop-first' %}
+        order: stop-first
+{% else %}
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+{% endif %}
+{% else %}
+{% if services[0].update_order is defined and services[0].update_order == 'start-first' %}
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+{% endif %}
+{% endif %}
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      placement:
+        constraints:
+{% if services[0].node_labels is defined %}
+          - node.labels.{{ services[0].node_labels[0] | upper }} == yes
+{% else %}
+          - node.labels.{{ org_node_label | upper }} == yes
+{% endif %}
+    networks:
+      - swarm_{{ network }}
+{% if team_name == "nex3" or team_name == "pentagon" %}
+    environment:
+      APP_NAME: {{ service_name }}
+{% endif %}
+{% if env == "local" and services[0].port_local is defined %}
+    ports:
+      - {{services[0].port_local}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if env == "nexprod" and services[0].port_nexprod is defined %}
+    ports:
+      - {{services[0].port_nexprod}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if env == "uat" and services[0].port_uat is defined %}
+    ports:
+      - {{services[0].port_uat}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if env == "sit" and services[0].port_sit is defined %}
+    ports:
+      - {{services[0].port_sit}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if (env == "prod" or env == "fpsprod" or env == "alphaprod") and services[0].port_prod is defined %}
+    ports:
+      - {{services[0].port_prod}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if env == "aws" and services[0].port_aws is defined %}
+    ports:
+      - {{services[0].port_aws}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if env == "nexaws" and services[0].port_nexaws is defined %}
+    ports:
+      - {{services[0].port_nexaws}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if env == "gc" and services[0].port_gc is defined %}
+    ports:
+      - {{services[0].port_gc}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if services[0].disable_health_check is undefined or services[0].disable_health_check == false %}
+{% if services[0].framework is defined and services[0].framework == "dotnet" %}
+    healthcheck:
+      test: ['CMD', 'curl', '-f', "http://{{services[0].healthcheck_domain | default('localhost')}}:{{services[0].port | default('5000')}}{{services[0].healthcheck_path | default('')}}"]
+      interval: {{services[0].healthcheck_interval | default('5s')}}
+      timeout: {{services[0].healthcheck_timeout | default('5s')}}
+      retries: {{services[0].healthcheck_retries | default('5')}}
+{% endif %}
+{% endif %}
+{% if services[0].dump_permission is defined and services[0].dump_permission == true %}
+    cap_add:
+      - SYS_PTRACE
+{% endif %}
+    labels:
+{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
+{% else %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}"
+{% endif %}
+networks:
+  swarm_{{ network }}:
+    external: true
+
+{% if services[0].volumes is defined %}
+volumes:
+{% for volume in services[0].volumes %}
+  {{volume.name}}_{{environment}}:
+    driver: local
+    driver_opts:
+       o: bind
+       type: none
+{% if services[0].custom_volumes is defined %}
+       device: {{services[0].custom_volumes}}
+{% else %}
+       device: {{gluster_path}}{{volume.src}}/{{environment}}
+{% endif %}
+    labels:
+{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
+{% else %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}"
+{% endif %}
+{% endfor %}
+{% endif %}

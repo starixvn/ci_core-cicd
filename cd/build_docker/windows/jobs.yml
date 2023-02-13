@@ -1,0 +1,11 @@
+include:
+  - cd/build_docker/windows/_definition.yml
+
+build_windows:
+  extends:
+    - .build:default:windowsimage
+    - .env
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, build_windows]
+    - !reference [.cd_rules, deploy]

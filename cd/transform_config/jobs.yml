@@ -1,0 +1,12 @@
+include:
+  - cd/transform_config/_definition.yml
+
+transform_config:
+  extends: 
+    - .base_transform_config
+    - .env
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, transform_config]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]

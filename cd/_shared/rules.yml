@@ -1,0 +1,79 @@
+.if_deploy_rocketor: &if_deploy_rocketor
+  if: '$CI_COMMIT_TAG =~ /^deploy-/ && $DEPLOY_BY == "rocketor"'
+
+.cd_success_rules: &cd_success_rules
+  - <<: *if_deploy_rocketor
+    when: on_success
+
+.cd_always_rules: &cd_always_rules
+  - <<: *if_deploy_rocketor
+    when: always
+
+.if_multi_stage: &if_multi_stage
+  if: $MULTI_STAGE == "true"
+
+.if_not_multi_stage: &if_not_multi_stage
+  if: $MULTI_STAGE != "true"
+
+.if_multiple_image_env: &if_multiple_image_env
+  if: $MULTIPLE_IMAGE_ENV == "true"
+
+.if_not_multiple_image_env: &if_not_multiple_image_env
+  if: $MULTIPLE_IMAGE_ENV != "true"
+
+.if_platform_not_linux: &if_platform_not_linux
+  if: $BUILD_PLATFORM != "linux"
+
+.if_platform_not_windows: &if_platform_not_windows
+  if: $BUILD_PLATFORM != "windows"
+
+.if_not_build_cocos: &if_not_build_cocos
+  if: $BUILD_COCOS != "true"
+
+.if_not_transform_config: &if_not_transform_config
+  if: $ENABLE_TRANSFORM_CONFIG != "true"
+
+.if_env_not_local: &if_env_not_local
+  if: $ENV_NAME != "LOCAL"
+
+.cd_rules:
+  build_multistage:
+    - <<: *if_not_multi_stage
+      when: never
+  build_no_multistage:
+    - <<: *if_multi_stage
+      when: never
+  build_env:
+    - <<: *if_not_multiple_image_env
+      when: never
+  build_noenv:
+    - <<: *if_multiple_image_env
+      when: never
+  build_linux:
+    - <<: *if_platform_not_linux
+      when: never
+  build_windows:
+    - <<: *if_platform_not_windows
+      when: never
+  build_cocos:
+    - <<: *if_not_build_cocos
+      when: never
+  transform_config:
+    - <<: *if_not_transform_config
+      when: never
+  prepare:
+    - *cd_always_rules
+  deploy:
+    - *cd_success_rules
+  cleanup:
+    - *cd_always_rules
+  smoke_test_sc1:
+    - <<: *if_env_not_local
+      when: never
+    - if: $STACK_NAME != "l1"
+      when: never
+  smoke_test_sc2:
+    - <<: *if_env_not_local
+      when: never
+    - if: $STACK_NAME != "l2"
+      when: never

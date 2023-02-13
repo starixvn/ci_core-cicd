@@ -1,0 +1,6 @@
+include:
+  - cd/.post/_definition.yml
+
+cleanup:
+  extends: .cleanup
+  rules: !reference [.cd_rules, cleanup]

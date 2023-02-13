@@ -1,0 +1,9 @@
+include:
+  - cd/deploy/_shared/_vars.yml
+  - cd/deploy/nexcel/_definition.yml
+  - cd/deploy/nexcel/_vars.yml
+
+deploy:
+  extends:
+    - .base_deploy_stack_swarm
+  rules: !reference [.cd_rules, deploy]

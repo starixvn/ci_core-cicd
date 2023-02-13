@@ -1,0 +1,12 @@
+include:
+  - _shared/*
+  - ci/_shared/*
+  - ci/unit_test/jobs.yml
+  - ci/integration_test/jobs.yml
+  - ci/sonarqube/jobs.yml
+  - ci/scan_vulnerability/jobs.yml
+  - cd/_shared/*.yml
+  - cd/.pre/jobs.yml
+  - cd/.post/jobs.yml
+  - cd/build_docker/linux/jobs.yml
+  - cd/scan_vulnerability/jobs.yml

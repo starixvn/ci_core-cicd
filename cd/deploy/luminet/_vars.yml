@@ -1,0 +1,54 @@
+variables:
+  TRIVY_VERSION: "0.22.0"
+  TRIVY_TOKEN: "H5nF5ywy262wt881ZWpq"
+  TRIVY_SERVER: "http://10.10.50.69:1115"
+  
+  LOCAL_PROXY_SSH_PORT: 22
+  LOCAL_PROXY_USER: vndeployer
+  LOCAL_PROXY_SERVER: 10.10.50.69
+  KBT_PROXY_SSH_PORT: 8837
+  KBT_PROXY_USER: vndeployer
+  KBT_PROXY_SERVER: l1deploy.starixplay.com
+  SIT_PROXY_SSH_PORT: 8837
+  SIT_PROXY_USER: vndeployer
+  SIT_PROXY_SERVER: l1deploy.starixplay.com
+
+  SWARM_CLUSTER_LOCAL: 10.10.50.14 10.10.50.19 10.10.50.20
+  SWARM_LEADER_LOCAL: 10.10.50.69
+  SWARM_LEADER_LOCAL_SSH_PORT: 22
+  SWARM_LEADER_LOCAL_SSH_USER: vndeployer
+  SWARM_NETWORK_LOCAL: swarm_luminet_local
+  DEPLOYMENT_API_LOCAL: https://deploymentapi.lumigame.com
+  REGISTRY_LOCAL: hub.lumigame.com
+
+  SWARM_CLUSTER_SIT: 10.2.189.65 10.2.189.69
+  SWARM_LEADER_SIT: 10.2.190.51 #10.2.189.51
+  SWARM_LEADER_SIT_SSH_PORT: 22 #8837
+  SWARM_LEADER_SIT_SSH_USER: vndeployer
+  SWARM_NETWORK_SIT: swarm_luminet_sit
+  DEPLOYMENT_API_SIT: https://scdeployapi2.starixplay.com
+  REGISTRY_SIT: lumhub.starixplay.com
+
+  SWARM_CLUSTER_UAT: 10.2.189.65 10.2.189.69
+  SWARM_LEADER_UAT: 10.2.190.51 #10.2.189.51
+  SWARM_LEADER_UAT_SSH_PORT: 22 #8837
+  SWARM_LEADER_UAT_SSH_USER: vndeployer
+  SWARM_NETWORK_UAT: swarm_luminet_sit
+  DEPLOYMENT_API_UAT: https://scdeployapi2.starixplay.com
+  REGISTRY_UAT: lumhub.starixplay.com
+
+  SWARM_CLUSTER_PROD: 10.2.189.61 10.2.189.62 10.2.189.63 10.2.189.64 10.2.189.70
+  SWARM_LEADER_PROD: 10.2.189.50
+  SWARM_LEADER_PROD_SSH_PORT: 22
+  SWARM_LEADER_PROD_SSH_USER: vndeployer
+  SWARM_NETWORK_PROD: swarm_luminet_prod
+  DEPLOYMENT_API_PROD: https://scdeployapi.starixplay.com
+  REGISTRY_PROD: lumhub.starixplay.com
+
+  SWARM_CLUSTER_AWS: 10.2.189.2 10.2.189.3 10.2.189.4 10.2.189.5
+  SWARM_LEADER_AWS: 10.2.189.2
+  SWARM_LEADER_AWS_SSH_PORT: 22
+  SWARM_LEADER_AWS_SSH_USER: vndeployer
+  SWARM_NETWORK_AWS: swarm_luminet_aws
+  DEPLOYMENT_API_AWS: https://deployment-api.sportsfun.app
+  REGISTRY_AWS: hub.lumigame.com

@@ -1,0 +1,44 @@
+.prepare-folder:
+  script:
+    - echo "$DEPLOYMENT_API"
+    - curl -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_USERNAME -F registryPassword=$DOCKER_REG_PASSWORD -F registryUrl=$DOCKER_REG_URL $DEPLOYMENT_API/loginRegistry?token=$DEPLOY_API_TOKEN
+    - curl -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH $DEPLOYMENT_API/prepareFolderPermission?token=$DEPLOY_API_TOKEN
+
+.generate-and-sync-docker-compose:
+  script:
+    - echo "===== GENERATE docker-compose.yml ... =====";
+    - echo $VARS_DATA > VARS_DATA.json
+    - curl --fail -o ${DOCKER_COMPOSE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcommon-ci/repository/files/$DOCKER_COMPOSE_FILE_PATH/raw?ref=$DOCKER_COMPOSE_REF
+    - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${DOCKER_COMPOSE_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${DOCKER_COMPOSE_FILE_NAME}.j2 -o ./${DOCKER_COMPOSE_FILE_NAME}
+    - cat $DOCKER_COMPOSE_FILE_NAME
+    - sed -i "s/@CONFIG_VERSION/$(date +%s)/g" $DOCKER_COMPOSE_FILE_NAME
+    - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" $DOCKER_COMPOSE_FILE_NAME
+    - sed -i "s/@DOMAINS/$DOMAINS/g" $DOCKER_COMPOSE_FILE_NAME
+    - echo "===== SYNC docker-compose.yml ... ====="
+    - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/docker-compose.yml"    
+    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/docker-compose.yml" -F file=@"$DOCKER_COMPOSE_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
+
+.sync-config:
+  script:
+    - echo $CONFIG_FILE_PATH/$CONFIG_FILE
+    - ls -l $CONFIG_FILE_PATH
+    - echo $TRANSFORM_CONFIG
+    - if [ ! -z "$CONFIG_FILE_NAME" ];
+      then
+        echo "===== SYNC $CONFIG_FILE ... =====";
+        curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/configs/$CONFIG_DEST_FILE" -F file=@"$CONFIG_FILE_PATH/$CONFIG_FILE" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN;      
+      fi
+
+.remove-old-swarm-configs:
+  script:
+    - echo "===== REMOVING OLD CONFIGS ... =====";   
+    - if [ ! -z "$CONFIG_FILE_NAME" ];
+      then 
+        curl -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F configName=${SERVICE_NAME}_${DEPLOY_ENV}_config $DEPLOYMENT_API/removeSwarmConfigs?token=$DEPLOY_API_TOKEN;        
+      fi
+
+.deploy-swarm-service:
+  script:
+    - echo "===== DEPLOYING SERVICE ... =====";    
+    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F stack=$STACK_NAME $DEPLOYMENT_API/deploySwarmService?token=$DEPLOY_API_TOKEN;   

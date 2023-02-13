@@ -1,0 +1,13 @@
+include:
+  - cd/build_cocos/_vars.yml
+  - cd/build_cocos/_definition.yml
+
+build_cocos_env:
+  extends:
+    - .base_build_cocos
+    - .env
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, build_cocos]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]

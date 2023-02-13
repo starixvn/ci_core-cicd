@@ -1,0 +1,12 @@
+.base_transform_config:
+  stage: transform-config
+  script:
+    - echo "====== Build NextJS ======"
+    - echo $DEPLOY_ENV
+    - cp ./configs/L1/configs.$DEPLOY_ENV.json ./configs.json
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - ././configs.json
+    expire_in: 1 day

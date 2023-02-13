@@ -1,0 +1,51 @@
+include:
+  - cd/deploy/_shared/_base.yml
+
+.import-connection-string: &import-connection-string
+  - if [[ ! -z "$CONFIG_FILE_NAME" && $DEPLOY_ENV =~ ^(SIT|UAT|PROD|ALPHAPROD|FPSPROD) ]];
+    then
+        printf "\n===== IMPORT CONNECTION STRING FROM $CONFIG_FILE ... =====\n";
+        curl --fail -F file=@"$CONFIG_FILE_PATH/$CONFIG_FILE" -F "serviceName=${SERVICE_NAME}_${DEPLOY_ENV}" -X POST $ROCKETOR_API_URL/Home/ImportConnectionString;
+    fi
+
+.change-version-and-sync-sp: &change-version-and-sync-sp
+  - echo $SP_FILE_TRANSFORM;
+  - if [ ! -z "$SP_FILE_NAME" ];
+    then
+      if [ "$SP_FILE_TRANSFORM" == "true" ]; then
+        export SP_FILE=$SP_FILE_NAME.${TRANSFORM_CONFIG}.$SP_FILE_EXTENSION;
+      else
+        export SP_FILE=$SP_FILE_NAME.$SP_FILE_EXTENSION;
+      fi;
+      if [ ! -z "$REDMINE_IDS" ]; then
+        echo "===== CHANGE SP VERSION FOR $SP_FILE ... =====";
+        if curl --fail -o sp-result.xml -F file=@"$SP_FILE_PATH/$SP_FILE" -F "redmineIds=$REDMINE_IDS" -X POST $ROCKETOR_API_URL/Home/ChangeSpVersion; then
+          cp sp-result.xml "$SP_FILE_PATH/$SP_FILE";
+          echo "It's done";
+        fi;
+      fi;
+      echo "===== SYNC $SP_FILE ... =====";
+      curl --fail -F jobid=$CI_JOB_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/configs/$SP_FILE_NAME.$SP_FILE_EXTENSION" -F file=@"$SP_FILE_PATH/$SP_FILE" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN;
+    fi
+
+.remove-old-swarm-sp-configs: &remove-old-swarm-sp-configs
+  - if [ ! -z "$SP_FILE_NAME" ];
+    then
+      curl -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F configName=${SERVICE_NAME}_${DEPLOY_ENV}_sp_config $DEPLOYMENT_API/removeSwarmConfigs?token=$DEPLOY_API_TOKEN;      
+    fi
+
+.base_deploy_stack_swarm:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare-folder, script]
+    - !reference [.generate-and-sync-docker-compose, script]
+    - !reference [.sync-config, script]
+    - *import-connection-string
+    - *change-version-and-sync-sp
+    - !reference [.remove-old-swarm-configs, script]
+    - *remove-old-swarm-sp-configs
+    - !reference [.deploy-swarm-service, script]
+  tags:
+    - docker

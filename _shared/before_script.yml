@@ -1,0 +1,126 @@
+image: $DOCKER_REG_LOCAL_URL/base/docker:20.10.7-bash-jq-jinja
+
+before_script:
+  - echo $STACK_NAME
+  - export DEPLOY_ENV=$CI_ENVIRONMENT_NAME;
+  - echo "env $DEPLOY_ENV"
+  - eval $(ssh-agent -s)
+  - mkdir -p ~/.ssh
+  - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  - echo -e "${SSH_PRIVATE_KEY_1}\n${SSH_PRIVATE_KEY_2}\n${SSH_PRIVATE_KEY_3}" | ssh-add -
+  - export COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+  - export CI_REGISTRY_IMAGE=$DOCKER_REG_LOCAL_URL/$DOCKER_IMAGE_PATH_LOCAL
+  - export CI_REGISTRY_LOCAL_IMAGE=$DOCKER_REG_LOCAL_URL/$DOCKER_IMAGE_PATH_LOCAL
+  - export CI_REGISTRY_IMAGE_VERSION=${CI_COMMIT_SHA:0:8}
+  - echo $CI_REGISTRY_IMAGE
+  - if [ "$TRANSFORM_CONFIG" == "" ]; then
+    export TRANSFORM_CONFIG=$DEPLOY_ENV;
+    fi
+  - echo $TRANSFORM_CONFIG
+  - if [ "$CONFIG_FILE_EXTENSION" == "" ]; then
+    export CONFIG_FILE=$CONFIG_FILE_NAME.${TRANSFORM_CONFIG};
+    export CONFIG_DEST_FILE=$CONFIG_FILE_NAME;
+    else
+    export CONFIG_FILE=$CONFIG_FILE_NAME.${TRANSFORM_CONFIG}.$CONFIG_FILE_EXTENSION;
+    export CONFIG_DEST_FILE=$CONFIG_FILE_NAME.$CONFIG_FILE_EXTENSION;
+    fi
+  - if [ "$DOCKER_FILE_PATH" == "" ]; then
+    export DOCKER_FILE_PATH=".";
+    else
+    export DOCKER_FILE_PATH=$DOCKER_FILE_PATH;
+    fi
+  - echo $CONFIG_FILE
+  - echo $DOCKER_FILE_PATH
+  - if [ "$DOCKER_FILE_NAME" == "" ]; then
+    export DOCKER_FILE_NAME="Dockerfile";
+    else
+    export DOCKER_FILE_NAME=$DOCKER_FILE_NAME;
+    fi
+  - echo $DOCKER_FILE_NAME
+  - if [ "$DOCKER_NETWORK_NAME" == "" ]; then
+    export DOCKER_NETWORK_NAME="bridge";
+    else
+    export DOCKER_NETWORK_NAME=$DOCKER_NETWORK_NAME;
+    fi
+  - echo $DOCKER_NETWORK_NAME
+  - if echo "$DEPLOY_ENV" | grep -q "LOCAL"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_LOCAL;
+      export REGISTRY_IMAGE=$REGISTRY_LOCAL;
+      export SERVER_IP=$SWARM_LEADER_LOCAL;
+      export SERVER_USER=$SWARM_LEADER_LOCAL_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_LOCAL_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "SIT"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_SIT;
+      export REGISTRY_IMAGE=$REGISTRY_SIT;
+      export SERVER_IP=$SWARM_LEADER_SIT;
+      export SERVER_USER=$SWARM_LEADER_SIT_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_SIT_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "UAT"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_UAT;
+      export REGISTRY_IMAGE=$REGISTRY_UAT;
+      export SERVER_IP=$SWARM_LEADER_UAT;
+      export SERVER_USER=$SWARM_LEADER_UAT_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_UAT_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "NEXPROD"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_NEXPROD;
+      export REGISTRY_IMAGE=$REGISTRY_NEXPROD;
+      export SERVER_IP=$SWARM_LEADER_NEXPROD;
+      export SERVER_USER=$SWARM_LEADER_NEXPROD_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_NEXPROD_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "FPSPROD"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_FPSPROD;
+      export REGISTRY_IMAGE=$REGISTRY_FPSPROD;
+      export SERVER_IP=$SWARM_LEADER_FPSPROD;
+      export SERVER_USER=$SWARM_LEADER_FPSPROD_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_FPSPROD_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "ALPHAPROD"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_ALPHAPROD;
+      export REGISTRY_IMAGE=$REGISTRY_ALPHAPROD;
+      export SERVER_IP=$SWARM_LEADER_ALPHAPROD;
+      export SERVER_USER=$SWARM_LEADER_ALPHAPROD_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_ALPHAPROD_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "PROD"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_PROD;
+      export REGISTRY_IMAGE=$REGISTRY_PROD;
+      export SERVER_IP=$SWARM_LEADER_PROD;
+      export SERVER_USER=$SWARM_LEADER_PROD_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_PROD_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "NEXAWS"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_NEXAWS;
+      export REGISTRY_IMAGE=$REGISTRY_NEXAWS;
+      export SERVER_IP=$SWARM_LEADER_NEXAWS;
+      export SERVER_USER=$SWARM_LEADER_NEXAWS_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_NEXAWS_SSH_PORT;
+    elif echo "$DEPLOY_ENV" | grep -q "GC"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_GC;
+      export REGISTRY_IMAGE=$REGISTRY_GC;
+      export SERVER_IP=$SWARM_LEADER_GC;
+      export SERVER_USER=$SWARM_LEADER_GC_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_GC_SSH_PORT;      
+    elif echo "$DEPLOY_ENV" | grep -q "AWS"; then
+      export DEPLOYMENT_API=$DEPLOYMENT_API_AWS;
+      export REGISTRY_IMAGE=$REGISTRY_AWS;
+      export SERVER_IP=$SWARM_LEADER_AWS;
+      export SERVER_USER=$SWARM_LEADER_AWS_SSH_USER;
+      export SERVER_PORT=$SWARM_LEADER_AWS_SSH_PORT;
+    else
+      echo "Not support for env $DEPLOY_ENV";     
+    fi
+  - echo "$CI_REGISTRY_IMAGE - $REGISTRY_IMAGE"
+  - echo $PROXY_SSH_COMMAND
+  - if [ "$SERVICE_NAME" == "" ]; then
+    echo "$DOCKER_SERVICE_NAME";
+    else
+    export DOCKER_SERVICE_NAME=$SERVICE_NAME;
+    fi
+  - if [ "$PROJECT_ROOT_PATH" == "" ]; then
+    echo "Root is here";
+    else
+    cd $PROJECT_ROOT_PATH;
+    fi
+  - echo $REDMINE_IDS
+  - echo "$TRIVY_SERVER - $TRIVY_VERSION";
+  - docker login -u $DOCKER_REG_LOCAL_USERNAME -p $DOCKER_REG_LOCAL_PASSWORD $DOCKER_REG_LOCAL_URL;
+  - export DOCKER_BUILDKIT=1;
+  - echo $DOMAINS;

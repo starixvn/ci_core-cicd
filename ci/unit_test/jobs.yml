@@ -1,0 +1,11 @@
+include:
+  - ci/unit_test/_vars.yml
+  - ci/unit_test/_defininition.yml
+
+unit_test_js:
+  extends: .unit_test_js
+  rules: !reference [.ci_rules, test_js]
+
+unit_test_dotnet:
+  extends: .unit_test_dotnet
+  rules: !reference [.ci_rules, test_dotnet]

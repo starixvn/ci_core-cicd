@@ -1,0 +1,4 @@
+include:
+  - _mixing.yml
+  - cd/build_docker/windows/jobs.yml
+  - cd/deploy/nexcel/jobs.yml

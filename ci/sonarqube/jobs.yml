@@ -1,0 +1,15 @@
+include:
+  - ci/sonarqube/_vars.yml
+  - ci/sonarqube/_defininition.yml
+
+sonar_js:
+  extends: .sonar_js
+  rules: !reference [.ci_rules, sonar_check_js]
+
+sonar_dotnet:
+  extends: .sonar_dotnet
+  rules: !reference [.ci_rules, sonar_check_dotnet]
+
+sonar_dotnet_js:
+  extends: .sonar_dotnet_js
+  rules: !reference [.ci_rules, sonar_check_dotnet_js]

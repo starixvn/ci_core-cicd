@@ -1,0 +1,15 @@
+include:
+  - cd/deploy/_shared/_base.yml
+
+.base_deploy_stack_swarm:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare-folder, script]
+    - !reference [.generate-and-sync-docker-compose, script]
+    - !reference [.sync-config, script]
+    - !reference [.remove-old-swarm-configs, script]
+    - !reference [.deploy-swarm-service, script]
+  tags:
+    - docker

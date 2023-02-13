@@ -1,0 +1,17 @@
+.prepare_vars:
+  stage: .pre
+  variables:
+    CD_VARS_FILE: cd%2f_templates%2fcd_vars.env.j2
+    CD_REF: main
+  before_script:
+    - echo "Prepare shared environment variables"
+  script:
+    - echo $VARS_DATA > VARS_DATA.json
+    - curl --fail -o cd_vars.env.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcommon-ci/repository/files/$CD_VARS_FILE/raw?ref=$CD_REF
+    - jinja render -d ./VARS_DATA.json -t ./cd_vars.env.j2 -o ./cd_vars.env
+    - cat cd_vars.env
+  artifacts:
+    reports:
+      dotenv: cd_vars.env
+  tags:
+    - docker

@@ -8,7 +8,7 @@
   script:
     - echo "===== GENERATE docker-compose.yml ... =====";
     - echo $VARS_DATA > VARS_DATA.json
-    - curl --fail -o ${DOCKER_COMPOSE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcommon-ci/repository/files/$DOCKER_COMPOSE_FILE_PATH/raw?ref=$DOCKER_COMPOSE_REF
+    - curl --fail -o ${DOCKER_COMPOSE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$DOCKER_COMPOSE_FILE_PATH/raw?ref=$DOCKER_COMPOSE_REF
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${DOCKER_COMPOSE_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${DOCKER_COMPOSE_FILE_NAME}.j2 -o ./${DOCKER_COMPOSE_FILE_NAME}
     - cat $DOCKER_COMPOSE_FILE_NAME

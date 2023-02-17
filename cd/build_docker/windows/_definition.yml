@@ -16,14 +16,15 @@
       }
     - echo $TRANSFORM_CONFIG
     - echo "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}"
+    - ls .
+    - echo "$DOCKER_FILE_PATH\$DOCKER_FILE_NAME"
+    - docker login -u $DOCKER_REG_LOCAL_USERNAME -p $DOCKER_REG_LOCAL_PASSWORD $DOCKER_REG_LOCAL_URL
+    - nuget restore
 
 .build:default:windowsimage:
   extends: .build:default:windowsimage:before_script
   stage: build
-  script:
-    - ls .
-    - echo "$DOCKER_FILE_PATH\$DOCKER_FILE_NAME"
-    - docker login -u $DOCKER_REG_LOCAL_USERNAME -p $DOCKER_REG_LOCAL_PASSWORD $DOCKER_REG_LOCAL_URL
+  script:    
     - docker build --pull -f "$DOCKER_FILE_PATH\$DOCKER_FILE_NAME"
         --build-arg DEPLOY_ENV=${DEPLOY_ENV}
         --build-arg ROCKETOR_API=${ROCKETOR_API}
@@ -38,10 +39,7 @@
 .build:default:windowsimage:multistage:
   stage: build
   extends: .build:default:windowsimage:before_script
-  script:
-    - ls .
-    - echo "$DOCKER_FILE_PATH\$DOCKER_FILE_NAME"
-    - docker login -u $DOCKER_REG_LOCAL_USERNAME -p $DOCKER_REG_LOCAL_PASSWORD $DOCKER_REG_LOCAL_URL
+  script:   
     - Start-Process -FilePath "docker" -ArgumentList "pull ${CI_REGISTRY_IMAGE}:builder" -Wait
     - docker build
         --target builder

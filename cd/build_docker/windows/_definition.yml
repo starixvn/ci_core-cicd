@@ -20,7 +20,7 @@
     - echo "$DOCKER_FILE_PATH\$DOCKER_FILE_NAME"
     - docker login -u $DOCKER_REG_LOCAL_USERNAME -p $DOCKER_REG_LOCAL_PASSWORD $DOCKER_REG_LOCAL_URL
     - |
-      $testFolder=tests
+      $testFolder = "tests"
       if (Test-Path $testFolder) {
         Remove-Item $testFolder -Recurse -Force
       }

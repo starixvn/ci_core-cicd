@@ -32,7 +32,7 @@
       -Dsonar.testExecutionReportPaths=./reports/test-reporter.xml
       -Dsonar.sources=${SRC_PATH}
       -Dsonar.tests=${TEST_PATH}
-      -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx
+      -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
 
 .sonar_dotnet:
   extends: .sonar_common

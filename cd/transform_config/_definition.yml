@@ -3,10 +3,10 @@
   script:
     - echo "====== Build NextJS ======"
     - echo $DEPLOY_ENV
-    - cp ./configs/L1/configs.$DEPLOY_ENV.json ./configs.json
+    - cp $CONFIG_FILE_PATH/$CONFIG_FILE_NAME.$DEPLOY_ENV.$CONFIG_FILE_EXTENSION ./$CONFIG_FILE_NAME.$CONFIG_FILE_EXTENSION
   tags:
     - docker
   artifacts:
     paths:
-      - ././configs.json
+      - ././$CONFIG_FILE_NAME.$CONFIG_FILE_EXTENSION
     expire_in: 1 day

@@ -1,11 +1,13 @@
 .prepare_ci:
   stage: .pre
+  before_script:
+    - echo "Generating dynamic CI jobs"
   script:
     - |
       cat <<-EndOfMessage >>ci.yml
       cocos_test:
         variables:
-          ENABLE_TEST_JS: true
+          ENABLE_TEST_JS: 'true'
           SRC_PATH: 'src'
           TEST_PATH: 'src'
           PROJECT_NAME: 'cocos_test'

@@ -1,7 +1,7 @@
 include:
   - _shared/*
   - ci/_shared/*
-  - ci/unit_test/jobs.yml
+  - ci/unit_test/others/jobs.yml
   - ci/integration_test/jobs.yml
   - ci/sonarqube/jobs.yml
   - ci/scan_vulnerability/jobs.yml

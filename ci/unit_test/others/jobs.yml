@@ -1,6 +1,6 @@
 include:
-  - ci/unit_test/_vars.yml
-  - ci/unit_test/_definition.yml
+  - ci/unit_test/others/_vars.yml
+  - ci/unit_test/others/_definition.yml
 
 unit_test_js:
   extends: .unit_test_js

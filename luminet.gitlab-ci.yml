@@ -1,5 +1,6 @@
 include:
   - _mixing.yml
+  - ci/unit_test/cocos/jobs.yml
   - cd/build_cocos/jobs.yml
   - cd/transform_config/jobs.yml
   - cd/deploy/luminet/jobs.yml

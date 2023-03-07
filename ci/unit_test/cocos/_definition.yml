@@ -1,0 +1,25 @@
+.prepare_ci:
+  stage: .pre
+  script:
+    - |
+      cat <<-EndOfMessage >>ci.yml
+      cocos_test:
+        variables:
+          ENABLE_TEST_JS: true
+          SRC_PATH: 'src'
+          TEST_PATH: 'src'
+          PROJECT_NAME: 'cocos_test'
+        trigger:
+          strategy: depend
+          include:
+            - project: ci/core-cicd
+              ref: main
+              file: luminet.gitlab-ci.yml
+      EndOfMessage
+  after_script:
+    - cat ci.yml
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - ci.yml

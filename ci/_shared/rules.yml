@@ -20,6 +20,9 @@
 .if_disable_test_js: &if_disable_test_js
   if: $ENABLE_TEST_JS != "true"
 
+.if_disable_test_cocos: &if_disable_test_cocos
+  if: $ENABLE_TEST_COCOS != "true"
+
 .ci_rules:
   test_js:
     - *ci_never_rules
@@ -29,6 +32,11 @@
   test_dotnet:
     - *ci_never_rules
     - <<: *if_disable_test_dotnet
+      when: never
+    - *ci_always_rules
+  test_cocos:
+    - *ci_never_rules
+    - <<: *if_disable_test_cocos
       when: never
     - *ci_always_rules
   sonar_check_js:

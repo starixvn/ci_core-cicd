@@ -1,0 +1,16 @@
+include:
+  - ci/unit_test/cocos/_definition.yml
+
+prepare_ci:
+  extends: .prepare_ci
+  rules: !reference [.ci_rules, test_cocos]
+
+run_test:
+  stage: test
+  trigger:
+    strategy: depend
+    include:
+      - artifact: ci.yml
+        job: prepare_ci
+  rules: !reference [.ci_rules, test_cocos]
+  needs: ["prepare_ci"]

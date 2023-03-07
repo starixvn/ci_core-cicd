@@ -23,6 +23,9 @@
 .if_disable_test_cocos: &if_disable_test_cocos
   if: $ENABLE_TEST_COCOS != "true"
 
+.if_child_pipeline: &if_child_pipeline
+  if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
+
 .ci_rules:
   test_js:
     - *ci_never_rules
@@ -37,6 +40,8 @@
   test_cocos:
     - *ci_never_rules
     - <<: *if_disable_test_cocos
+      when: never
+    - <<: *if_child_pipeline
       when: never
     - *ci_always_rules
   sonar_check_js:
@@ -67,7 +72,9 @@
     - *ci_always_rules
   scan_dockerfile:
     - *ci_never_rules
+    - <<: *if_child_pipeline
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH'
       changes:
         - "*ockerfile"
-        - "*/*ockerfile"       
+        - "*/*ockerfile"

@@ -4,19 +4,56 @@
     - echo "Generating dynamic CI jobs"
   script:
     - |
+      meta_files=$(ls assets/games/*.meta)
+      for meta_file in $meta_files; do
+          if grep -q '"isBundle": true' "$meta_file"; then
+              source=${meta_file%%.*}
+              name=${source##*\/}
+              test=__tests__/${source#*\/}
+
+              if [ ! -d "$test" ]; then
+                  test=__tests__
+              fi
+
       cat <<-EndOfMessage >>ci.yml
-      cocos_test:
+      $name:
         variables:
           ENABLE_TEST_JS: 'true'
-          SRC_PATH: 'src'
-          TEST_PATH: 'src'
-          PROJECT_NAME: 'cocos_test'
+          SRC_PATH: ./$source
+          TEST_PATH: ./$test
+          PROJECT_NAME: $name-client
         trigger:
           strategy: depend
           include:
             - project: ci/core-cicd
               ref: main
               file: luminet.gitlab-ci.yml
+        rules:
+          - changes:
+              - $source/**/*
+              - $test/**/*
+          - when: never
+      EndOfMessage
+
+          fi
+      done
+
+    - |
+      cat <<-EndOfMessage >>ci.yml
+      main:
+        variables:
+          ENABLE_TEST_JS: 'true'
+          SRC_PATH: ./assets
+          TEST_PATH: ./__tests__
+          PROJECT_NAME: $CI_PROJECT_NAME
+        trigger:
+          strategy: depend
+          include:
+            - project: ci/core-cicd
+              ref: main
+              file: luminet.gitlab-ci.yml
+        rules:
+          - when: always
       EndOfMessage
   after_script:
     - cat ci.yml

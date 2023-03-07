@@ -2,7 +2,7 @@
   stage: test
   before_script:
     - echo "===========Start Sonar Scanner============="    
-  allow_failure: true
+  allow_failure: false
   tags:
     - docker
 
@@ -16,6 +16,7 @@
   before_script:
     - !reference [.sonar_common, before_script]
     - echo "$SRC_PATH";
+    - echo $TEST_PATH
     - npm set registry http://npm.lumigame.com
     - npm rebuild
     - npm install -g typescript

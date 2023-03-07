@@ -1,6 +1,6 @@
 include:
   - ci/sonarqube/_vars.yml
-  - ci/sonarqube/_defininition.yml
+  - ci/sonarqube/_definition.yml
 
 sonar_js:
   extends: .sonar_js

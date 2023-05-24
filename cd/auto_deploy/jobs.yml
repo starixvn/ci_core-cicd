@@ -1,7 +1,7 @@
 include:
   - cd/auto_deploy/_definition.yml
 
-trigger_cd:
+check_trigger_cd:
   extends:
     - .trigger_cd
   needs: []

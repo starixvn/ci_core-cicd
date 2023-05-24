@@ -1,0 +1,9 @@
+.trigger_cd:
+  stage: deploy
+  before_script:
+    - echo 'Check and trigger CD if the location setting "Auto Deploy Branch" is configured'
+  script:
+    - curl -H "ROCKETOR-TOKEN:$ROCKETOR_TOKEN" -d CommitHash=$CI_COMMIT_SHA -d "CommitMessage=$CI_COMMIT_MESSAGE" -d "UserName=$GITLAB_USER_LOGIN" -d Branch=$CI_COMMIT_BRANCH -d "ProjectUrl=$CI_PROJECT_URL" -X POST $ROCKETOR_API_URL/api/Deploy/Trigger
+  tags:
+    - docker
+  allow_failure: true

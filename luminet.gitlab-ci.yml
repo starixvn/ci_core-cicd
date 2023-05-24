@@ -5,6 +5,7 @@ include:
   - cd/transform_config/jobs.yml
   - cd/deploy/luminet/jobs.yml
   - cd/smoke_test/jobs.yml
+  - cd/auto_deploy/jobs.yml
 
 build_multistage_env:
   needs:

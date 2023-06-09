@@ -1,0 +1,8 @@
+include:
+  - cd/auto_deploy/_definition.yml
+
+check_trigger_cd:
+  extends:
+    - .trigger_cd
+  needs: []
+  rules: !reference [.trigger_cd_rules, rules]

@@ -62,7 +62,7 @@ variables:
   DEPLOYMENT_API_ALPHAPROD: https://stdeployapi2.starixplay.com
   REGISTRY_ALPHAPROD: nexhub.starixplay.com
 
-  SWARM_LEADER_AWS: 10.110.115.12
+  SWARM_LEADER_AWS: 10.77.15.11
   SWARM_LEADER_AWS_SSH_PORT: 22
   SWARM_LEADER_AWS_SSH_USER: vndeployer
   SWARM_NETWORK_AWS: swarm_nexcel_aws

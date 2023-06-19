@@ -36,6 +36,9 @@
 .if_env_not_local: &if_env_not_local
   if: $ENV_NAME != "LOCAL"
 
+.if_not_sync_tolgee: &if_not_sync_tolgee
+  if: $SYNC_TOLGEE != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -60,6 +63,9 @@
       when: never
   transform_config:
     - <<: *if_not_transform_config
+      when: never
+  sync_tolgee:
+    - <<: *if_not_sync_tolgee
       when: never
   prepare:
     - *cd_always_rules

@@ -1,0 +1,25 @@
+.sync-tolgee:
+  stage: transform-config
+  script:
+    - echo "===== SYNC TOLGEE DATA ... =====";
+    - |
+      if [ -n "$TOLGEE_KEY" ] && [ -n "$TOLGEE_PROJECT_ID" ]; then
+        tolgee_url=$(echo $TOLGEE_URL | sed "s/@TOLGEE_PROJECT_ID/$TOLGEE_PROJECT_ID/; s/@TOLGEE_KEY/$TOLGEE_KEY/")
+        if ! curl $tolgee_url --output data.zip --fail
+        then
+          echo "Failed to download Tolgee data."
+          exit 1
+        fi
+        
+        unzip -o data.zip -d $TOLGEE_RESOURCE_PATH
+        rm data.zip
+      else
+        echo "Tolgee key or project ID is missing."
+        exit 1
+      fi
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - $TOLGEE_RESOURCE_PATH
+    expire_in: 1 day

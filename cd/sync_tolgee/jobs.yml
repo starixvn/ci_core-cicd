@@ -1,0 +1,12 @@
+include:
+  - cd/sync_tolgee/_definition.yml
+
+sync_tolgee:
+  extends:
+    - .sync-tolgee
+    - .env
+  needs: ["prepare_vars"]
+  rules:
+    - !reference [.cd_rules, sync_tolgee]
+    - !reference [.cd_rules, build_linux]
+    - !reference [.cd_rules, deploy]

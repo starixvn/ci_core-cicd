@@ -23,6 +23,8 @@
   script:
     - sonar-scanner
       -X
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
       -Dsonar.sourceEncoding=UTF-8
       -Dsonar.qualitygate.wait=true
       -Dsonar.projectKey=$PROJECT_NAME
@@ -46,7 +48,7 @@
     - !reference [.sonar_common, before_script]
     - update-locale LC_ALL="en_US.UTF-8"
     - export LANG="en_US.UTF-8"
-    - dotnet tool install --global dotnet-sonarscanner --version 5.9.2
+    - dotnet tool install --global dotnet-sonarscanner --version 5.13.0
     - export PATH="$PATH:/root/.dotnet/tools"
     - export NUGET_PACKAGES=$CI_PROJECT_DIR/packages
     - dotnet nuget add source http://nuget.nexdev.net/api/v2
@@ -54,14 +56,14 @@
     - ls
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
       /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
-      /d:sonar.login=$SONAR_TOKEN
+      /d:sonar.token=$SONAR_TOKEN
       /d:sonar.host.url=$SONAR_HOST_URL
       /d:sonar.qualitygate.wait=true
       /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
       /d:sonar.cs.vstest.reportsPaths=**/*.trx
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
-    - dotnet sonarscanner end /d:sonar.login=$SONAR_TOKEN
+    - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
   cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
@@ -75,7 +77,7 @@
     - ls
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
       /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
-      /d:sonar.login=$SONAR_TOKEN
+      /d:sonar.token=$SONAR_TOKEN
       /d:sonar.host.url=$SONAR_HOST_URL
       /d:sonar.qualitygate.wait=true
       /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
@@ -84,7 +86,7 @@
       /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
-    - dotnet sonarscanner end /d:sonar.login=$SONAR_TOKEN
+    - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
   cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
@@ -99,6 +101,8 @@
     - npm install -g typescript
     - sonar-scanner 
       -X 
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
       -Dsonar.sourceEncoding=UTF-8 
       -Dsonar.qualitygate.wait=true 
       -Dsonar.projectKey=$PROJECT_NAME 

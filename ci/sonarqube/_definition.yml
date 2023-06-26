@@ -15,11 +15,8 @@
     name: $SONAR_SCANNER_CLI_IMAGE
   before_script:
     - !reference [.sonar_common, before_script]
-    - echo "$SRC_PATH";
+    - echo $SRC_PATH
     - echo $TEST_PATH
-    - npm set registry http://npm.lumigame.com
-    - npm rebuild
-    - npm install -g typescript
   script:
     - sonar-scanner
       -X
@@ -32,7 +29,6 @@
       -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
       -Dproject.settings=./sonarqube.analysis.properties
       -Dsonar.javascript.lcov.reportPaths=**/lcov.info
-      -Dsonar.testExecutionReportPaths=./reports/test-reporter.xml
       -Dsonar.sources=${SRC_PATH}
       -Dsonar.tests=${TEST_PATH}
       -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
@@ -97,8 +93,6 @@
   image:
     name: $SONAR_SCANNER_CLI_IMAGE
   script:
-    - npm set registry http://npm.lumigame.com
-    - npm install -g typescript
     - sonar-scanner 
       -X 
       -Dsonar.host.url=$SONAR_HOST_URL

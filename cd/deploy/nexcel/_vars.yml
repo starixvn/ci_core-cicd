@@ -13,7 +13,7 @@ variables:
   SIT_PROXY_USER: vndeployer
   SIT_PROXY_SERVER: deployment.playthefun.com
 
-  SWARM_LEADER_LOCAL: 10.18.200.131
+  SWARM_LEADER_LOCAL: 10.18.200.204 #10.18.200.131
   SWARM_LEADER_LOCAL_SSH_PORT: 22
   SWARM_LEADER_LOCAL_SSH_USER: spvn\rocketor.vn
   SWARM_NETWORK_LOCAL: swarm_nexcel_local
@@ -34,16 +34,16 @@ variables:
   DEPLOYMENT_API_SIT: https://deploymentapi.playthefun.com
   REGISTRY_SIT: nexhub.starixplay.com
 
-  SWARM_LEADER_UAT: 10.2.190.41
+  SWARM_LEADER_UAT: 10.2.190.79 #10.2.190.41
   SWARM_LEADER_UAT_SSH_PORT: 22
   SWARM_LEADER_UAT_SSH_USER: lucky777\webdeployer.vn
   SWARM_NETWORK_UAT: swarm_nexcel_uat
   DEPLOYMENT_API_UAT: https://stdeployapi2.starixplay.com
   REGISTRY_UAT: nexhub.starixplay.com
 
-  SWARM_LEADER_PROD: 10.2.27.8
+  SWARM_LEADER_PROD: 10.2.27.130 #10.2.27.8
   SWARM_LEADER_PROD_SSH_PORT: 22
-  SWARM_LEADER_PROD_SSH_USER: vndeployer
+  SWARM_LEADER_PROD_SSH_USER: lucky777\webdeployer.vn #vndeployer
   SWARM_NETWORK_PROD: swarm_nexcel_prod
   DEPLOYMENT_API_PROD: https://stdeployapi2.starixplay.com
   REGISTRY_PROD: nexhub.starixplay.com

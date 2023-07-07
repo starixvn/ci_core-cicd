@@ -25,7 +25,7 @@
 {% endif %}
 {% set storage_label = '_LOW_STORAGE' if high_storage is undefined or high_storage == false else '_HIGH_STORAGE'%}
 {% set org_node_label = org_name ~ storage_label if platform == "linux" else org_name ~ "_WINDOWS" %}
-{% set networks = {"luminet":{"local":"1","sit":"1","uat":"1","prod":"","aws":""},"nexcel":{"local":"2","nexprod":"","sit":"","uat":"1","prod":"","alphaprod":"","fpsprod":"","nexaws":"","gc":"","aws":""}} %}
+{% set networks = {"luminet":{"local":"1","sit":"1","uat":"1","prod":"","aws":""},"nexcel":{"local":"2","nexprod":"","sit":"","uat":"1","prod":"1","alphaprod":"","fpsprod":"","nexaws":"","gc":"","aws":""}} %}
 {% set network = org_name | lower ~ '_' ~ env | lower ~ networks[org_name][env] | default ('') %}
 {% set separator_char = '/' if platform == "linux" else '\\' %}
 version: '3.8'

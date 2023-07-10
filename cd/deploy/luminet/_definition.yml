@@ -6,7 +6,6 @@ include:
   extends:
     - .env
   script:
-    - !reference [.prepare-folder, script]
     - !reference [.generate-and-sync-docker-compose, script]
     - !reference [.sync-config, script]
     - !reference [.remove-old-swarm-configs, script]

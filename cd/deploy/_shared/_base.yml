@@ -12,7 +12,7 @@
     - sed -i "s/@DOMAINS/$DOMAINS/g" $DOCKER_COMPOSE_FILE_NAME
     - echo "===== SYNC docker-compose.yml ... ====="
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/docker-compose.yml"    
-    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/docker-compose.yml" -F file=@"$DOCKER_COMPOSE_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
+    - curl -v --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/docker-compose.yml" -F file=@"$DOCKER_COMPOSE_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
 
 .sync-config:
   script:

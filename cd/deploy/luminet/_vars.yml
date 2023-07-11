@@ -16,7 +16,7 @@ variables:
   SWARM_CLUSTER_LOCAL: 10.10.50.14 10.10.50.19 10.10.50.20
   SWARM_LEADER_LOCAL: 10.10.50.69
   SWARM_LEADER_LOCAL_SSH_PORT: 22
-  SWARM_LEADER_LOCAL_SSH_USER: vndeployer
+  SWARM_LEADER_LOCAL_SSH_USER: luminet\rocketor.vn
   SWARM_NETWORK_LOCAL: swarm_luminet_local
   DEPLOYMENT_API_LOCAL: https://deploymentapi.lumigame.com
   REGISTRY_LOCAL: hub.lumigame.com

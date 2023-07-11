@@ -25,7 +25,7 @@ include:
         fi;
       fi;
       echo "===== SYNC $SP_FILE ... =====";
-      curl --fail -F jobid=$CI_JOB_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/configs/$SP_FILE_NAME.$SP_FILE_EXTENSION" -F file=@"$SP_FILE_PATH/$SP_FILE" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN;
+      curl --retry-max-time 60 --retry 1 --fail -F jobid=$CI_JOB_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/configs/$SP_FILE_NAME.$SP_FILE_EXTENSION" -F file=@"$SP_FILE_PATH/$SP_FILE" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN;
     fi
 
 .remove-old-swarm-sp-configs: &remove-old-swarm-sp-configs

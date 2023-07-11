@@ -35,5 +35,5 @@
 
 .deploy-swarm-service:
   script:
-    - echo "===== DEPLOYING SERVICE ... =====";    
-    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F stack=$STACK_NAME $DEPLOYMENT_API/deploySwarmService?token=$DEPLOY_API_TOKEN;   
+    - echo "===== DEPLOYING SERVICE ... =====";
+    - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F stack=$STACK_NAME $DEPLOYMENT_API/deploySwarmService?token=$DEPLOY_API_TOKEN;   

@@ -55,11 +55,11 @@ variables:
   DEPLOYMENT_API_FPSPROD: https://stdeployapi2.starixplay.com
   REGISTRY_FPSPROD: nexhub.starixplay.com
 
-  SWARM_LEADER_ALPHAPROD: 10.2.27.140
+  SWARM_LEADER_ALPHAPROD: 10.2.27.146
   SWARM_LEADER_ALPHAPROD_SSH_PORT: 22
   SWARM_LEADER_ALPHAPROD_SSH_USER: lucky777\webdeployer.vn #vndeployer
   SWARM_NETWORK_ALPHAPROD: swarm_nexcel_alphaprod
-  DEPLOYMENT_API_ALPHAPROD: https://stdeployapi2.starixplay.com
+  DEPLOYMENT_API_ALPHAPROD: https://stdeployapi-uat.starixplay.com
   REGISTRY_ALPHAPROD: nexhub.starixplay.com
 
   SWARM_LEADER_AWS: 10.77.15.11

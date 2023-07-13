@@ -52,7 +52,7 @@ variables:
   SWARM_LEADER_FPSPROD_SSH_PORT: 22
   SWARM_LEADER_FPSPROD_SSH_USER: lucky777\webdeployer.vn #vndeployer
   SWARM_NETWORK_FPSPROD: swarm_nexcel_fpsprod
-  DEPLOYMENT_API_FPSPROD: https://stdeployapi2.starixplay.com
+  DEPLOYMENT_API_FPSPROD: https://stdeployapi-uat.starixplay.com
   REGISTRY_FPSPROD: nexhub.starixplay.com
 
   SWARM_LEADER_ALPHAPROD: 10.2.27.146

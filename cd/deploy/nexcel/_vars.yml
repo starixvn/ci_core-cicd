@@ -34,7 +34,7 @@ variables:
   DEPLOYMENT_API_SIT: https://deploymentapi.playthefun.com
   REGISTRY_SIT: nexhub.starixplay.com
 
-  SWARM_LEADER_UAT: 10.99.98.115
+  SWARM_LEADER_UAT: 10.99.27.79
   SWARM_LEADER_UAT_SSH_PORT: 22
   SWARM_LEADER_UAT_SSH_USER: lucky777\ken.nguyen
   SWARM_NETWORK_UAT: swarm_nexcel_uat

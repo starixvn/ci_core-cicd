@@ -36,28 +36,28 @@ variables:
 
   SWARM_LEADER_UAT: 10.99.98.117 #10.2.190.41 #41
   SWARM_LEADER_UAT_SSH_PORT: 22
-  SWARM_LEADER_UAT_SSH_USER: lucky777\troy.vo
+  SWARM_LEADER_UAT_SSH_USER: lucky777\ken.nguyen
   SWARM_NETWORK_UAT: swarm_nexcel_uat
   DEPLOYMENT_API_UAT: https://stdeployapi-uat.starixplay.com
   REGISTRY_UAT: nexhub.starixplay.com
 
   SWARM_LEADER_PROD: 10.2.27.168 #10.2.27.130
   SWARM_LEADER_PROD_SSH_PORT: 22
-  SWARM_LEADER_PROD_SSH_USER: lucky777\troy.vo #webdeployer.vn
+  SWARM_LEADER_PROD_SSH_USER: lucky777\ken.nguyen #webdeployer.vn
   SWARM_NETWORK_PROD: swarm_nexcel_prod
   DEPLOYMENT_API_PROD: https://stdeployapi-uat.starixplay.com
   REGISTRY_PROD: nexhub.starixplay.com
 
   SWARM_LEADER_FPSPROD: 10.2.23.20 #10.2.23.8
   SWARM_LEADER_FPSPROD_SSH_PORT: 22
-  SWARM_LEADER_FPSPROD_SSH_USER: lucky777\troy.vo #vndeployer
+  SWARM_LEADER_FPSPROD_SSH_USER: lucky777\ken.nguyen #vndeployer
   SWARM_NETWORK_FPSPROD: swarm_nexcel_fpsprod
   DEPLOYMENT_API_FPSPROD: https://stdeployapi-uat.starixplay.com
   REGISTRY_FPSPROD: nexhub.starixplay.com
 
   SWARM_LEADER_ALPHAPROD: 10.2.27.147
   SWARM_LEADER_ALPHAPROD_SSH_PORT: 22
-  SWARM_LEADER_ALPHAPROD_SSH_USER: lucky777\troy.vo #vndeployer
+  SWARM_LEADER_ALPHAPROD_SSH_USER: lucky777\ken.nguyen #vndeployer
   SWARM_NETWORK_ALPHAPROD: swarm_nexcel_alphaprod
   DEPLOYMENT_API_ALPHAPROD: https://stdeployapi-uat.starixplay.com
   REGISTRY_ALPHAPROD: nexhub.starixplay.com

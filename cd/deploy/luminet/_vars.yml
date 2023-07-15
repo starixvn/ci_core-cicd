@@ -24,7 +24,7 @@ variables:
   SWARM_CLUSTER_SIT: 10.2.189.65 10.2.189.69
   SWARM_LEADER_SIT: 10.2.190.83 #10.2.190.51
   SWARM_LEADER_SIT_SSH_PORT: 22
-  SWARM_LEADER_SIT_SSH_USER: lucky777\troy.vo
+  SWARM_LEADER_SIT_SSH_USER: lucky777\ken.nguyen
   SWARM_NETWORK_SIT: swarm_luminet_sit
   DEPLOYMENT_API_SIT: https://scdeployapi-uat.starixplay.com
   REGISTRY_SIT: lumhub.starixplay.com
@@ -32,7 +32,7 @@ variables:
   SWARM_CLUSTER_UAT: 10.2.189.65 10.2.189.69
   SWARM_LEADER_UAT: 10.2.190.83 #10.2.190.51
   SWARM_LEADER_UAT_SSH_PORT: 22
-  SWARM_LEADER_UAT_SSH_USER: lucky777\troy.vo
+  SWARM_LEADER_UAT_SSH_USER: lucky777\ken.nguyen
   SWARM_NETWORK_UAT: swarm_luminet_sit
   DEPLOYMENT_API_UAT: https://scdeployapi-uat.starixplay.com
   REGISTRY_UAT: lumhub.starixplay.com
@@ -40,7 +40,7 @@ variables:
   SWARM_CLUSTER_PROD: 10.2.189.61 10.2.189.62 10.2.189.63 10.2.189.64 10.2.189.70
   SWARM_LEADER_PROD: 10.2.189.66 #10.2.189.50
   SWARM_LEADER_PROD_SSH_PORT: 22
-  SWARM_LEADER_PROD_SSH_USER: lucky777\troy.vo
+  SWARM_LEADER_PROD_SSH_USER: lucky777\ken.nguyen
   SWARM_NETWORK_PROD: swarm_luminet_prod
   DEPLOYMENT_API_PROD: https://scdeployapi-prod.starixplay.com
   REGISTRY_PROD: lumhub.starixplay.com

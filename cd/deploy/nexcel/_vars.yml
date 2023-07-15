@@ -41,7 +41,7 @@ variables:
   DEPLOYMENT_API_UAT: https://stdeployapi-uat.starixplay.com
   REGISTRY_UAT: nexhub.starixplay.com
 
-  SWARM_LEADER_PROD: 10.2.27.168 #10.2.27.130
+  SWARM_LEADER_PROD: 10.99.27.220 #10.2.27.168
   SWARM_LEADER_PROD_SSH_PORT: 22
   SWARM_LEADER_PROD_SSH_USER: lucky777\ken.nguyen #webdeployer.vn
   SWARM_NETWORK_PROD: swarm_nexcel_prod

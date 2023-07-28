@@ -23,3 +23,10 @@ build_env:
     - job: "build_cocos_env"
       artifacts: true
       optional: true
+
+build_noenv:
+  needs:
+    - "prepare_vars"
+    - job: "build_cocos_env"
+      artifacts: true
+      optional: true

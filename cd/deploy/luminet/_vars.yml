@@ -27,6 +27,13 @@ variables:
   DEPLOYMENT_API_SGLOCAL: https://deploymentapi-new.lumigame.com
   REGISTRY_SGLOCAL: hub.lumigame.com
 
+  SWARM_LEADER_AWSLOCAL: 10.0.1.41
+  SWARM_LEADER_AWSLOCAL_SSH_PORT: 22
+  SWARM_LEADER_AWSLOCAL_SSH_USER: vndeployer
+  SWARM_NETWORK_AWSLOCAL: swarm_luminet_AWSLOCAL
+  DEPLOYMENT_API_AWSLOCAL: http://cloud-lumi-local-nlb-internal-1a078f649c14f195.elb.ap-east-1.amazonaws.com:22222
+  REGISTRY_AWSLOCAL: hub.lumigame.com
+
   SWARM_LEADER_SIT: 10.2.190.83 #10.2.190.51
   SWARM_LEADER_SIT_SSH_PORT: 22
   SWARM_LEADER_SIT_SSH_USER: lucky777\webdeployer.vn

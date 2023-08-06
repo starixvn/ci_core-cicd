@@ -31,7 +31,7 @@ variables:
   SWARM_LEADER_AWSLOCAL_SSH_PORT: 22
   SWARM_LEADER_AWSLOCAL_SSH_USER: vndeployer
   SWARM_NETWORK_AWSLOCAL: swarm_luminet_AWSLOCAL
-  DEPLOYMENT_API_AWSLOCAL: http://10.0.1.41:22222
+  DEPLOYMENT_API_AWSLOCAL: http://nlb-internet-lumi-local-17e8854b29fdd37a.elb.ap-east-1.amazonaws.com:22222
   REGISTRY_AWSLOCAL: hub.lumigame.com
 
   SWARM_LEADER_SIT: 10.2.190.83 #10.2.190.51

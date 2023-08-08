@@ -55,6 +55,13 @@ variables:
   DEPLOYMENT_API_AWSUAT: https://deploy-l.sportsfun.app
   REGISTRY_AWSUAT: lumhub.starixplay.com
 
+  SWARM_LEADER_AWSSIT: 10.77.15.5
+  SWARM_LEADER_AWSSIT_SSH_PORT: 22
+  SWARM_LEADER_AWSSIT_SSH_USER: vndeployer
+  SWARM_NETWORK_AWSSIT: swarm_luminet_AWSSIT
+  DEPLOYMENT_API_AWSSIT: https://deploy-l.sportsfun.app
+  REGISTRY_AWSSIT: lumhub.starixplay.com
+
   SWARM_LEADER_PROD: 10.2.189.67 #10.2.189.50
   SWARM_LEADER_PROD_SSH_PORT: 22
   SWARM_LEADER_PROD_SSH_USER: lucky777\webdeployer.vn

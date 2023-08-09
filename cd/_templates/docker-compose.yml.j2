@@ -55,8 +55,10 @@ configs:
 services:
   {{service_name}}_{{environment}}:
 {% if team_name == "nex3" or team_name == "pentagon" %}
-{% if env == "local" or env == "sglocal" or env == "nexaws" or env == "aws" or env == "awslocal" or env == "awsuat" or env == "awssit" %}
+{% if env == "local" or env == "sglocal" or env == "nexaws" or env == "aws" or env == "awslocal" %}
     image: hub.lumigame.com/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
+{% elif env == "awsuat" or env == "awssit" %}
+    image: lumhub.sportsfun.app/aws/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
 {% else %}
     image: lumhub.starixplay.com/kbt/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
 {% endif %}

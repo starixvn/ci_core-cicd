@@ -40,11 +40,12 @@ include:
     - .env
   script:
     - !reference [.generate-and-sync-docker-compose, script]
-    - !reference [.sync-config, script]
+    - !reference [.sync-config, script]    
     - *import-connection-string
     - *change-version-and-sync-sp
     - !reference [.remove-old-swarm-configs, script]
     - *remove-old-swarm-sp-configs
+    - !reference [.login-registry, script]
     - !reference [.deploy-swarm-service, script]
   tags:
     - docker

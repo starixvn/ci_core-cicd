@@ -1,3 +1,8 @@
+.login-registry:
+  script:
+    - echo "$REGISTRY_IMAGE"
+    - curl -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginRegistry?token=$DEPLOY_API_TOKEN
+
 .generate-and-sync-docker-compose:
   script:
     - echo "$DEPLOYMENT_API - $SERVER_USER"

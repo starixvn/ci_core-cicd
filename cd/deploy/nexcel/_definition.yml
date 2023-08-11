@@ -39,13 +39,13 @@ include:
   extends:
     - .env
   script:
+    - !reference [.login-registry, script]
     - !reference [.generate-and-sync-docker-compose, script]
-    - !reference [.sync-config, script]    
+    - !reference [.sync-config, script]
     - *import-connection-string
     - *change-version-and-sync-sp
     - !reference [.remove-old-swarm-configs, script]
-    - *remove-old-swarm-sp-configs
-    - !reference [.login-registry, script]
+    - *remove-old-swarm-sp-configs    
     - !reference [.deploy-swarm-service, script]
   tags:
     - docker

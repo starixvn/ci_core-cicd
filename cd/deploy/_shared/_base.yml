@@ -1,7 +1,7 @@
 .login-registry:
   script:
     - echo "$REGISTRY_IMAGE"
-    - curl -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginRegistry?token=$DEPLOY_API_TOKEN
+    - curl -v -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginRegistry?token=$DEPLOY_API_TOKEN
 
 .generate-and-sync-docker-compose:
   script:
@@ -17,7 +17,7 @@
     - sed -i "s/@DOMAINS/$DOMAINS/g" $DOCKER_COMPOSE_FILE_NAME
     - echo "===== SYNC docker-compose.yml ... ====="
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/docker-compose.yml"    
-    - curl -v --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/docker-compose.yml" -F file=@"$DOCKER_COMPOSE_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
+    - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/docker-compose.yml" -F file=@"$DOCKER_COMPOSE_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
 
 .sync-config:
   script:

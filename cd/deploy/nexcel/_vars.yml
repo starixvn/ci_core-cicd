@@ -13,7 +13,7 @@ variables:
   SIT_PROXY_USER: vndeployer
   SIT_PROXY_SERVER: deployment.playthefun.com
 
-  SWARM_LEADER_LOCAL: 10.18.200.204 #10.18.200.131
+  SWARM_LEADER_LOCAL: 10.18.200.131 #10.18.200.131
   SWARM_LEADER_LOCAL_SSH_PORT: 22
   SWARM_LEADER_LOCAL_SSH_USER: spvn\rocketor.vn
   SWARM_NETWORK_LOCAL: swarm_nexcel_local

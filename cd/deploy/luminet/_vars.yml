@@ -69,9 +69,9 @@ variables:
   DEPLOYMENT_API_PROD: https://scdeployapi-prod.starixplay.com
   REGISTRY_PROD: lumhub.starixplay.com
 
-  SWARM_LEADER_AWS: 10.2.189.2
-  SWARM_LEADER_AWS_SSH_PORT: 22
-  SWARM_LEADER_AWS_SSH_USER: vndeployer
-  SWARM_NETWORK_AWS: swarm_luminet_aws
-  DEPLOYMENT_API_AWS: https://deployment-api.sportsfun.app
-  REGISTRY_AWS: hub.lumigame.com
+  SWARM_LEADER_AWSPROD: 10.77.15.10
+  SWARM_LEADER_AWSPROD_SSH_PORT: 22
+  SWARM_LEADER_AWSPROD_SSH_USER: vndeployer
+  SWARM_NETWORK_AWSPROD: swarm_luminet_AWSPROD
+  DEPLOYMENT_API_AWSPROD: https://deploy-l.sportsfun.app
+  REGISTRY_AWSPROD: lumhub.sportsfun.app

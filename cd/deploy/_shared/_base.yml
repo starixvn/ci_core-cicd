@@ -1,7 +1,7 @@
 .login-registry:
   script:
     - echo "$REGISTRY_IMAGE"
-    - curl -v -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginRegistry?token=$DEPLOY_API_TOKEN
+    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginRegistry?token=$DEPLOY_API_TOKEN
 
 .generate-and-sync-docker-compose:
   script:
@@ -46,7 +46,7 @@
 .login_chart_registry:
   script:
     - echo "$REGISTRY_IMAGE"
-    - curl -v -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginChartRegistry?token=$DEPLOY_API_TOKEN
+    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginChartRegistry?token=$DEPLOY_API_TOKEN
 
 .prepare_k8s_deployments_values:
   script:

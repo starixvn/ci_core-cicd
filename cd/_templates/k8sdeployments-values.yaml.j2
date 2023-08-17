@@ -91,6 +91,18 @@ healthCheck:
   timeoutSeconds: {{services[0].healthcheck_timeout | default(5) | replace('s','')}}
   startupFailureThreshold: 30
 
+{% if config_file is defined %}
+configFile:
+  path: "{{ container_root_path }}/{{ config_container_path }}"
+  name: "{{ config_file }}"    
+{% endif %}
+
+{% if sp_file is defined %}
+spFile:
+  path: "{{container_root_path}}/{{sp_container_path}}"
+  name: "{{sp_file}}"    
+{% endif %}
+
 service:
 # kind of types: ClusterIP, NodePort, LoadBalancer
   type: ClusterIP
@@ -119,22 +131,6 @@ resources:
     memory: {{ limit_memory }}Mi
   requests:
     memory: 512Mi
-
-{% if config_file is defined %}
-configFile:
-  path: "{{ container_root_path }}/{{ config_container_path }}"
-  name: "{{ config_file }}"
-  content: |
-    
-{% endif %}
-
-{% if sp_file is defined %}
-spFile:
-  path: "{{container_root_path}}/{{sp_container_path}}"
-  name: "{{sp_file}}"
-  content: |
-    
-{% endif %}
 
 serviceAccount:
   # Specifies whether a service account should be created

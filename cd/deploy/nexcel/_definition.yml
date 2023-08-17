@@ -49,3 +49,17 @@ include:
     - !reference [.deploy-swarm-service, script]
   tags:
     - docker
+
+.base_deploy_k8s:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.login_chart_registry, script]
+    - !reference [.prepare_k8s_deployments_values, script]
+    - !reference [.sync-config, script]
+    - *import-connection-string
+    - *change-version-and-sync-sp
+    - !reference [.deploy_k8s, script]
+  tags:
+    - docker

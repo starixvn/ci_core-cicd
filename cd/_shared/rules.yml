@@ -39,6 +39,12 @@
 .if_not_sync_tolgee: &if_not_sync_tolgee
   if: $SYNC_TOLGEE != "true"
 
+.if_not_deploy_swarm: &if_not_deploy_swarm
+  if: $ORCHESTRATION != "swarm"
+
+.if_not_deploy_k8s: &if_not_deploy_k8s
+  if: $ORCHESTRATION != "k8s"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -71,6 +77,12 @@
     - *cd_always_rules
   deploy:
     - *cd_success_rules
+  deploy_swarm:
+    - <<: *if_not_deploy_swarm
+      when: never
+  deploy_k8s:
+    - <<: *if_not_deploy_k8s
+      when: never
   cleanup:
     - *cd_always_rules
   smoke_test:

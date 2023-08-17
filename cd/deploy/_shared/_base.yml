@@ -42,3 +42,41 @@
   script:
     - echo "===== DEPLOYING SERVICE ... =====";
     - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F stack=$STACK_NAME $DEPLOYMENT_API/deploySwarmService?token=$DEPLOY_API_TOKEN;   
+
+.login_chart_registry:
+  script:
+    - echo "$REGISTRY_IMAGE"
+    - curl -v -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginChartRegistry?token=$DEPLOY_API_TOKEN
+
+.prepare_k8s_deployments_values:
+  script:
+    - echo "===== GENERATE k8sdeployments-values.yaml ... =====";
+    - echo $VARS_DATA > VARS_DATA.json
+    - curl --fail -o ${K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$K8S_FILE_PATH/raw?ref=$K8S_REF
+    - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${K8S_FILE_NAME}.j2
+    - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${K8S_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
+    - cat $K8S_FILE_NAME
+    - echo "===== SYNC k8sdeployments-values.yaml ... ====="
+    - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME"    
+    - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME" -F file=@"$K8S_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
+
+.deploy_k8s:
+  script:
+    - echo "===== DEPLOYING K8S RESOURCES ... =====";
+    - |
+      RELEASE_NAME=${SERVICE_NAME}_${DEPLOY_ENV/_/}
+      echo $RELEASE_NAME
+      CHART_URL=oci://${REGISTRY_IMAGE}/charts/k8sdeployments
+      echo $CHART_URL
+      if [ ! -z "$CONFIG_FILE_NAME" ];
+      then
+        CONFIG_DEST_FILE_NAME=configs/$CONFIG_DEST_FILE
+      fi
+      echo $CONFIG_DEST_FILE_NAME
+      if [ ! -z "$SP_FILE_NAME" ];
+      then
+        SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
+      fi
+      echo $SP_DEST_FILE_NAME
+    - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartUrl=$CHART_URL -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;

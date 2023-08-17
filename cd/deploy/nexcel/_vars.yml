@@ -32,42 +32,42 @@ variables:
   SWARM_LEADER_SIT_SSH_USER: vndeployer
   SWARM_NETWORK_SIT: swarm_nexcel_sit
   DEPLOYMENT_API_SIT: https://deploymentapi.playthefun.com
-  REGISTRY_SIT: nexhub.starixplay.com
+  REGISTRY_SIT: nexhub.starixplay.com/kbt
 
   SWARM_LEADER_UAT: 10.99.27.79
   SWARM_LEADER_UAT_SSH_PORT: 22
   SWARM_LEADER_UAT_SSH_USER: lucky777\webdeployer.vn
   SWARM_NETWORK_UAT: swarm_nexcel_uat
   DEPLOYMENT_API_UAT: https://stdeployapi2.starixplay.com
-  REGISTRY_UAT: nexhub.starixplay.com
+  REGISTRY_UAT: nexhub.starixplay.com/kbt
 
   SWARM_LEADER_PROD: 10.99.27.220 #10.2.27.168
   SWARM_LEADER_PROD_SSH_PORT: 22
   SWARM_LEADER_PROD_SSH_USER: lucky777\webdeployer.vn
   SWARM_NETWORK_PROD: swarm_nexcel_prod
   DEPLOYMENT_API_PROD: https://stdeployapi2.starixplay.com
-  REGISTRY_PROD: nexhub.starixplay.com
+  REGISTRY_PROD: nexhub.starixplay.com/kbt
 
   SWARM_LEADER_FPSPROD: 10.2.23.20 #10.2.23.8
   SWARM_LEADER_FPSPROD_SSH_PORT: 22
   SWARM_LEADER_FPSPROD_SSH_USER: lucky777\webdeployer.vn
   SWARM_NETWORK_FPSPROD: swarm_nexcel_fpsprod
   DEPLOYMENT_API_FPSPROD: https://stdeployapi2.starixplay.com
-  REGISTRY_FPSPROD: nexhub.starixplay.com
+  REGISTRY_FPSPROD: nexhub.starixplay.com/kbt
 
   SWARM_LEADER_ALPHAPROD: 10.2.27.147
   SWARM_LEADER_ALPHAPROD_SSH_PORT: 22
   SWARM_LEADER_ALPHAPROD_SSH_USER: lucky777\webdeployer.vn
   SWARM_NETWORK_ALPHAPROD: swarm_nexcel_alphaprod
   DEPLOYMENT_API_ALPHAPROD: https://stdeployapi2.starixplay.com
-  REGISTRY_ALPHAPROD: nexhub.starixplay.com
+  REGISTRY_ALPHAPROD: nexhub.starixplay.com/kbt
 
   SWARM_LEADER_AWS: 10.77.15.11
   SWARM_LEADER_AWS_SSH_PORT: 22
   SWARM_LEADER_AWS_SSH_USER: vndeployer
   SWARM_NETWORK_AWS: swarm_nexcel_aws
   DEPLOYMENT_API_AWS: https://deploy-l.sportsfun.app
-  REGISTRY_AWS: nexhub.starixplay.com
+  REGISTRY_AWS: nexhub.starixplay.com/kbt
 
   SWARM_LEADER_NEXAWS: 10.200.10.10
   SWARM_LEADER_NEXAWS_SSH_PORT: 22

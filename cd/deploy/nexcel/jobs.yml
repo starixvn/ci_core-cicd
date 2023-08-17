@@ -3,7 +3,16 @@ include:
   - cd/deploy/nexcel/_definition.yml
   - cd/deploy/nexcel/_vars.yml
 
-deploy:
+deploy_swarm:
   extends:
     - .base_deploy_stack_swarm
-  rules: !reference [.cd_rules, deploy]
+  rules:
+    - !reference [.cd_rules, deploy_swarm]
+    - !reference [.cd_rules, deploy]
+
+deploy_k8s:
+  extends:
+    - .base_deploy_k8s
+  rules:
+    - !reference [.cd_rules, deploy_k8s]
+    - !reference [.cd_rules, deploy]

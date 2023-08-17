@@ -4,4 +4,4 @@ variables:
   DOCKER_COMPOSE_REF: main
   K8S_FILE_NAME: k8sdeployments-values.yaml
   K8S_FILE_PATH: "cd%2f_templates%2f${K8S_FILE_NAME}.j2"
-  K8S_REF: main
+  K8S_REF: k8s

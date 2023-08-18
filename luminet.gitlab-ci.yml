@@ -6,11 +6,22 @@ include:
   - cd/deploy/luminet/jobs.yml
   - cd/smoke_test/jobs.yml
   - cd/auto_deploy/jobs.yml
+  - cd/sync_tolgee/jobs.yml
 
 build_multistage_env:
   needs:
     - "prepare_vars"
     - job: "transform_config"
+      artifacts: true
+      optional: true
+    - job: "sync_tolgee"
+      artifacts: true
+      optional: true
+
+build_multistage_noenv:
+  needs:
+    - "prepare_vars"
+    - job: "sync_tolgee"
       artifacts: true
       optional: true
 
@@ -23,10 +34,16 @@ build_env:
     - job: "build_cocos_env"
       artifacts: true
       optional: true
+    - job: "sync_tolgee"
+      artifacts: true
+      optional: true
 
 build_noenv:
   needs:
     - "prepare_vars"
     - job: "build_cocos_env"
+      artifacts: true
+      optional: true
+    - job: "sync_tolgee"
       artifacts: true
       optional: true

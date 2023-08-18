@@ -44,7 +44,8 @@ before_script:
     export DOCKER_NETWORK_NAME=$DOCKER_NETWORK_NAME;
     fi
   - echo $DOCKER_NETWORK_NAME
-  - if [ "$ENV_NAME" == "SGLOCAL" ]; then
+  - |
+    if [ "$ENV_NAME" == "SGLOCAL" ]; then
       export DEPLOYMENT_API=$DEPLOYMENT_API_SGLOCAL;
       export REGISTRY_IMAGE=$REGISTRY_SGLOCAL;
       export SERVER_IP=$SWARM_LEADER_SGLOCAL;
@@ -57,11 +58,19 @@ before_script:
       export SERVER_USER=$SWARM_LEADER_AWSLOCAL_SSH_USER;
       export SERVER_PORT=$SWARM_LEADER_AWSLOCAL_SSH_PORT;
     elif [ "$ENV_NAME" == "LOCAL" ]; then
-      export DEPLOYMENT_API=$DEPLOYMENT_API_LOCAL;
-      export REGISTRY_IMAGE=$REGISTRY_LOCAL;
-      export SERVER_IP=$SWARM_LEADER_LOCAL;
-      export SERVER_USER=$SWARM_LEADER_LOCAL_SSH_USER;
-      export SERVER_PORT=$SWARM_LEADER_LOCAL_SSH_PORT;    
+      if [ "$ORCHESTRATION" == "k8s" ]; then
+        export DEPLOYMENT_API=$K8S_DEPLOYMENT_API_LOCAL;
+        export REGISTRY_IMAGE=$REGISTRY_LOCAL;
+        export SERVER_IP=$K8S_LOCAL;
+        export SERVER_USER=$K8S_LOCAL_SSH_USER;
+        export SERVER_PORT=$K8S_LOCAL_SSH_PORT;
+      else
+        export DEPLOYMENT_API=$DEPLOYMENT_API_LOCAL;
+        export REGISTRY_IMAGE=$REGISTRY_LOCAL;
+        export SERVER_IP=$SWARM_LEADER_LOCAL;
+        export SERVER_USER=$SWARM_LEADER_LOCAL_SSH_USER;
+        export SERVER_PORT=$SWARM_LEADER_LOCAL_SSH_PORT;
+      fi
     elif [ "$ENV_NAME" == "SIT" ]; then
       export DEPLOYMENT_API=$DEPLOYMENT_API_SIT;
       export REGISTRY_IMAGE=$REGISTRY_SIT;

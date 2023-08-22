@@ -19,6 +19,10 @@ variables:
   SWARM_NETWORK_LOCAL: swarm_luminet_local
   DEPLOYMENT_API_LOCAL: https://deploymentapi-new.lumigame.com
   REGISTRY_LOCAL: hub.lumigame.com
+  K8S_LOCAL: 10.10.50.45
+  K8S_LOCAL_SSH_PORT: 22
+  K8S_LOCAL_SSH_USER: luminet\rocketor.vn
+  K8S_DEPLOYMENT_API_LOCAL: https://deploymentapi-new.lumigame.com
 
   SWARM_LEADER_SGLOCAL: 10.10.50.16
   SWARM_LEADER_SGLOCAL_SSH_PORT: 22

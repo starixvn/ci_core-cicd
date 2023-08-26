@@ -231,6 +231,21 @@ services:
       endpoint_mode: dnsrr
 {% endif %}
 {% endif %}
+{% if env == "awslocal"%}
+{% if services[0].port_aws is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "awsuat"%}
+{% if services[0].port_aws is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
+{% if env == "awsprod"%}
+{% if services[0].port_aws is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
 {% if env == "nexaws"%}
 {% if services[0].port_nexaws is undefined %}
       endpoint_mode: dnsrr
@@ -351,7 +366,7 @@ volumes:
        device: {{gluster_path}}{{volume.src}}/{{environment}}
 {% endif %}
     labels:
-{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc" or env == "awsprod"%}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
 {% else %}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}"

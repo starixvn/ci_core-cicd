@@ -1,4 +1,4 @@
 variables:
   DOCKER_COMPOSE_FILE_NAME: docker-compose.yml
   DOCKER_COMPOSE_FILE_PATH: "cd%2f_templates%2f${DOCKER_COMPOSE_FILE_NAME}.j2" #url encoded
-  DOCKER_COMPOSE_REF: main
+  DOCKER_COMPOSE_REF: troy

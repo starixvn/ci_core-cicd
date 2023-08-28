@@ -157,51 +157,36 @@ services:
       replicas: {{services[0].number_of_replicas_aws | default('1') }}
 {% endif %}
 {% endif %}
-#nexaws
 {% if env == "nexaws"%}
+#nexaws
 {% if services[0].number_of_replicas_nexaws is defined and services[0].number_of_replicas_nexaws | int > 4 %}
       replicas: 4
 {% else %}
       replicas: {{services[0].number_of_replicas_nexaws | default('1') }}
 {% endif %}
 {% endif %}
-#awslocal
 {% if env == "awslocal"%}
+#awslocal
 {% if services[0].number_of_replicas_awslocal is defined and services[0].number_of_replicas_awslocal | int > 4 %}
       replicas: 4
 {% else %}
       replicas: {{services[0].number_of_replicas_awslocal | default('1') }}
 {% endif %}
 {% endif %}
-#awsuat
-{% if env == "awsuat"%}
-{% if services[0].number_of_replicas_awsuat is defined and services[0].number_of_replicas_awsuat | int > 4 %}
+{% if env == "uat" or env == "awsuat" %}
+#uat
+{% if services[0].number_of_replicas_uat is defined and services[0].number_of_replicas_uat | int > 4 %}
       replicas: 4
 {% else %}
-      replicas: {{services[0].number_of_replicas_awsuat | default('1') }}
+      replicas: {{services[0].number_of_replicas_uat | default('1') }}
 {% endif %}
 {% endif %}
-#awsprod
-{% if env == "awsprod"%}
-{% if services[0].number_of_replicas_awsprod is defined and services[0].number_of_replicas_awsprod | int > 4 %}
-      replicas: 4
-{% else %}
-      replicas: {{services[0].number_of_replicas_awsprod | default('1') }}
-{% endif %}
-{% endif %}
-#gc
 {% if env == "gc"%}
+#gc
 {% if services[0].number_of_replicas_gc is defined and services[0].number_of_replicas_gc | int > 4 %}
       replicas: 4
 {% else %}
       replicas: {{services[0].number_of_replicas_gc | default('1') }}
-{% endif %}
-{% endif %}
-{% if env == "uat"%}
-{% if services[0].number_of_replicas_uat is defined and services[0].number_of_replicas_uat | int > 2 %}
-      replicas: 2
-{% else %}
-      replicas: {{services[0].number_of_replicas_uat | default('1') }}
 {% endif %}
 {% endif %}
 {% if env == "sit"%}

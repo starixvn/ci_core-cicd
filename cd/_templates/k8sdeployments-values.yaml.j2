@@ -80,7 +80,7 @@ rollingUpdate:
 
 image:
   name: "{{registry_host}}/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 healthCheck:
   enabled: {{ enable_health_check }}

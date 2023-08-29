@@ -328,7 +328,7 @@ services:
     ports:
       - {{services[0].port_gc}}:{{services[0].port | default('5000')}}
 {% endif %}
-{% if services[0].disable_health_check is undefined or services[0].disable_health_check == false %}
+{% if services[0].disable_health_check is undefined or not services[0].disable_health_check or services[0].disable_health_check == 'false' %}
 {% if services[0].framework is defined and services[0].framework == "dotnet" %}
     healthcheck:
       test: ['CMD', 'curl', '-f', "http://{{services[0].healthcheck_domain | default('localhost')}}:{{services[0].port | default('5000')}}{{services[0].healthcheck_path | default('')}}"]

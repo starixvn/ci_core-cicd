@@ -112,10 +112,6 @@ service:
 {% if site_urls is defined and site_urls | length > 0 %}
 ingress:
   enabled: true
-#  className: ""
-#  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
   hosts:
   {% for url in site_urls %}
     - host: {{ url.host }}
@@ -123,10 +119,6 @@ ingress:
         - path: {{ url.path }}
           pathType: Prefix
   {% endfor %}
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 {% endif %}
 
 resources:

@@ -67,8 +67,8 @@
     - |
       RELEASE_NAME=${SERVICE_NAME}_${DEPLOY_ENV/_/}
       echo $RELEASE_NAME
-      CHART_URL=oci://${REGISTRY_IMAGE}/charts/k8sdeployments
-      echo $CHART_URL
+      CHART_BASE_URL=oci://${REGISTRY_IMAGE}/charts
+      echo $CHART_BASE_URL
       if [ ! -z "$CONFIG_FILE_NAME" ];
       then
         CONFIG_DEST_FILE_NAME=configs/$CONFIG_DEST_FILE
@@ -79,4 +79,4 @@
         SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
       fi
       echo $SP_DEST_FILE_NAME
-    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartUrl=$CHART_URL -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;
+    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;

@@ -39,7 +39,7 @@
 
 {#---------enable_health_check---------#}
 {% set disable_health_check = services[0].disable_health_check | default(false) %}
-{% set enable_health_check = (true if disable_health_check == false else false) | lower %}
+{% set enable_health_check = (true if not disable_health_check or disable_health_check == 'false' else false) | lower %}
 {#---------end enable_health_check---------#}
 
 {#---------container_port---------#}
@@ -125,7 +125,7 @@ resources:
   limits:
     memory: {{ limit_memory }}Mi
   requests:
-    memory: 512Mi
+    memory: 128Mi
 
 serviceAccount:
   # Specifies whether a service account should be created

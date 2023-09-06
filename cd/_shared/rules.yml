@@ -45,6 +45,12 @@
 .if_not_deploy_k8s: &if_not_deploy_k8s
   if: $ORCHESTRATION != "k8s"
 
+.if_multi_clusters: &if_multi_clusters
+  if: $MULTI_CLUSTER == "true"
+
+.if_not_multi_clusters: &if_not_multi_clusters
+  if: $MULTI_CLUSTER != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -75,13 +81,26 @@
       when: never
   prepare:
     - *cd_always_rules
+  prepare_cd_jobs:
+    - <<: *if_not_multi_clusters
+      when: never
+    - <<: *if_child_pipeline
+      when: never
+    - *cd_always_rules
   deploy:
     - *cd_success_rules
   deploy_swarm:
+    - <<: *if_multi_clusters
+      when: never
     - <<: *if_not_deploy_swarm
       when: never
   deploy_k8s:
+    - <<: *if_multi_clusters
+      when: never
     - <<: *if_not_deploy_k8s
+      when: never
+   deploy_multi_clusters:
+    - <<: *if_not_multi_clusters
       when: never
   cleanup:
     - *cd_always_rules

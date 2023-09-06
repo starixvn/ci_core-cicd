@@ -1,0 +1,16 @@
+{% for item in clusters %}
+deploy_{{ item.type }}_{{ item.name }}:
+  variables:
+    DEPLOYMENT_API: {{ item.deploy_api_link }}
+    REGISTRY_IMAGE: {{ item.registry }}
+    SERVER_IP: {{ item.server_ip }}
+    SERVER_USER: {{ item.ssh_user }}
+    SERVER_PORT: {{ item.ssh_port }}
+  extends:
+  {% if item.type == "swarm" %}
+    - .base_deploy_stack_swarm
+  {% else %}
+    - .base_deploy_k8s
+  {% endif %}
+
+{% endfor %}

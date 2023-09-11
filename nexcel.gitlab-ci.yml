@@ -2,4 +2,4 @@ include:
   - _mixing.yml
   - cd/build_docker/windows/jobs.yml
   - cd/deploy/nexcel/jobs.yml
-  - cd/deploy/nexcel/trigger_jobs.yml
+  - cd/deploy/nexcel/multi_clusters/jobs.yml

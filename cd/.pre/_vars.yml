@@ -1,6 +1,6 @@
 variables:
   CD_VARS_FILE_NAME: cd_vars.env
   CD_VARS_FILE_PATH: "cd%2f_templates%2f${CD_VARS_FILE_NAME}.j2"
-  CD_REF: main
+  CD_REF: k8s
   CD_JOBS_FILE_NAME: cd_jobs.yaml
   CD_JOBS_FILE_PATH: "cd%2f_templates%2f${CD_JOBS_FILE_NAME}.j2"

@@ -1,11 +1,12 @@
 {% for item in clusters %}
-deploy_{{ item.type }}_{{ item.name }}:
+deploy_{{ item.type }}_{{ item.name | lower | replace(' ', '') }}:
   variables:
     DEPLOYMENT_API: {{ item.deploy_api_link }}
     REGISTRY_IMAGE: {{ item.registry }}
     SERVER_IP: {{ item.server_ip }}
     SERVER_USER: {{ item.ssh_user }}
     SERVER_PORT: {{ item.ssh_port }}
+  needs: ["prepare_vars"]
   extends:
   {% if item.type == "swarm" %}
     - .base_deploy_stack_swarm

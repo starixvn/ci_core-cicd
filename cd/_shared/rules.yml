@@ -51,6 +51,9 @@
 .if_not_multi_clusters: &if_not_multi_clusters
   if: $MULTI_CLUSTER != "true"
 
+.if_child_pipeline: &if_child_pipeline
+  if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -99,7 +102,7 @@
       when: never
     - <<: *if_not_deploy_k8s
       when: never
-   deploy_multi_clusters:
+  deploy_multi_clusters:
     - <<: *if_not_multi_clusters
       when: never
   cleanup:

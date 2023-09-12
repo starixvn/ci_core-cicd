@@ -39,6 +39,8 @@
   stage: build
   script:
     - echo $DOCKER_FILE_PATH
+    - docker pull $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder ||
+      docker pull $CI_REGISTRY_IMAGE:builder || true
     - docker build
       --target builder
       --cache-from $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder

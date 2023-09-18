@@ -6,6 +6,7 @@ prepare-variables:
     - .prepare-variables
   rules:
     - !reference [.cd_rules, smoke_test]
+    - !reference [.cd_rules, deploy]
   
 smoke_test:
   extends:
@@ -13,3 +14,4 @@ smoke_test:
   needs: ["prepare-variables"]
   rules:
     - !reference [.cd_rules, smoke_test]
+    - !reference [.cd_rules, deploy]

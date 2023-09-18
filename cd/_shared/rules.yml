@@ -33,8 +33,8 @@
 .if_not_transform_config: &if_not_transform_config
   if: $ENABLE_TRANSFORM_CONFIG != "true"
 
-.if_env_not_local: &if_env_not_local
-  if: $ENV_NAME != "LOCAL"
+.if_env_not_prod: &if_env_not_prod
+  if: $ENV_NAME != "PROD"
 
 .if_not_sync_tolgee: &if_not_sync_tolgee
   if: $SYNC_TOLGEE != "true"
@@ -74,7 +74,8 @@
   cleanup:
     - *cd_always_rules
   smoke_test:
-    - if: '$CI_COMMIT_TAG =~ /^deploy-.*-prod\d*-.*/ && $DEPLOY_BY == "rocketor"'      
+    - <<: *if_env_not_prod
+      when: never
 
 .trigger_cd_rules:
   rules:

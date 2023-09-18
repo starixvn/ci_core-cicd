@@ -1,24 +1,33 @@
-include:
-  - cd/smoke_test/_definition.yml
-  
-smoke_test_sc1:
-  extends:
-    - .smoke_test
-  trigger:
+prepare-variables:
+  stage: post-deploy    
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^deploy-.*-prod\d*-.*/ && $DEPLOY_BY == "rocketor"'
+  before_script:
+    - echo "before script prepare-variables"
+  script:
+    - apk add jq
+    - GAME_ID_FROM_ROCKETOR=$(echo $VARS_DATA | jq '.["services"][0]["game_id"]' | tr -d '"')
+    - echo $GAME_ID_FROM_ROCKETOR
+    - GAME_ID=$([ $GAME_ID_FROM_ROCKETOR == "null" ] && echo $SMOKE_PRODUCT_NAME || echo $GAME_ID_FROM_ROCKETOR)
+    - echo "SMOKE_GAME_ID=$GAME_ID" >> variables.env
+  artifacts:
+    reports:
+      dotenv: variables.env
+    expire_in: 1 day
+
+smoke_test:
+  stage: post-deploy
+  allow_failure: true
+  needs: ["prepare-variables"]
+  variables:
+    PRODUCT: $SMOKE_GAME_ID
+    ENV: $ENV_NAME    
+    TRIGGERED_BY_DEPLOYMENT: 'true'
+    MODE: 'SMOKE'
+    STACK_NAME: $STACK_NAME  
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^deploy-.*-prod\d*-.*/ && $DEPLOY_BY == "rocketor"'
+  trigger: 
     project: rnd/testing/trigger-auto-sc1
     branch: master
-  rules:
-    - !reference [.cd_rules, smoke_test_sc1]
-    - !reference [.cd_rules, build_linux]
-    - !reference [.cd_rules, deploy]
-
-smoke_test_sc2:
-  extends:
-    - .smoke_test
-  trigger:
-    project: rnd/testing/trigger-auto-sc2
-    branch: master
-  rules:
-    - !reference [.cd_rules, smoke_test_sc2]
-    - !reference [.cd_rules, build_linux]
-    - !reference [.cd_rules, deploy]

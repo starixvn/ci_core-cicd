@@ -1,7 +1,0 @@
-.smoke_test:
-  stage: post-deploy
-  variables:
-    PRODUCT: $SMOKE_PRODUCT_NAME
-    PROJECT: $SMOKE_PROJECT_NAME
-    MODE: $SMOKE_MODE
-  allow_failure: true

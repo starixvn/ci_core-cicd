@@ -73,16 +73,6 @@
     - *cd_success_rules
   cleanup:
     - *cd_always_rules
-  smoke_test_sc1:
-    - <<: *if_env_not_local
-      when: never
-    - if: $STACK_NAME != "l1"
-      when: never
-  smoke_test_sc2:
-    - <<: *if_env_not_local
-      when: never
-    - if: $STACK_NAME != "l2"
-      when: never
 
 .trigger_cd_rules:
   rules:

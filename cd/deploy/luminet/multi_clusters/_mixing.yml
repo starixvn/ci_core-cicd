@@ -3,3 +3,6 @@ include:
   - cd/_shared/*.yml
   - cd/.pre/jobs.yml
   - cd/deploy/luminet/jobs.yml
+
+prepare_vars:
+  stage: deploy

@@ -3,3 +3,6 @@ include:
   - cd/_shared/*.yml
   - cd/.pre/jobs.yml
   - cd/deploy/nexcel/jobs.yml
+
+prepare_vars:
+  stage: deploy

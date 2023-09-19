@@ -1,7 +1,28 @@
+.prepare-variables:
+  stage: post-deploy    
+  allow_failure: true
+  before_script:
+    - echo "before script prepare-variables"
+  script:
+    - apk add jq
+    - GAME_ID_FROM_ROCKETOR=$(echo $VARS_DATA | jq '.["services"][0]["game_id"]' | tr -d '"')
+    - echo $GAME_ID_FROM_ROCKETOR
+    - GAME_ID=$([ $GAME_ID_FROM_ROCKETOR == "null" ] && echo $SMOKE_PRODUCT_NAME || echo $GAME_ID_FROM_ROCKETOR)
+    - echo "SMOKE_GAME_ID=$GAME_ID" >> variables.env
+  artifacts:
+    reports:
+      dotenv: variables.env
+    expire_in: 1 day
+
 .smoke_test:
   stage: post-deploy
-  variables:
-    PRODUCT: $SMOKE_PRODUCT_NAME
-    PROJECT: $SMOKE_PROJECT_NAME
-    MODE: $SMOKE_MODE
   allow_failure: true
+  variables:
+    PRODUCT: $SMOKE_GAME_ID
+    ENV: $ENV_NAME    
+    TRIGGERED_BY_DEPLOYMENT: 'true'
+    MODE: 'SMOKE'
+    STACK_NAME: $STACK_NAME  
+  trigger: 
+    project: rnd/testing/trigger-auto-sc1
+    branch: master

@@ -1,6 +1,5 @@
 stages:
   - test
-  - scan-config
   - transform-config
   - build-cocos-web
   - build

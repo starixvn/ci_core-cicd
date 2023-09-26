@@ -11,10 +11,10 @@
     - curl --fail -o ${DOCKER_COMPOSE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$DOCKER_COMPOSE_FILE_PATH/raw?ref=$DOCKER_COMPOSE_REF
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${DOCKER_COMPOSE_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${DOCKER_COMPOSE_FILE_NAME}.j2 -o ./${DOCKER_COMPOSE_FILE_NAME}
-    - cat $DOCKER_COMPOSE_FILE_NAME
     - sed -i "s/@CONFIG_VERSION/$(date +%s)/g" $DOCKER_COMPOSE_FILE_NAME
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" $DOCKER_COMPOSE_FILE_NAME
-    - sed -i "s/@DOMAINS/$DOMAINS/g" $DOCKER_COMPOSE_FILE_NAME
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" $DOCKER_COMPOSE_FILE_NAME
+    - cat $DOCKER_COMPOSE_FILE_NAME
     - echo "===== SYNC docker-compose.yml ... ====="
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/docker-compose.yml"    
     - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/docker-compose.yml" -F file=@"$DOCKER_COMPOSE_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN

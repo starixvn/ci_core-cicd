@@ -19,24 +19,6 @@
 {% set max_unavailable = 0 if update_order == 'start-first' else '75%' %}
 {#---------end max_unavailable---------#}
 
-{#---------registry_host---------#}
-{% if team_name == "pentagon" %}
-  {% if env in ["local","sglocal","awslocal"] %}
-    {% set registry_host = "hub.lumigame.com" %}
-  {% elif env in ["awsuat","awssit","awsprod"] %}
-    {% set registry_host = "lumhub.sportsfun.app/aws" %}
-  {% else %}
-    {% set registry_host = "lumhub.starixplay.com/kbt" %}
-  {% endif %}
-{% else %}
-  {% if env in ["local","nexprod","nexaws","gc","aws"] %}
-    {% set registry_host = "hub.nexdev.net" %}
-  {% else %}
-    {% set registry_host = "nexhub.starixplay.com/kbt" %}
-  {% endif %}
-{% endif %}
-{#---------end registry_host---------#}
-
 {#---------enable_health_check---------#}
 {% set disable_health_check = services[0].disable_health_check | default(false) %}
 {% set enable_health_check = (true if not disable_health_check or disable_health_check == 'false' else false) | lower %}
@@ -79,7 +61,7 @@ rollingUpdate:
   maxUnavailable: {{ max_unavailable }}
 
 image:
-  name: "{{registry_host}}/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest"
+  name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest"
   pullPolicy: Always
 
 healthCheck:
@@ -100,6 +82,12 @@ configFile:
 spFile:
   path: "{{container_root_path}}/{{sp_container_path}}"
   name: "{{sp_file}}"    
+{% endif %}
+
+{% if org_name == "luminet" %}
+env:
+  - name: APP_NAME
+    value: "{{ service_name }}"
 {% endif %}
 
 service:

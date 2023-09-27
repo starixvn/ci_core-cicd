@@ -55,6 +55,7 @@
     - curl --fail -o ${K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$K8S_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${K8S_FILE_NAME}.j2
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${K8S_FILE_NAME}.j2
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${K8S_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
     - cat $K8S_FILE_NAME
     - echo "===== SYNC k8sdeployments-values.yaml ... ====="

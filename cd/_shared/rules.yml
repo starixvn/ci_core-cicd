@@ -54,6 +54,12 @@
 .if_child_pipeline: &if_child_pipeline
   if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
 
+.if_publish_npm: &if_publish_npm
+  if: $PUBLISH_NPM == "true"
+
+.if_not_publish_npm: &if_not_publish_npm
+  if: $PUBLISH_NPM != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -110,9 +116,16 @@
   smoke_test:
     - <<: *if_env_not_prod
       when: never
+  publish_npm:
+    - <<: *if_not_publish_npm
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: always
 
 .trigger_cd_rules:
   rules:
+    - <<: *if_publish_npm
+      when: never
     - if: $CI_PIPELINE_SOURCE != "push"
       when: never
     - if: $CI_COMMIT_BRANCH

@@ -15,6 +15,13 @@
     name: $SONAR_SCANNER_CLI_IMAGE
   before_script:
     - !reference [.sonar_common, before_script]
+    - if [ "$PROJECT_NAME" == "" ];
+      then
+      export PROJECT_NAME=$CI_PROJECT_NAME;
+      export SONAR_PROJECT_NAME=$CI_PROJECT_NAME;
+      else
+      echo "$PROJECT_NAME";
+      fi
     - echo $SRC_PATH
     - echo $TEST_PATH
   script:

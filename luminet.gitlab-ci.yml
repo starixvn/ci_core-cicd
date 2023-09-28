@@ -8,6 +8,7 @@ include:
   - cd/smoke_test/jobs.yml
   - cd/auto_deploy/jobs.yml
   - cd/sync_tolgee/jobs.yml
+  - cd/publish_npm/jobs.yml
 
 build_multistage_env:
   needs:

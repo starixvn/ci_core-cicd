@@ -1,7 +1,6 @@
 include:
   - cd/deploy/_shared/_vars.yml
   - cd/deploy/nexcel/_definition.yml
-  - cd/deploy/nexcel/_vars.yml
 
 deploy_swarm:
   extends:

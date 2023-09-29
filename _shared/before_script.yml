@@ -4,12 +4,6 @@ before_script:
   - echo $STACK_NAME
   - export DEPLOY_ENV=$CI_ENVIRONMENT_NAME;
   - echo "env $DEPLOY_ENV"
-  - eval $(ssh-agent -s)
-  - mkdir -p ~/.ssh
-  - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-  - echo -e "${SSH_PRIVATE_KEY_1}\n${SSH_PRIVATE_KEY_2}\n${SSH_PRIVATE_KEY_3}" | ssh-add -
-  - export COMMIT_MESSAGE=$(git log -1 --pretty=%B)
   - export CI_REGISTRY_IMAGE=$DOCKER_REG_LOCAL_URL/$DOCKER_IMAGE_PATH_LOCAL
   - export CI_REGISTRY_LOCAL_IMAGE=$DOCKER_REG_LOCAL_URL/$DOCKER_IMAGE_PATH_LOCAL
   - export CI_REGISTRY_IMAGE_VERSION=${CI_COMMIT_SHA:0:8}
@@ -50,7 +44,6 @@ before_script:
     echo $SERVER_IP
     echo $SERVER_USER
     echo $SERVER_PORT
-  - echo $PROXY_SSH_COMMAND
   - if [ "$SERVICE_NAME" == "" ]; then
     echo "$DOCKER_SERVICE_NAME";
     else

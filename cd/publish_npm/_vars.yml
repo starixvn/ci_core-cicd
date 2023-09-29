@@ -1,0 +1,2 @@
+variables:
+  PUBLISH_NPM_IMAGE: $DOCKER_REG_LOCAL_URL/docker-hub/library/node:18.10-slim

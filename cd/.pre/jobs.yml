@@ -1,6 +1,11 @@
 include:
+  - cd/.pre/_vars.yml
   - cd/.pre/_definition.yml
 
 prepare_vars:
   extends: .prepare_vars
   rules: !reference [.cd_rules, prepare]
+
+prepare_cd_jobs:
+  extends: .prepare_cd_jobs
+  rules: !reference [.cd_rules, prepare_cd_jobs]

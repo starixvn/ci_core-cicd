@@ -39,6 +39,27 @@
 .if_not_sync_tolgee: &if_not_sync_tolgee
   if: $SYNC_TOLGEE != "true"
 
+.if_not_deploy_swarm: &if_not_deploy_swarm
+  if: $ORCHESTRATION != "swarm"
+
+.if_not_deploy_k8s: &if_not_deploy_k8s
+  if: $ORCHESTRATION != "k8s"
+
+.if_multi_clusters: &if_multi_clusters
+  if: $MULTI_CLUSTER == "true"
+
+.if_not_multi_clusters: &if_not_multi_clusters
+  if: $MULTI_CLUSTER != "true"
+
+.if_child_pipeline: &if_child_pipeline
+  if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
+
+.if_publish_npm: &if_publish_npm
+  if: $PUBLISH_NPM == "true"
+
+.if_not_publish_npm: &if_not_publish_npm
+  if: $PUBLISH_NPM != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -69,16 +90,42 @@
       when: never
   prepare:
     - *cd_always_rules
+  prepare_cd_jobs:
+    - <<: *if_not_multi_clusters
+      when: never
+    - <<: *if_child_pipeline
+      when: never
+    - *cd_always_rules
   deploy:
     - *cd_success_rules
+  deploy_swarm:
+    - <<: *if_multi_clusters
+      when: never
+    - <<: *if_not_deploy_swarm
+      when: never
+  deploy_k8s:
+    - <<: *if_multi_clusters
+      when: never
+    - <<: *if_not_deploy_k8s
+      when: never
+  deploy_multi_clusters:
+    - <<: *if_not_multi_clusters
+      when: never
   cleanup:
     - *cd_always_rules
   smoke_test:
     - <<: *if_env_not_prod
       when: never
+  publish_npm:
+    - <<: *if_not_publish_npm
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: always
 
 .trigger_cd_rules:
   rules:
+    - <<: *if_publish_npm
+      when: never
     - if: $CI_PIPELINE_SOURCE != "push"
       when: never
     - if: $CI_COMMIT_BRANCH

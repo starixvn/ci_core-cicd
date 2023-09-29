@@ -1,17 +1,29 @@
 .prepare_vars:
   stage: .pre
-  variables:
-    CD_VARS_FILE: cd%2f_templates%2fcd_vars.env.j2
-    CD_REF: main
   before_script:
     - echo "Prepare shared environment variables"
   script:
     - echo $VARS_DATA > VARS_DATA.json
-    - curl --fail -o cd_vars.env.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$CD_VARS_FILE/raw?ref=$CD_REF
-    - jinja render -d ./VARS_DATA.json -t ./cd_vars.env.j2 -o ./cd_vars.env
-    - cat cd_vars.env
+    - curl --fail -o ${CD_VARS_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$CD_VARS_FILE_PATH/raw?ref=$CD_REF
+    - jinja render -d ./VARS_DATA.json -t ./${CD_VARS_FILE_NAME}.j2 -o ./${CD_VARS_FILE_NAME}
+    - cat $CD_VARS_FILE_NAME
   artifacts:
     reports:
-      dotenv: cd_vars.env
+      dotenv: $CD_VARS_FILE_NAME
+  tags:
+    - docker
+
+.prepare_cd_jobs:
+  stage: .pre
+  before_script:
+    - echo "Prepare CD jobs for multi-clusters"
+  script:
+    - echo $VARS_DATA > VARS_DATA.json
+    - curl --fail -o ${CD_JOBS_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$CD_JOBS_FILE_PATH/raw?ref=$CD_REF
+    - jinja render -d ./VARS_DATA.json -t ./${CD_JOBS_FILE_NAME}.j2 -o ./${CD_JOBS_FILE_NAME}
+    - cat $CD_JOBS_FILE_NAME
+  artifacts:
+    paths:
+      - $CD_JOBS_FILE_NAME
   tags:
     - docker

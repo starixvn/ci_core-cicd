@@ -1,0 +1,8 @@
+include:
+  - cd/publish_npm/_vars.yml
+  - cd/publish_npm/_definition.yml
+
+publish_npm:
+  extends: .publish_npm
+  needs: ["sonar_js"]
+  rules: !reference [.cd_rules, publish_npm]

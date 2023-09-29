@@ -15,14 +15,20 @@
     name: $SONAR_SCANNER_CLI_IMAGE
   before_script:
     - !reference [.sonar_common, before_script]
-    - echo "$SRC_PATH";
+    - if [ "$PROJECT_NAME" == "" ];
+      then
+      export PROJECT_NAME=$CI_PROJECT_NAME;
+      export SONAR_PROJECT_NAME=$CI_PROJECT_NAME;
+      else
+      echo "$PROJECT_NAME";
+      fi
+    - echo $SRC_PATH
     - echo $TEST_PATH
-    - npm set registry http://npm.lumigame.com
-    - npm rebuild
-    - npm install -g typescript
   script:
     - sonar-scanner
       -X
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
       -Dsonar.sourceEncoding=UTF-8
       -Dsonar.qualitygate.wait=true
       -Dsonar.projectKey=$PROJECT_NAME
@@ -30,7 +36,6 @@
       -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
       -Dproject.settings=./sonarqube.analysis.properties
       -Dsonar.javascript.lcov.reportPaths=**/lcov.info
-      -Dsonar.testExecutionReportPaths=./reports/test-reporter.xml
       -Dsonar.sources=${SRC_PATH}
       -Dsonar.tests=${TEST_PATH}
       -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
@@ -46,7 +51,7 @@
     - !reference [.sonar_common, before_script]
     - update-locale LC_ALL="en_US.UTF-8"
     - export LANG="en_US.UTF-8"
-    - dotnet tool install --global dotnet-sonarscanner --version 5.9.2
+    - dotnet tool install --global dotnet-sonarscanner --version 5.13.1
     - export PATH="$PATH:/root/.dotnet/tools"
     - export NUGET_PACKAGES=$CI_PROJECT_DIR/packages
     - dotnet nuget add source http://nuget.nexdev.net/api/v2
@@ -54,14 +59,14 @@
     - ls
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
       /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
-      /d:sonar.login=$SONAR_TOKEN
+      /d:sonar.token=$SONAR_TOKEN
       /d:sonar.host.url=$SONAR_HOST_URL
       /d:sonar.qualitygate.wait=true
       /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
       /d:sonar.cs.vstest.reportsPaths=**/*.trx
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
-    - dotnet sonarscanner end /d:sonar.login=$SONAR_TOKEN
+    - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
   cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
@@ -75,7 +80,7 @@
     - ls
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
       /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
-      /d:sonar.login=$SONAR_TOKEN
+      /d:sonar.token=$SONAR_TOKEN
       /d:sonar.host.url=$SONAR_HOST_URL
       /d:sonar.qualitygate.wait=true
       /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
@@ -84,7 +89,7 @@
       /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
-    - dotnet sonarscanner end /d:sonar.login=$SONAR_TOKEN
+    - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
   cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
@@ -95,10 +100,10 @@
   image:
     name: $SONAR_SCANNER_CLI_IMAGE
   script:
-    - npm set registry http://npm.lumigame.com
-    - npm install -g typescript
     - sonar-scanner 
       -X 
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
       -Dsonar.sourceEncoding=UTF-8 
       -Dsonar.qualitygate.wait=true 
       -Dsonar.projectKey=$PROJECT_NAME 

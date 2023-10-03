@@ -1,4 +1,4 @@
-image: $DOCKER_REG_LOCAL_URL/base/docker:20.10.7-bash-jq-jinja
+image: $DOCKER_REG_LOCAL_URL/base/docker:24.0.4-bash-jq-jinja
 
 before_script:
   - echo $STACK_NAME

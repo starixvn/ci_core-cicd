@@ -112,6 +112,8 @@
     - <<: *if_not_multi_clusters
       when: never
   cleanup:
+    - <<: *if_multi_clusters
+      when: never
     - *cd_always_rules
   smoke_test:
     - <<: *if_env_not_prod

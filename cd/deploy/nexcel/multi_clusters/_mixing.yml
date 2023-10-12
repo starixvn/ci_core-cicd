@@ -2,6 +2,7 @@ include:
   - _shared/before_script.yml
   - cd/_shared/*.yml
   - cd/.pre/jobs.yml
+  - cd/.post/jobs.yml
   - cd/deploy/nexcel/jobs.yml
 
 prepare_vars:

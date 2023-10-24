@@ -43,11 +43,6 @@
     - echo "===== DEPLOYING SERVICE ... =====";
     - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F stack=$STACK_NAME $DEPLOYMENT_API/deploySwarmService?token=$DEPLOY_API_TOKEN;   
 
-.login_chart_registry:
-  script:
-    - echo "$REGISTRY_IMAGE"
-    - curl --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F registryUrl=$REGISTRY_IMAGE $DEPLOYMENT_API/loginChartRegistry?token=$DEPLOY_API_TOKEN
-
 .prepare_k8s_deployments_values:
   script:
     - echo "===== GENERATE k8sdeployments-values.yaml ... =====";
@@ -60,7 +55,7 @@
     - cat $K8S_FILE_NAME
     - echo "===== SYNC k8sdeployments-values.yaml ... ====="
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME"    
-    - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME" -F file=@"$K8S_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
+    - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F remotePath="$WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME" -F file=@"$K8S_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
 
 .deploy_k8s:
   script:
@@ -80,4 +75,4 @@
         SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
       fi
       echo $SP_DEST_FILE_NAME
-    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;
+    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;

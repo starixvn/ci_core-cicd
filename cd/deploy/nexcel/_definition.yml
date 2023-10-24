@@ -55,7 +55,6 @@ include:
   extends:
     - .env
   script:
-    - !reference [.login_chart_registry, script]
     - !reference [.prepare_k8s_deployments_values, script]
     - !reference [.sync-config, script]
     - *import-connection-string

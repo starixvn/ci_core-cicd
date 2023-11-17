@@ -15,3 +15,10 @@ deploy_k8s:
   rules:
     - !reference [.cd_rules, deploy_k8s]
     - !reference [.cd_rules, deploy]
+
+update_k8s_ingress:
+  extends:
+    - .base_update_k8s_ingress
+  rules:
+    - !reference [.cd_rules, deploy_k8s]
+    - !reference [.cd_rules, update_k8s_ingress]

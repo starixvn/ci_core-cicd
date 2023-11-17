@@ -24,3 +24,14 @@ include:
     - !reference [.deploy_k8s, script]
   tags:
     - docker
+
+.base_update_k8s_ingress:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare_k8s_deployments_values, script]
+    - !reference [.sync-config, script]
+    - !reference [.update_k8s_ingress, script]
+  tags:
+    - docker

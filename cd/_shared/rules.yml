@@ -1,6 +1,9 @@
 .if_deploy_rocketor: &if_deploy_rocketor
   if: '$CI_COMMIT_TAG =~ /^deploy-/ && $DEPLOY_BY == "rocketor"'
 
+.if_update_k8s_ingress: &if_update_k8s_ingress
+  if: '$CI_COMMIT_TAG =~ /^update-ingress-/ && $DEPLOY_BY == "rocketor"'
+
 .cd_success_rules: &cd_success_rules
   - <<: *if_deploy_rocketor
     when: on_success
@@ -90,6 +93,8 @@
       when: never
   prepare:
     - *cd_always_rules
+    - <<: *if_update_k8s_ingress
+      when: always
   prepare_cd_jobs:
     - <<: *if_not_multi_clusters
       when: never
@@ -108,6 +113,9 @@
       when: never
     - <<: *if_not_deploy_k8s
       when: never
+  update_k8s_ingress:
+    - <<: *if_update_k8s_ingress
+      when: on_success
   deploy_multi_clusters:
     - <<: *if_not_multi_clusters
       when: never
@@ -115,6 +123,8 @@
     - <<: *if_multi_clusters
       when: never
     - *cd_always_rules
+    - <<: *if_update_k8s_ingress
+      when: always
   smoke_test:
     - <<: *if_env_not_prod
       when: never

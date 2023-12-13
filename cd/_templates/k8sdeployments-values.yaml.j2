@@ -16,7 +16,7 @@
 
 {#---------max_unavailable---------#}
 {% set update_order = services[0].update_order | default('start-first', true) %}
-{% set max_unavailable = 0 if update_order == 'start-first' else '75%' %}
+{% set max_unavailable = 0 if update_order == 'start-first' else '1' %}
 {#---------end max_unavailable---------#}
 
 {#---------enable_health_check---------#}

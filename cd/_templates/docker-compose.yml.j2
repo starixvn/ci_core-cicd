@@ -177,12 +177,18 @@ services:
       replicas: {{services[0].number_of_replicas_local | default('1') }}
 {% endif %}
 {% endif %}
-
 {% if env == "nexprod"%}
 {% if services[0].number_of_replicas_nexprod is defined and services[0].number_of_replicas_nexprod | int > 2 %}
       replicas: 2
 {% else %}
       replicas: {{services[0].number_of_replicas_nexprod | default('1') }}
+{% endif %}
+{% endif %}
+{% if env == "kldr" or env == "alphakldr" %}
+{% if services[0].number_of_replicas_kldr is defined and services[0].number_of_replicas_kldr | int > 2 %}
+      replicas: 2
+{% else %}
+      replicas: {{services[0].number_of_replicas_kldr | default('1') }}
 {% endif %}
 {% endif %}
 {% if env == "local"%}

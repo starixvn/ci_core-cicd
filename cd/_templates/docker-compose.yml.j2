@@ -246,6 +246,11 @@ services:
       endpoint_mode: dnsrr
 {% endif %}
 {% endif %}
+{% if env == "kldr" or env == "alphakldr"%}
+{% if services[0].port_kldr is undefined %}
+      endpoint_mode: dnsrr
+{% endif %}
+{% endif %}
 {% if env == "prod" or env == "nexprod" %}
       update_config:
 {% if services[0].update_order is defined and services[0].update_order == 'stop-first' %}
@@ -318,6 +323,10 @@ services:
 {% if env == "gc" and services[0].port_gc is defined %}
     ports:
       - {{services[0].port_gc}}:{{services[0].port | default('5000')}}
+{% endif %}
+{% if (env == "kldr" or env == "alphakldr") and services[0].port_kldr is defined %}
+    ports:
+      - {{services[0].port_kldr}}:{{services[0].port | default('5000')}}
 {% endif %}
 {% if services[0].disable_health_check is undefined or not services[0].disable_health_check or services[0].disable_health_check == 'false' %}
 {% if services[0].framework is defined and services[0].framework == "dotnet" %}

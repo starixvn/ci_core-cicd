@@ -121,8 +121,8 @@ services:
 {% if services[0].cpus is defined %}
           cpus: '{{services[0].cpus}}'
 {% endif %}
-{% if services[0].max_memory is defined and services[0].max_memory | int > 12200 %}
-          memory: 12000M
+{% if services[0].max_memory is defined and services[0].max_memory | int > 4000 %}
+          memory: 4096M
 {% elif services[0].max_memory is defined and services[0].max_memory | int < 100 %}
           memory: 1000M
 {% else %}

@@ -52,6 +52,14 @@
 {% endif %}
 {#---------end sp_file---------#}
 
+{#---------node_label---------#}
+{% if services[0].node_labels is defined and services[0].node_labels | length > 0 %}
+  {% set node_label = services[0].node_labels[0] | replace('_','-') | lower %}
+{% else %}
+  {% set node_label = (org_name ~ '-app') | lower %}
+{% endif %}
+{#---------end node_label---------#}
+
 ############# k8s deployments values #############
 replicaCount: {{ replica_count }}
 revisionHistoryLimit: 5
@@ -129,7 +137,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 nodeSelector:
-  {{org_name | lower}}-app: "yes"
+  {{node_label}}: "yes"
 
 tolerations: []
 

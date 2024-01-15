@@ -70,6 +70,12 @@ services:
         target: {{container_root_path}}{{separator_char}}{{sp_container_path}}{{separator_char}}{{sp_file}}
 {% endif %}
 {% endif %}
+{% if services[0].secrets is defined %}
+    secrets:
+{% for secret in services[0].secrets %}
+      - {{secret}}
+{% endfor %}
+{% endif %}
 {% if services[0].volumes is defined %}
     volumes:
 {% for volume in services[0].volumes %}
@@ -370,5 +376,13 @@ volumes:
 {% else %}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}"
 {% endif %}
+{% endfor %}
+{% endif %}
+
+{% if services[0].secrets is defined %}
+secrets:
+{% for secret in services[0].secrets %}
+  {{secret}}:
+    external: true
 {% endfor %}
 {% endif %}

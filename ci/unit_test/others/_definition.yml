@@ -4,7 +4,9 @@
   tags:
     - docker
   before_script:
-    - npm set registry http://npm.lumigame.com
+    - if [ "$NPM_LUMI_HOST" != "" ]; then
+        npm set registry $NPM_LUMI_HOST;
+      fi
     - yarn global add jest@28.1.3
     - echo $SRC_PATH
     - cd "$SRC_PATH"

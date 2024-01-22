@@ -54,7 +54,7 @@ configs:
 
 services:
   {{service_name}}_{{environment}}:
-    image: @REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest
+    image: @REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest@@IMAGE_DIGEST
 {% if platform == "linux" %}
     hostname: "swarm-{{'{{'}}.Service.Name{{'}}'}}-{{'{{'}}.Task.Slot{{'}}'}}"
 {% else %}

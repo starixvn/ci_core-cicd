@@ -69,7 +69,7 @@ rollingUpdate:
   maxUnavailable: {{ max_unavailable }}
 
 image:
-  name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest"
+  name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-latest@@IMAGE_DIGEST"
   pullPolicy: Always
 
 healthCheck:

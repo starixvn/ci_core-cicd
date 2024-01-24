@@ -49,3 +49,9 @@ build_noenv:
     - job: "sync_tolgee"
       artifacts: true
       optional: true
+
+unit_test_js:
+  allow_failure: false
+
+unit_test_dotnet:
+  allow_failure: false

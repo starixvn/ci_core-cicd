@@ -35,7 +35,9 @@ configs:
   {{service_name}}_{{ environment }}_config_@CONFIG_VERSION:
     file: {{working_path}}/{{environment}}/configs/{{config_file}}
     labels:
-{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+{% if env == "nexaws" %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_SPECIAL"
+{% elif env == "prod" or env == "aws" or env == "alphaprod" or env == "fpsprod" or env == "gc"%}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
 {% else %}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}"
@@ -44,7 +46,9 @@ configs:
   {{service_name}}_{{ environment }}_sp_config_@CONFIG_VERSION:
     file: {{working_path}}/{{environment}}/configs/{{sp_file}}
     labels:
-{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+{% if env == "nexaws" %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_SPECIAL"
+{% elif env == "prod" or env == "aws" or env == "alphaprod" or env == "fpsprod" or env == "gc"%}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
 {% else %}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}"
@@ -348,7 +352,9 @@ services:
       - SYS_PTRACE
 {% endif %}
     labels:
-{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc"%}
+{% if env == "nexaws" %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_SPECIAL"
+{% elif env == "prod" or env == "aws" or env == "alphaprod" or env == "fpsprod" or env == "gc"%}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
 {% else %}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}"
@@ -371,7 +377,9 @@ volumes:
        device: {{gluster_path}}{{volume.src}}/{{environment}}
 {% endif %}
     labels:
-{% if env == "prod" or env == "aws" or env == "nexaws" or env == "alphaprod" or env == "fpsprod" or env == "nexaws" or env == "gc" or env == "awsprod"%}
+{% if env == "nexaws" %}
+      - "io.portainer.accesscontrol.teams={{team_name | upper}}_SPECIAL"
+{% elif env == "prod" or env == "aws" or env == "alphaprod" or env == "fpsprod" or env == "gc" or env == "awsprod"%}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}_LEADERS"
 {% else %}
       - "io.portainer.accesscontrol.teams={{team_name | upper}}"

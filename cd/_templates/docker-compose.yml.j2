@@ -302,6 +302,9 @@ services:
     environment:
       APP_NAME: {{ service_name }}
 {% endif %}
+{% if services[0].stop_grace_period is defined %}
+    stop_grace_period: {{services[0].stop_grace_period | default('10s')}}
+{% endif %}
 {% if env == "local" and services[0].port_local is defined %}
     ports:
       - {{services[0].port_local}}:{{services[0].port | default('5000')}}

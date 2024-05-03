@@ -63,6 +63,7 @@
 ############# k8s deployments values #############
 replicaCount: {{ replica_count }}
 revisionHistoryLimit: 5
+environment: {{ environment | lower | replace('_','') }}
 
 rollingUpdate:
   maxSurge: 25%
@@ -114,6 +115,21 @@ ingress:
       paths:
         - path: {{ url.path }}
           pathType: Prefix
+  {% endfor %}
+{% endif %}
+
+{% if services[0].pvc is defined %}
+pvc:
+  create: true
+  storage: {{ services[0].pvc.storage }}
+{% endif %}
+
+{% if services[0].volumes is defined and services[0].volumes | length > 0 %}
+volumes:
+  {% for volume in services[0].volumes %}
+  - name: {{ volume.name }}
+    mountPath: {{ volume.mount_path }}
+    sharedPVC: {{ volume.shared_pvc }}
   {% endfor %}
 {% endif %}
 

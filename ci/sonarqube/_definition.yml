@@ -49,7 +49,7 @@
     name: $SONAR_SCANNER_DOTNET_IMAGE
   before_script:
     - !reference [.sonar_common, before_script]
-    - update-locale LC_ALL="en_US.UTF-8"
+    - export LC_ALL="en_US.UTF-8"
     - export LANG="en_US.UTF-8"
     - dotnet tool install --global dotnet-sonarscanner --version 5.13.1
     - export PATH="$PATH:/root/.dotnet/tools"

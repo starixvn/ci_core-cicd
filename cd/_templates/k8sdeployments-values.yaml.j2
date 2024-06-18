@@ -136,6 +136,9 @@ volumes:
 resources:
   limits:
     memory: {{ limit_memory }}Mi
+{% if services[0].nvidia_gpu is defined %}
+    nvidia.com/gpu: {{ services[0].nvidia_gpu }}
+{% endif %}
   requests:
     memory: 16Mi
 

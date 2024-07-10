@@ -12,6 +12,9 @@
     - npm set registry $NPM_LUMI_HOST
     - yarn install
     - npm run reg
+    - if [ "$NPM_LANG_TS" == "true" ]; then
+        npm run build;
+      fi;
     - npx semantic-release
   tags:
     - docker

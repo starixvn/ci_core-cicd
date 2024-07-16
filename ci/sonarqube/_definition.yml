@@ -4,7 +4,7 @@
     - echo "===========Start Sonar Scanner============="    
   allow_failure: false
   tags:
-    - docker
+    - ci
 
 .sonar_js:
   extends: .sonar_common

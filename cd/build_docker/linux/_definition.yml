@@ -44,6 +44,7 @@
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:builder
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder
+      --build-arg CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder
@@ -53,6 +54,7 @@
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:latest
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
+      --build-arg CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
@@ -74,6 +76,7 @@
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:builder
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION-builder
+      --build-arg CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION-builder
@@ -84,6 +87,7 @@
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
       --build-arg DEPLOY_ENV=$DEPLOY_ENV
+      --build-arg CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION

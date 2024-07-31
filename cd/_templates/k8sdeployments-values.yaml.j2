@@ -60,6 +60,10 @@
 {% endif %}
 {#---------end node_label---------#}
 
+{#---------sticky_sessions---------#}
+{% set sticky_sessions = services[0].sticky_sessions | default(false) | lower %}
+{#---------end sticky_sessions---------#}
+
 ############# k8s deployments values #############
 replicaCount: {{ replica_count }}
 revisionHistoryLimit: 5
@@ -109,6 +113,7 @@ service:
 {% if site_urls is defined and site_urls | length > 0 %}
 ingress:
   enabled: true
+  stickySessions: {{ sticky_sessions }}
   hosts:
   {% for url in site_urls %}
     - host: {{ url.host }}

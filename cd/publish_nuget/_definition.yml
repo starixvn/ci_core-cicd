@@ -1,0 +1,10 @@
+.publish_nuget:
+  stage: publish
+  image: $DOTNET_SDK_IMAGE
+  before_script: []
+  script:
+    - cd $PROJECT_FOLDER
+    - dotnet pack -c $RELEASE_CONFIGURATION
+    - dotnet nuget push -s $BAGET_API_URL -k "$BAGET_API_KEY" "bin/$RELEASE_CONFIGURATION/*.nupkg" --skip-duplicate
+  tags:
+    - docker

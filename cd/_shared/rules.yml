@@ -63,6 +63,12 @@
 .if_not_publish_npm: &if_not_publish_npm
   if: $PUBLISH_NPM != "true"
 
+.if_publish_nuget: &if_publish_nuget
+  if: $PUBLISH_NUGET == "true"
+
+.if_not_publish_nuget: &if_not_publish_nuget
+  if: $PUBLISH_NUGET != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -133,10 +139,18 @@
       when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: always
+  publish_nuget:
+    - <<: *if_not_publish_nuget
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - $PROJECT_FOLDER/**/*.csproj
 
 .trigger_cd_rules:
   rules:
     - <<: *if_publish_npm
+      when: never
+    - <<: *if_publish_nuget
       when: never
     - if: $CI_PIPELINE_SOURCE != "push"
       when: never

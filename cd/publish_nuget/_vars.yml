@@ -1,0 +1,4 @@
+variables:
+  PUBLISH_NUGET: 'false'
+  PROJECT_FOLDER: ""
+  RELEASE_CONFIGURATION: Release

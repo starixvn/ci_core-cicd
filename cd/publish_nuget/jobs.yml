@@ -1,0 +1,8 @@
+include:
+  - cd/publish_nuget/_vars.yml
+  - cd/publish_nuget/_definition.yml
+
+publish_nuget:
+  extends: .publish_nuget
+  #needs: ["sonar_dotnet"]
+  rules: !reference [.cd_rules, publish_nuget]

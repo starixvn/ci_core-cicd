@@ -9,6 +9,7 @@ include:
   - cd/auto_deploy/jobs.yml
   - cd/sync_tolgee/jobs.yml
   - cd/publish_npm/jobs.yml
+  - cd/publish_nuget/jobs.yml
 
 build_multistage_env:
   needs:

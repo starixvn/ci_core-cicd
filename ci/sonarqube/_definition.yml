@@ -4,7 +4,7 @@
     - echo "===========Start Sonar Scanner============="    
     - if [ "$SONAR_PROJECT_GROUP" != "" ]; then
       export SONAR_PROJECT_NAME=$SONAR_PROJECT_GROUP-$SONAR_PROJECT_NAME;      
-      echo $SONAR_PROJECT_NAME
+      echo $SONAR_PROJECT_NAME;
       fi
   allow_failure: false
   tags:

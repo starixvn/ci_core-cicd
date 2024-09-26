@@ -14,10 +14,7 @@
     - sed -i "s/@CONFIG_VERSION/$(date +%s)/g" $DOCKER_COMPOSE_FILE_NAME
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" $DOCKER_COMPOSE_FILE_NAME
     - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" $DOCKER_COMPOSE_FILE_NAME
-    - |
-      IMAGE_DIGEST=$(skopeo inspect --creds=$DOCKER_REG_LOCAL_USERNAME:$DOCKER_REG_LOCAL_PASSWORD docker://$CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest | jq '.Digest' | tr -d \")
-      echo $IMAGE_DIGEST
-      sed -i "s|@IMAGE_DIGEST|$IMAGE_DIGEST|g" $DOCKER_COMPOSE_FILE_NAME
+    - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" $DOCKER_COMPOSE_FILE_NAME
     - cat $DOCKER_COMPOSE_FILE_NAME
     - echo "===== SYNC docker-compose.yml ... ====="
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/docker-compose.yml"    
@@ -55,10 +52,7 @@
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${K8S_FILE_NAME}.j2
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${K8S_FILE_NAME}.j2
     - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${K8S_FILE_NAME}.j2
-    - |
-      IMAGE_DIGEST=$(skopeo inspect --creds=$DOCKER_REG_LOCAL_USERNAME:$DOCKER_REG_LOCAL_PASSWORD docker://$CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest | jq '.Digest' | tr -d \")
-      echo $IMAGE_DIGEST
-      sed -i "s|@IMAGE_DIGEST|$IMAGE_DIGEST|g" ${K8S_FILE_NAME}.j2
+    - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${K8S_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
     - cat $K8S_FILE_NAME
     - echo "===== SYNC k8sdeployments-values.yaml ... ====="

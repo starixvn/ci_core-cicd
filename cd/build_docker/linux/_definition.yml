@@ -5,14 +5,11 @@
     - docker buildx build
       --cache-to type=inline
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
       --build-arg DEPLOY_ENV=$DEPLOY_ENV
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-    - docker tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest &&
-      docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
   tags:
     - docker
 
@@ -23,21 +20,20 @@
     - docker buildx build
       --cache-to type=inline
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:latest
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
       --build-arg APP_NAME=$APP_NAME
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:latest &&
-      docker push $CI_REGISTRY_IMAGE:latest
+    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
+      && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
 
 .build:default:image:noenv:multistage:
   stage: build
   script:
-    - echo $DOCKER_FILE_PATH   
+    - echo $DOCKER_FILE_PATH
     - docker buildx build
       --target builder
       --cache-to type=inline
@@ -52,7 +48,6 @@
     - docker buildx build
       --cache-to type=inline
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:latest
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
       --build-arg CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
@@ -61,8 +56,8 @@
       && docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
     - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder $CI_REGISTRY_IMAGE:builder &&
       docker push $CI_REGISTRY_IMAGE:builder
-    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:latest &&
-      docker push $CI_REGISTRY_IMAGE:latest
+    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
+      && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
 
@@ -84,7 +79,6 @@
     - docker buildx build
       --cache-to type=inline
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
       --build-arg DEPLOY_ENV=$DEPLOY_ENV
@@ -94,18 +88,5 @@
       && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
     - docker tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION-builder $CI_REGISTRY_IMAGE:builder &&
       docker push $CI_REGISTRY_IMAGE:builder
-    - docker tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest &&
-      docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
-  tags:
-    - docker
-
-.post_build:
-  stage: build
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION || 
-      docker pull $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION || true
-    - docker tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest 
-      || docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
-    - docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
   tags:
     - docker

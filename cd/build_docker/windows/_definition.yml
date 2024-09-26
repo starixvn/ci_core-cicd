@@ -4,7 +4,7 @@
     - echo $DEPLOY_ENV
     - $ROCKETOR_API="$ROCKETOR_API_URL/Home/ChangeSpVersion"
     - $CI_REGISTRY_IMAGE="$DOCKER_REG_LOCAL_URL/$DOCKER_IMAGE_PATH_LOCAL"
-    - $CI_REGISTRY_IMAGE_VERSION=$CI_COMMIT_SHA.SubString(0,8)    
+    - $CI_REGISTRY_IMAGE_VERSION=$CI_COMMIT_SHORT_SHA
     - if (!$PROJECT_ROOT_PATH) {
         echo "Root is here";
       } else {
@@ -35,8 +35,7 @@
         --build-arg REDMINE_IDS=${REDMINE_IDS}
         --build-arg TRANSFORM_CONFIG=${TRANSFORM_CONFIG}
         --tag "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}" .
-    - docker tag "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}" "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-latest"
-    - docker push "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-latest"
+    - docker push "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}"
   tags:
     - windows
 
@@ -62,8 +61,7 @@
         --build-arg REDMINE_IDS=${REDMINE_IDS}
         --build-arg TRANSFORM_CONFIG=${TRANSFORM_CONFIG}
         --tag "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}" .
-    - docker tag "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}" "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-latest"
+    - docker push "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-${CI_REGISTRY_IMAGE_VERSION}"
     - docker push "${CI_REGISTRY_IMAGE}:builder"
-    - docker push "${CI_REGISTRY_IMAGE}:${DEPLOY_ENV}-latest"
   tags:
     - windows

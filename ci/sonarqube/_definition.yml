@@ -1,9 +1,17 @@
 .sonar_common:
   stage: test
   before_script:
-    - echo "===========Start Sonar Scanner============="    
-    - if [ "$SONAR_PROJECT_GROUP" != "" ]; then
-      export SONAR_PROJECT_NAME=$SONAR_PROJECT_GROUP-$SONAR_PROJECT_NAME;      
+    - echo "===========Start Sonar Scanner============="
+    - if [ "$PROJECT_NAME" == "" ];
+      then
+      export PROJECT_NAME=$CI_PROJECT_NAME;
+      export SONAR_PROJECT_NAME=$CI_PROJECT_NAME;
+      else
+      echo "$PROJECT_NAME";
+      fi
+    - if [ "$SONAR_PROJECT_GROUP" != "" ] && [[ $PROJECT_NAME != ${SONAR_PROJECT_GROUP}* ]]; then
+      export PROJECT_NAME=$SONAR_PROJECT_GROUP-$PROJECT_NAME;
+      export SONAR_PROJECT_NAME=$PROJECT_NAME;
       echo $SONAR_PROJECT_NAME;
       fi
   allow_failure: false
@@ -12,20 +20,13 @@
 
 .sonar_js:
   extends: .sonar_common
-  needs: ['unit_test_js']
+  needs: ["unit_test_js"]
   dependencies:
     - unit_test_js
   image:
     name: $SONAR_SCANNER_CLI_IMAGE
   before_script:
-    - if [ "$PROJECT_NAME" == "" ];
-      then
-      export PROJECT_NAME=$CI_PROJECT_NAME;
-      export SONAR_PROJECT_NAME=$CI_PROJECT_NAME;
-      else
-      echo "$PROJECT_NAME";
-      fi
-    - !reference [.sonar_common, before_script]    
+    - !reference [.sonar_common, before_script]
     - echo $SRC_PATH
     - echo $TEST_PATH
   script:
@@ -46,7 +47,7 @@
 
 .sonar_dotnet:
   extends: .sonar_common
-  needs: ['unit_test_dotnet']
+  needs: ["unit_test_dotnet"]
   dependencies:
     - unit_test_dotnet
   image:
@@ -78,8 +79,8 @@
 
 .sonar_dotnet_js:
   extends: .sonar_dotnet
-  needs: ['unit_test_dotnet', 'unit_test_js']
-  dependencies: ['unit_test_dotnet', 'unit_test_js']
+  needs: ["unit_test_dotnet", "unit_test_js"]
+  dependencies: ["unit_test_dotnet", "unit_test_js"]
   script:
     - ls
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
@@ -106,14 +107,14 @@
   image:
     name: $SONAR_SCANNER_CLI_IMAGE
   script:
-    - sonar-scanner 
-      -X 
+    - sonar-scanner
+      -X
       -Dsonar.host.url=$SONAR_HOST_URL
       -Dsonar.token=$SONAR_TOKEN
-      -Dsonar.sourceEncoding=UTF-8 
-      -Dsonar.qualitygate.wait=true 
-      -Dsonar.projectKey=$PROJECT_NAME 
-      -Dsonar.projectName="$SONAR_PROJECT_NAME" 
-      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]" 
-      -Dproject.settings=./sonarqube.analysis.properties 
+      -Dsonar.sourceEncoding=UTF-8
+      -Dsonar.qualitygate.wait=true
+      -Dsonar.projectKey=$PROJECT_NAME
+      -Dsonar.projectName="$SONAR_PROJECT_NAME"
+      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
+      -Dproject.settings=./sonarqube.analysis.properties
       -Dsonar.sources=.

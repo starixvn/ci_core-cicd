@@ -10,7 +10,7 @@
 {% set gluster_path = '/var/www/gluster/web/' %}
 {% set working_path = gluster_path ~ team_name ~ '/' ~ project_name ~ '/' ~ services[0].name | replace('-','_') %}
 {% set config_file_path = services[0].config_file_path | default(".") %}
-{% if services[0].config_file_name is defined %}
+{% if services[0].config_file_name is defined and services[0].config_file_name | length > 0 %}
 {% if services[0].config_file_ext | length > 0 %}
 {% set config_file = services[0].config_file_name ~ '.' ~ services[0].config_file_ext %}
 {% else %}

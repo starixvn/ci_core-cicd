@@ -261,7 +261,7 @@ services:
       endpoint_mode: dnsrr
 {% endif %}
 {% endif %}
-{% if env == "prod" or env == "nexprod" %}
+{% if env == "prod" or env == "nexprod" or env == "fpsprod" or env == "alphaprod" %}
       update_config:
 {% if services[0].update_order is defined and services[0].update_order == 'stop-first' %}
         order: stop-first

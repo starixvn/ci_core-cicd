@@ -83,7 +83,7 @@
         SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
       fi
       echo $SP_DEST_FILE_NAME
-    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.1.0 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;
+    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.2.0 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;
 
 .update_k8s_ingress:
   script:
@@ -103,4 +103,4 @@
         SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
       fi
       echo $SP_DEST_FILE_NAME
-    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.1.0 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME -F enableIngress=$ENABLE_INGRESS $DEPLOYMENT_API/updateIngress?token=$DEPLOY_API_TOKEN;
+    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.2.0 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME -F enableIngress=$ENABLE_INGRESS $DEPLOYMENT_API/updateIngress?token=$DEPLOY_API_TOKEN;

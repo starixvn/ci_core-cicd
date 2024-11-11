@@ -64,6 +64,10 @@
 {% set sticky_sessions = services[0].sticky_sessions | default(false) | lower %}
 {#---------end sticky_sessions---------#}
 
+{#---------ingress_class---------#}
+{% set ingress_class = services[0].ingress_class | default('haproxy') | lower %}
+{#---------end ingress_class---------#}
+
 ############# k8s deployments values #############
 replicaCount: {{ replica_count }}
 revisionHistoryLimit: 5
@@ -114,6 +118,7 @@ service:
 ingress:
   enabled: true
   stickySessions: {{ sticky_sessions }}
+  className: {{ ingress_class }}
   hosts:
   {% for url in site_urls %}
     - host: {{ url.host }}

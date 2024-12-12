@@ -168,7 +168,11 @@ autoscaling:
 nodeSelector:
   {{node_label}}: "yes"
 
-tolerations: []
+tolerations:
+  - key: {{node_label}}
+    operator: "Equal"
+    value: "yes"
+    effect: "NoSchedule"
 
 affinity: {}
 

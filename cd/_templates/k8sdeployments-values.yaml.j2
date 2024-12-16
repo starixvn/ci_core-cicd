@@ -68,6 +68,10 @@
 {% set ingress_class = services[0].ingress_class | default('haproxy') | lower %}
 {#---------end ingress_class---------#}
 
+{#---------timeout_server---------#}
+{% set timeout_server = services[0].timeout_server | default('') %}
+{#---------end timeout_server---------#}
+
 ############# k8s deployments values #############
 replicaCount: {{ replica_count }}
 revisionHistoryLimit: 5
@@ -119,6 +123,9 @@ ingress:
   enabled: true
   stickySessions: {{ sticky_sessions }}
   className: {{ ingress_class }}
+  {% if timeout_server is defined and timeout_server | length > 0 %}
+  timeoutServer: {{ timeout_server }}
+  {% endif %}
   hosts:
   {% for url in site_urls %}
     - host: {{ url.host }}

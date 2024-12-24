@@ -5,11 +5,13 @@
     - docker buildx build
       --cache-to type=inline
       --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
+      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest
       -f $DOCKER_FILE_PATH/$DOCKER_FILE_NAME
       --tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
       --build-arg DEPLOY_ENV=$DEPLOY_ENV
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
 
@@ -25,8 +27,8 @@
       --build-arg APP_NAME=$APP_NAME
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-      && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
 
@@ -54,10 +56,9 @@
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
       && docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder $CI_REGISTRY_IMAGE:builder &&
-      docker push $CI_REGISTRY_IMAGE:builder
-    - docker tag $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-      && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:builder $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
 
@@ -85,8 +86,8 @@
       --build-arg CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
-      && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-    - docker tag $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION-builder $CI_REGISTRY_IMAGE:builder &&
-      docker push $CI_REGISTRY_IMAGE:builder
+      && docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION    
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:builder $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION-builder
+    - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker

@@ -9,4 +9,3 @@ include:
   - cd/.pre/jobs.yml
   - cd/.post/jobs.yml
   - cd/build_docker/linux/jobs.yml
-  - cd/scan_vulnerability/jobs.yml

@@ -1,4 +1,4 @@
-.scan_image:
+.scan_build_image:
   script:
     - wget https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/.trivyignore.yml
     - wget --no-verbose https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz?inline=false -O - | tar -zxvf -
@@ -20,7 +20,7 @@
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
     - export BUILD_IMAGE=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-    - !reference [.scan_image, script]
+    - !reference [.scan_build_image, script]
     - docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
@@ -39,7 +39,7 @@
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
     - export BUILD_IMAGE=$CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-    - !reference [.scan_image, script]
+    - !reference [.scan_build_image, script]
     - docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
@@ -70,7 +70,7 @@
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
     - export BUILD_IMAGE=$CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
-    - !reference [.scan_image, script]
+    - !reference [.scan_build_image, script]
     - docker push $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:builder $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION-builder
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
@@ -103,7 +103,7 @@
       --build-arg CI_JOB_TOKEN=$CI_JOB_TOKEN
       --build-arg TRANSFORM_CONFIG=$TRANSFORM_CONFIG .
     - export BUILD_IMAGE=$CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
-    - !reference [.scan_image, script]
+    - !reference [.scan_build_image, script]
     - docker push $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:builder $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION-builder
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION

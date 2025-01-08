@@ -69,6 +69,7 @@
       /d:sonar.qualitygate.wait=true
       /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
       /d:sonar.cs.vstest.reportsPaths=**/*.trx
+      /d:sonar.sourceEncoding=UTF-8
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
@@ -94,6 +95,7 @@
       /d:sonar.sources=${SRC_PATH}
       /d:sonar.tests=${TEST_PATH}
       /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
+      /d:sonar.sourceEncoding=UTF-8
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN

@@ -5,11 +5,12 @@
       wget --no-verbose https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz?inline=false -O - | tar -zxvf -
       cat .trivyignore.yml
     - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 0 --scanners vuln --severity HIGH $BUILD_IMAGE
-    - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 1 --scanners vuln --severity CRITICAL $BUILD_IMAGE || {
-      BYPASS_CRITICAL_VULNERABILITY=$(curl -s -H "ROCKETOR-TOKEN:$ROCKETOR_TOKEN" "$ROCKETOR_API_URL/api/Deploy/CanBypassCVEs?service=$SERVICE_NAME")
-      echo "BYPASS_CRITICAL_VULNERABILITY=$BYPASS_CRITICAL_VULNERABILITY"
-      [ "$BYPASS_CRITICAL_VULNERABILITY" == "true" ]
-    }
+    - |
+      ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 1 --scanners vuln --severity CRITICAL $BUILD_IMAGE || {
+        BYPASS_CRITICAL_VULNERABILITY=$(curl -s -H "ROCKETOR-TOKEN:$ROCKETOR_TOKEN" "$ROCKETOR_API_URL/api/Deploy/CanBypassCVEs?service=$SERVICE_NAME")
+        echo "BYPASS_CRITICAL_VULNERABILITY=$BYPASS_CRITICAL_VULNERABILITY"
+        [ "$BYPASS_CRITICAL_VULNERABILITY" == "true" ]
+      }
 
 .build:default:image:
   stage: build

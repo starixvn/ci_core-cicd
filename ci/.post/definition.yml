@@ -6,11 +6,35 @@
     - |
       COMMITTER_EMAIL="${GITLAB_USER_LOGIN}@${COMPANY_DOMAIN}"
       echo "COMMITTER_EMAIL: $COMMITTER_EMAIL"
-      SLACK_USER_ID=$(curl -X GET -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" "https://slack.com/api/users.lookupByEmail?email=$COMMITTER_EMAIL" | jq -r '.user.id')
-      echo "SLACK_USER_ID: $SLACK_USER_ID"
+      
+      # Get Slack user ID with error handling
+      RESPONSE=$(curl -s -X GET -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" "https://slack.com/api/users.lookupByEmail?email=$COMMITTER_EMAIL")
+      if echo "$RESPONSE" | jq -e '.ok == true' > /dev/null; then
+        SLACK_USER_ID=$(echo "$RESPONSE" | jq -r '.user.id')
+        echo "SLACK_USER_ID: $SLACK_USER_ID"
+      else
+        echo "Error getting Slack user ID: $(echo "$RESPONSE" | jq -r '.error')"
+        exit 1
+      fi
   script:
     - |
-      curl -X POST -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
+      # Prepare message with all relevant details
+      MESSAGE="❌ Pipeline failed for project: $CI_PROJECT_NAME
+      Pipeline URL: $CI_PIPELINE_URL
+      Commit: $CI_COMMIT_SHORT_SHA
+      Author: $GITLAB_USER_NAME 
+      Branch: $CI_COMMIT_REF_NAME
+      Failed Job: $CI_JOB_NAME"
+      
+      # Send message with error handling
+      RESPONSE=$(curl -s -X POST \
+        -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
         -H 'Content-type: application/json' \
-        --data '{ "channel": "$SLACK_USER_ID", "text": "❌ Pipeline failed for project: $CI_PROJECT_NAME" }' https://slack.com/api/chat.postMessage
+        --data "{\"channel\":\"$SLACK_USER_ID\",\"text\":\"$MESSAGE\"}" \
+        https://slack.com/api/chat.postMessage)
+      
+      if ! echo "$RESPONSE" | jq -e '.ok == true' > /dev/null; then
+        echo "Error sending Slack message: $(echo "$RESPONSE" | jq -r '.error')"
+        exit 1
+      fi
   allow_failure: true

@@ -4,7 +4,3 @@ include:
 notify_failure:
   extends: .notify_failure
   rules: !reference [.ci_rules, notify_failure]
-
-notify_failure2:
-  extends: .notify_failure
-  stage: test

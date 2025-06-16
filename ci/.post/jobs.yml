@@ -1,0 +1,6 @@
+include:
+  - ci/.post/definition.yml
+
+notify_failure:
+  extends: .notify_failure
+  rules: !reference [.ci_rules, notify_failure]

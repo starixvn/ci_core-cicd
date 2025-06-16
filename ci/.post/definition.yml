@@ -1,0 +1,27 @@
+.notify_failure:
+  stage: .post 
+  tags:
+    - ci
+  before_script:
+    - |
+      COMMITTER_EMAIL="${GITLAB_USER_LOGIN}@${COMPANY_DOMAIN}"
+      echo "COMMITTER_EMAIL: $COMMITTER_EMAIL"
+      SLACK_USER_ID=$(curl -X POST -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
+        -H "Content-type: application/json" \
+        --data "{\"email\":\"$COMMITTER_EMAIL\"}" \
+        "https://slack.com/api/users.lookupByEmail" | jq -r '.user.id')
+      echo "SLACK_USER_ID: $SLACK_USER_ID"
+  script:
+    - |
+      curl -X POST -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
+        -H 'Content-type: application/json' \
+        --data '{
+        "channel": "$SLACK_USER_ID",
+        "text": "❌ Pipeline failed for project: $CI_PROJECT_NAME\n
+        Pipeline URL: $CI_PIPELINE_URL\n
+        Commit: $CI_COMMIT_SHORT_SHA\n
+        Author: $GITLAB_USER_NAME\n
+        Branch: $CI_COMMIT_REF_NAME\n
+        Failed Job: $CI_JOB_NAME"
+      }' https://slack.com/api/chat.postMessage
+  allow_failure: true

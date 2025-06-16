@@ -19,12 +19,12 @@
   script:
     - |
       # Prepare message with all relevant details
-      MESSAGE="❌ Pipeline failed for project: $CI_PROJECT_NAME
+      MESSAGE="❌ CI Pipeline Failed ❌
+      Project: $CI_PROJECT_NAME
       Pipeline URL: $CI_PIPELINE_URL
       Commit: $CI_COMMIT_SHORT_SHA
       Author: $GITLAB_USER_NAME 
-      Branch: $CI_COMMIT_REF_NAME
-      Failed Job: $CI_JOB_NAME"
+      Branch: $CI_COMMIT_REF_NAME"
       
       # Send message with error handling
       RESPONSE=$(curl -s -X POST \

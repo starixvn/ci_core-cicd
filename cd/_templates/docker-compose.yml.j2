@@ -138,7 +138,7 @@ services:
 {% else %}
           memory: {{ services[0].max_memory | default('2048') }}M
 {% endif %}
-{% if env == "prod" or env == "alphaprod" or env == "fpsprod" or env == "awsprod" %}
+{% if env == "prod" or env == "alphaprod" or env == "fpsprod" or env == "awsprod" or env == "klprod" or env == "alphaklprod" or env == "fpsklprod" %}
 {% if services[0].number_of_replicas_prod is defined and services[0].number_of_replicas_prod | int > 8 %}
       replicas: 8
 {% else %}

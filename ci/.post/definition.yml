@@ -26,7 +26,6 @@
       > Commit: $CI_COMMIT_SHORT_SHA
       > Author: $GITLAB_USER_NAME"
       
-      # Send message with error handling
       RESPONSE=$(curl -s -X POST \
         -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
         -H 'Content-type: application/json' \
@@ -36,5 +35,7 @@
       if ! echo "$RESPONSE" | jq -e '.ok == true' > /dev/null; then
         echo "Error sending Slack message: $(echo "$RESPONSE" | jq -r '.error')"
         exit 1
+      else
+        echo "Slack message sent successfully"
       fi
   allow_failure: true

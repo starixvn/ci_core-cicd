@@ -20,13 +20,13 @@
     - |
       # Prepare message with all relevant details
       MESSAGE="###❌ CI Pipeline Failed
-      ```
+      \`\`\`
       Project: **$CI_PROJECT_NAME**
       Pipeline URL: [$CI_PIPELINE_URL]($CI_PIPELINE_URL)
       Branch: **$CI_COMMIT_REF_NAME**
       Commit: $CI_COMMIT_SHORT_SHA
       Author: $GITLAB_USER_NAME
-      ```"
+      \`\`\`"
       
       # Send message with error handling
       RESPONSE=$(curl -s -X POST \

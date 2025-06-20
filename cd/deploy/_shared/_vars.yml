@@ -15,4 +15,4 @@ variables:
   ARGOCD_REF: argocd
   ARGOCD_REPO_URL: "https://gitlab.nexdev.net/gitlab-sentry/zdemogroup/demo-argocd.git"
   ARGOCD_ROOT_FOLDER: demo-argocd
-  ARGOCD_TARGET_REVISION: mason
+  ARGOCD_TARGET_REVISION: main

@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: @SERVICE_NAME_@ENV_NAME
+  name: @STACK_NAME-@APP_NAME-@ENV_NAME
   namespace: argocd
   finalizers:
-  - resources-finalizer.argocd.argoproj.io
+    - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
     namespace: @STACK_NAME
-    server: https://kubernetes.default.svc
+    name: @DEST_NAME
   project: default
   source:
     path: charts/@SRC_PATH
@@ -16,10 +16,4 @@ spec:
     targetRevision: @SRC_TARGET_REVISION
     helm:
       valueFiles:
-        - values_@ENV_NAME.yaml
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+        - values-@ENV_NAME.yaml

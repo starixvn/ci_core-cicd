@@ -72,6 +72,10 @@
 {% set timeout_server = services[0].timeout_server | default('') %}
 {#---------end timeout_server---------#}
 
+{#---------sp_content---------#}
+{% set sp_content = '@SP_CONTENT' %}
+{#---------end sp_content---------#}
+
 ############# image pullsecrets values #############
 imagepullsecrets:
   imageCredentials:
@@ -107,14 +111,18 @@ k8sdeployments:
     name: "{{ config_file }}"    
     {% if config_content is defined %}
     content: |
-      {{ config_content }}
+      {{ config_content | trim("'") | indent(6) }}
     {% endif %}
   {% endif %}
 
-  {% if sp_file is defined %}
+  {% if sp_file is defined and false %}
   spFile:
     path: "{{container_root_path}}/{{sp_container_path}}"
     name: "{{sp_file}}"    
+    {% if sp_content is defined and sp_content | length > 0 %}
+    content: |
+      {{ sp_content }}
+    {% endif %}
   {% endif %}
 
   {% if org_name == "luminet" %}

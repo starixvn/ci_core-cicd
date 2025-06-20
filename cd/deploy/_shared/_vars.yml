@@ -8,7 +8,7 @@ variables:
 
   ARGOCD_APP_TEMPLATE_FILE_NAME: argocd-app-template.yaml
   ARGOCD_APP_TEMPLATE_FILE_PATH: "cd%2f_templates%2f${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2"
-  ARGOCD_APP_CHART_FILE_NAME: argocd-app-chart
+  ARGOCD_APP_CHART_FILE_NAME: argocd-app-chart.yaml
   ARGOCD_APP_CHART_FILE_PATH: "cd%2f_templates%2f${ARGOCD_APP_CHART_FILE_NAME}.j2"
   ARGOCD_APP_VALUES_FILE_NAME: argocd-app-values.yaml
   ARGOCD_APP_VALUES_FILE_PATH: "cd%2f_templates%2f${ARGOCD_APP_VALUES_FILE_NAME}.j2"

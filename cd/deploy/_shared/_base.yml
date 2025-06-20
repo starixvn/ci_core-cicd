@@ -88,14 +88,11 @@
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
     - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - |
-      echo "Config file path: $CONFIG_FILE_PATH/$CONFIG_FILE"
-      echo "Config file content: $(cat $CONFIG_FILE_PATH/$CONFIG_FILE)"
-      echo "Config file name: $CONFIG_FILE_NAME"
-      if [ ! -z "$CONFIG_FILE_NAME" ]; then
-        jq --rawfile config_content "$CONFIG_FILE_PATH/$CONFIG_FILE" '.config_content = $config_content' VARS_DATA.json > _vars && mv _vars VARS_DATA.json
+    - if [ ! -z "$CONFIG_FILE_NAME" ]; then
+        jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME} -e "config_content=$(cat $CONFIG_FILE_PATH/$CONFIG_FILE)"
+      else
+        jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME}
       fi
-    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME}
     - cat $ARGOCD_APP_VALUES_FILE_NAME
 
 .sync_argocd_app_files:

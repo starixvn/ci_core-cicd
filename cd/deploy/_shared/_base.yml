@@ -91,8 +91,8 @@
     - echo "Config file path: $CONFIG_FILE_PATH/$CONFIG_FILE"
     - echo "Config file content: $(cat $CONFIG_FILE_PATH/$CONFIG_FILE)"
     - echo "Config file name: $CONFIG_FILE_NAME"
-    - if [ ! -z "$CONFIG_FILE_NAME" ];
-      then
+    - |
+      if [ ! -z "$CONFIG_FILE_NAME" ]; then
         jq --rawfile config_content "$CONFIG_FILE_PATH/$CONFIG_FILE" '.config_content = $config_content' VARS_DATA.json > _vars && mv _vars VARS_DATA.json
       fi
     - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME}

@@ -55,11 +55,13 @@ include:
   extends:
     - .env
   script:
-    - !reference [.prepare_k8s_deployments_values, script]
-    - !reference [.sync-config, script]
-    - *import-connection-string
-    - *change-version-and-sync-sp
-    - !reference [.deploy_k8s, script]
+    # - !reference [.prepare_k8s_deployments_values, script]
+    # - !reference [.sync-config, script]
+    # - *import-connection-string
+    # - *change-version-and-sync-sp
+    # - !reference [.deploy_k8s, script]
+    - !reference [.prepare_argocd_app_files, script]
+    - !reference [.sync_argocd_app_files, script]
   tags:
     - docker
 

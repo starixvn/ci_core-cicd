@@ -1,0 +1,14 @@
+{#---------config_content---------#}
+{% set config_content = @CONFIG_CONTENT %}
+{#---------end config_content---------#}
+
+imagepullsecrets:
+  {% include 'imagepullsecrets-values.yaml.j2' %}
+
+k8sdeployments:
+  {% include 'k8sdeployments-values.yaml.j2' %}
+  {% if config_content is defined %}
+  configFile:
+    content: |
+      {{config_content}}
+  {% endif %}

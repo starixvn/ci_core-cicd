@@ -59,6 +59,81 @@
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME"    
     - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F remotePath="$WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME" -F file=@"$K8S_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
 
+.prepare_argocd_app_files:
+  script:
+    - echo $VARS_DATA > VARS_DATA.json
+    - echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME ... =====";
+    - curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
+    - sed -i "s/@SERVICE_NAME/${SERVICE_NAME}/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s/@ENV_NAME/$DEPLOY_ENV/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s|@SRC_PATH|$APPLICATION_PATH|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s|@SRC_TARGET_REVISION|$ARGOCD_TARGET_REVISION|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${ARGOCD_APP_TEMPLATE_FILE_NAME}
+    - cat $ARGOCD_APP_TEMPLATE_FILE_NAME
+
+    - echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME ... =====";
+    - curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
+    - sed -i "s/@SERVICE_NAME/${SERVICE_NAME}/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_APP_CHART_FILE_NAME}
+    - cat $ARGOCD_APP_CHART_FILE_NAME
+
+    - echo "===== GENERATE $ARGOCD_APP_VALUES_FILE_NAME ... =====";
+    - curl --fail -o ${ARGOCD_APP_VALUES_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_VALUES_FILE_PATH/raw?ref=$ARGOCD_REF
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - sed -i "s|@REGISTRY_USERNAME|$DOCKER_REG_LOCAL_USERNAME|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - sed -i "s|@REGISTRY_PASSWORD|$DOCKER_REG_LOCAL_PASSWORD|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - sed -i "s|@CONFIG_CONTENT|$(cat $CONFIG_FILE_PATH/$CONFIG_FILE)|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME}
+    - cat $ARGOCD_APP_VALUES_FILE_NAME
+
+.sync_argocd_app_files:
+  script:
+    - echo "===== SYNC ARGOCD APP FILES ... ====="
+    - |
+      # Clone ArgoCD repository
+      echo "Cloning ArgoCD repository..."
+      git clone $ARGOCD_REPO_URL $ARGOCD_ROOT_FOLDER
+      cd $ARGOCD_ROOT_FOLDER
+
+      APPLICATION_ROOT_FOLDER=applications/templates
+      # Check if template folder exists, create if not
+      if [ ! -d "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH" ]; then
+        echo "Creating template folder: $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH"
+        mkdir -p "applications/$APPLICATION_PATH"
+      fi
+
+      # Copy the generated template file to the template folder
+      echo "Copying $ARGOCD_APP_TEMPLATE_FILE_NAME to applications/$APPLICATION_PATH/${SERVICE_NAME}_${DEPLOY_ENV/_/}.yaml"
+      cp ../$ARGOCD_APP_TEMPLATE_FILE_NAME "applications/$APPLICATION_PATH/${SERVICE_NAME}_${DEPLOY_ENV/_/}.yaml"
+
+      CHART_ROOT_FOLDER=charts
+      # Check if chart folder exists, create if not
+      if [ ! -d "$CHART_ROOT_FOLDER/$APPLICATION_PATH" ]; then
+        echo "Creating chart folder: $CHART_ROOT_FOLDER/$APPLICATION_PATH"
+        mkdir -p "$CHART_ROOT_FOLDER/$APPLICATION_PATH"
+      fi
+
+      # Copy the generated chart file to the chart folder
+      echo "Copying $ARGOCD_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
+      cp ../$ARGOCD_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
+
+      # Copy the generated values file to the chart folder
+      echo "Copying $ARGOCD_APP_VALUES_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values_${DEPLOY_ENV/_/}.yaml"
+      cp ../$ARGOCD_APP_VALUES_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/values_${DEPLOY_ENV/_/}.yaml"
+
+      # Commit and push changes
+      git config user.email "rocketor@nexcel.vn"
+      git config user.name "rocketor.vn"
+      git add -A
+      git commit -m "$SERVICE_NAME_${DEPLOY_ENV/_/}: $CI_COMMIT_MESSAGE [skip ci]"
+      git push origin $ARGOCD_TARGET_REVISION
+
 .deploy_k8s:
   script:
     - echo "===== DEPLOYING K8S RESOURCES ... =====";

@@ -221,7 +221,7 @@ services:
       endpoint_mode: dnsrr
 {% endif %}
 {% endif %}
-{% if env == "prod" or env == "fpsprod" or env == "alphaprod"%}
+{% if env == "prod" or env == "fpsprod" or env == "alphaprod" or env == "klprod" or env == "fpsklprod" or env == "alphaklprod" %}
 {% if services[0].port_prod is undefined %}
       endpoint_mode: dnsrr
 {% endif %}

@@ -72,126 +72,146 @@
 {% set timeout_server = services[0].timeout_server | default('') %}
 {#---------end timeout_server---------#}
 
+{#---------sp_content---------#}
+{% set sp_content = '@SP_CONTENT' %}
+{#---------end sp_content---------#}
+
+############# image pullsecrets values #############
+imagepullsecrets:
+  imageCredentials:
+    registry: "oci://@REGISTRY_IMAGE/charts"
+    username: @REGISTRY_USERNAME
+    password: @REGISTRY_PASSWORD
+
 ############# k8s deployments values #############
-replicaCount: {{ replica_count }}
-revisionHistoryLimit: 5
-environment: {{ environment | lower | replace('_','') }}
+k8sdeployments:
+  replicaCount: {{ replica_count }}
+  revisionHistoryLimit: 5
+  environment: {{ environment | lower | replace('_','') }}
 
-rollingUpdate:
-  maxSurge: 25%
-  maxUnavailable: {{ max_unavailable }}
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: {{ max_unavailable }}
 
-image:
-  name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-@COMMIT_HASH"
-  pullPolicy: Always
+  image:
+    name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-@COMMIT_HASH"
+    pullPolicy: Always
 
-healthCheck:
-  enabled: {{ enable_health_check }}
-  path: {{services[0].healthcheck_path | default('/')}}
-  failureThreshold: {{services[0].healthcheck_retries | default(5)}}
-  periodSeconds: {{services[0].healthcheck_interval | default(5) | replace('s','')}}
-  timeoutSeconds: {{services[0].healthcheck_timeout | default(5) | replace('s','')}}
-  startupFailureThreshold: 30
+  healthCheck:
+    enabled: {{ enable_health_check }}
+    path: {{services[0].healthcheck_path | default('/')}}
+    failureThreshold: {{services[0].healthcheck_retries | default(5)}}
+    periodSeconds: {{services[0].healthcheck_interval | default(5) | replace('s','')}}
+    timeoutSeconds: {{services[0].healthcheck_timeout | default(5) | replace('s','')}}
+    startupFailureThreshold: 30
 
-{% if config_file is defined %}
-configFile:
-  path: "{{ container_root_path }}/{{ config_container_path }}"
-  name: "{{ config_file }}"    
-{% endif %}
-
-{% if sp_file is defined %}
-spFile:
-  path: "{{container_root_path}}/{{sp_container_path}}"
-  name: "{{sp_file}}"    
-{% endif %}
-
-{% if org_name == "luminet" %}
-env:
-  - name: APP_NAME
-    value: "{{ service_name }}"
-{% endif %}
-
-service:
-# kind of types: ClusterIP, NodePort, LoadBalancer
-  type: ClusterIP
-  port: {{ container_port }}
-  targetPort: {{ container_port }}
-#  nodePort:
-
-{% if site_urls is defined and site_urls | length > 0 %}
-ingress:
-  enabled: true
-  stickySessions: {{ sticky_sessions }}
-  className: {{ ingress_class }}
-  {% if timeout_server is defined and timeout_server | length > 0 %}
-  timeoutServer: {{ timeout_server }}
+  {% if config_file is defined %}
+  configFile:
+    path: "{{ container_root_path }}/{{ config_container_path }}"
+    name: "{{ config_file }}"    
+    {% if config_content is defined %}
+    content: |
+      {{ config_content | trim("'") | indent(6) }}
+    {% endif %}
   {% endif %}
-  hosts:
-  {% for url in site_urls %}
-    - host: {{ url.host }}
-      paths:
-        - path: {{ url.path }}
-          pathType: Prefix
-  {% endfor %}
-{% endif %}
 
-{% if services[0].pvc is defined %}
-pvc:
-  create: true
-  storage: {{ services[0].pvc.storage }}
-{% endif %}
+  {% if sp_file is defined and false %}
+  spFile:
+    path: "{{container_root_path}}/{{sp_container_path}}"
+    name: "{{sp_file}}"    
+    {% if sp_content is defined and sp_content | length > 0 %}
+    content: |
+      {{ sp_content }}
+    {% endif %}
+  {% endif %}
 
-{% if services[0].volumes is defined and services[0].volumes | length > 0 %}
-volumes:
-  {% for volume in services[0].volumes %}
-  - name: {{ volume.name }}
-    mountPath: {{ volume.mount_path }}
-    sharedPVC: {{ volume.shared_pvc }}
-  {% endfor %}
-{% endif %}
+  {% if org_name == "luminet" %}
+  env:
+    - name: APP_NAME
+      value: "{{ service_name }}"
+  {% endif %}
 
-resources:
-  limits:
-    memory: {{ limit_memory }}Mi
-{% if services[0].nvidia_gpu is defined %}
-    nvidia.com/gpu: {{ services[0].nvidia_gpu }}
-{% endif %}
-  requests:
-    memory: 16Mi
+  service:
+  # kind of types: ClusterIP, NodePort, LoadBalancer
+    type: ClusterIP
+    port: {{ container_port }}
+    targetPort: {{ container_port }}
+  #  nodePort:
 
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: false
-  # Annotations to add to the service account
-  annotations: {}
+  {% if site_urls is defined and site_urls | length > 0 %}
+  ingress:
+    enabled: true
+    stickySessions: {{ sticky_sessions }}
+    className: {{ ingress_class }}
+    {% if timeout_server is defined and timeout_server | length > 0 %}
+    timeoutServer: {{ timeout_server }}
+    {% endif %}
+    hosts:
+    {% for url in site_urls %}
+      - host: {{ url.host }}
+        paths:
+          - path: {{ url.path }}
+            pathType: Prefix
+    {% endfor %}
+  {% endif %}
 
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  {% if services[0].pvc is defined %}
+  pvc:
+    create: true
+    storage: {{ services[0].pvc.storage }}
+  {% endif %}
 
-nodeSelector:
-  {{node_label}}: "yes"
+  {% if services[0].volumes is defined and services[0].volumes | length > 0 %}
+  volumes:
+    {% for volume in services[0].volumes %}
+    - name: {{ volume.name }}
+      mountPath: {{ volume.mount_path }}
+      sharedPVC: {{ volume.shared_pvc }}
+    {% endfor %}
+  {% endif %}
 
-tolerations:
-  - key: {{node_label}}
-    operator: "Equal"
-    value: "yes"
-    effect: "NoSchedule"
+  resources:
+    limits:
+      memory: {{ limit_memory }}Mi
+  {% if services[0].nvidia_gpu is defined %}
+      nvidia.com/gpu: {{ services[0].nvidia_gpu }}
+  {% endif %}
+    requests:
+      memory: 16Mi
 
-affinity: {}
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
 
-podAnnotations: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
 
-podSecurityContext: {}
-  # fsGroup: 2000
+  nodeSelector:
+    {{node_label}}: "yes"
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+  tolerations:
+    - key: {{node_label}}
+      operator: "Equal"
+      value: "yes"
+      effect: "NoSchedule"
+
+  affinity: {}
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000

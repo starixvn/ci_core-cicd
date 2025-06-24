@@ -64,7 +64,7 @@
     - echo $VARS_DATA > VARS_DATA.json
     - ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
     - echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME ... =====";
-    - curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
+    - curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
     - sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
     - sed -i "s/@ENV_NAME/${ENV_NAME_LOWER}/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
@@ -76,27 +76,27 @@
     - cat $ARGOCD_APP_TEMPLATE_FILE_NAME
 
     - echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME ... =====";
-    - curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
+    - curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_APP_CHART_FILE_NAME}
     - cat $ARGOCD_APP_CHART_FILE_NAME
 
-    - echo "===== GENERATE $ARGOCD_APP_VALUES_FILE_NAME ... =====";
-    - curl --fail -o ${ARGOCD_APP_VALUES_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_VALUES_FILE_PATH/raw?ref=$ARGOCD_REF
-    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME}
-    - cat $ARGOCD_APP_VALUES_FILE_NAME
+    - echo "===== GENERATE $K8S_FILE_NAME ... =====";
+    - curl --fail -o ${K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$K8S_FILE_PATH/raw?ref=$K8S_REF
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${K8S_FILE_NAME}.j2
+    - sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${K8S_FILE_NAME}.j2
+    - sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${K8S_FILE_NAME}.j2
+    - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${K8S_FILE_NAME}.j2
+    - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${K8S_FILE_NAME}.j2
+    - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${K8S_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
+    - cat $K8S_FILE_NAME
     - |
       if [ ! -z "$CONFIG_FILE_NAME" ];
       then
         CONFIG_CONTENT=$(cat $CONFIG_FILE_PATH/$CONFIG_FILE)
-        jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME} -e "config_content='$CONFIG_CONTENT'"
+        jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME} -e "config_content='$CONFIG_CONTENT'"
       fi
     # - |
     #   echo $SP_FILE_TRANSFORM;
@@ -116,9 +116,9 @@
     #     fi;
     #     SP_CONTENT=$(cat $SP_FILE_PATH/$SP_FILE)
     #     echo $SP_CONTENT
-    #     sed -i "s#@SP_CONTENT#$SP_CONTENT#g" ${ARGOCD_APP_VALUES_FILE_NAME}.j2
-    #     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_VALUES_FILE_NAME}.j2 -o ./${ARGOCD_APP_VALUES_FILE_NAME}
-    #     cat $ARGOCD_APP_VALUES_FILE_NAME
+    #     sed -i "s#@SP_CONTENT#$SP_CONTENT#g" ${K8S_FILE_NAME}.j2
+    #     jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
+    #     cat $K8S_FILE_NAME
     #   fi
 
 .sync_argocd_app_files:
@@ -162,8 +162,8 @@
       cp ../$ARGOCD_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
 
       # Copy the generated values file to the chart folder
-      echo "Copying $ARGOCD_APP_VALUES_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
-      cp ../$ARGOCD_APP_VALUES_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
+      echo "Copying $K8S_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
+      cp ../$K8S_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
 
       # Commit and push changes
       git config user.email "rocketor.vn@spvn.local"

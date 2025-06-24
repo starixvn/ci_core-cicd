@@ -115,13 +115,13 @@ k8sdeployments:
     {% endif %}
   {% endif %}
 
-  {% if sp_file is defined and false %}
+  {% if sp_file is defined %}
   spFile:
     path: "{{container_root_path}}/{{sp_container_path}}"
     name: "{{sp_file}}"    
     {% if sp_content is defined and sp_content | length > 0 %}
     content: |
-      {{ sp_content }}
+      {{ sp_content | indent(6) }}
     {% endif %}
   {% endif %}
 

@@ -98,79 +98,77 @@
         CONFIG_CONTENT=$(cat $CONFIG_FILE_PATH/$CONFIG_FILE)
         jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME} -e "config_content='$CONFIG_CONTENT'"
       fi
-    # - |
-    #   echo $SP_FILE_TRANSFORM;
-    #   if [ ! -z "$SP_FILE_NAME" ];
-    #   then
-    #     if [ "$SP_FILE_TRANSFORM" == "true" ]; then
-    #       export SP_FILE=$SP_FILE_NAME.${TRANSFORM_CONFIG}.$SP_FILE_EXTENSION;
-    #     else
-    #       export SP_FILE=$SP_FILE_NAME.$SP_FILE_EXTENSION;
-    #     fi;
-    #     if [ ! -z "$REDMINE_IDS" ]; then
-    #       echo "===== CHANGE SP VERSION FOR $SP_FILE ... =====";
-    #       if curl --fail -o sp-result.xml -F file=@"$SP_FILE_PATH/$SP_FILE" -F "redmineIds=$REDMINE_IDS" -X POST $ROCKETOR_API_URL/Home/ChangeSpVersion; then
-    #         cp sp-result.xml "$SP_FILE_PATH/$SP_FILE";
-    #         echo "It's done";
-    #       fi;
-    #     fi;
-    #     SP_CONTENT=$(cat $SP_FILE_PATH/$SP_FILE)
-    #     echo $SP_CONTENT
-    #     sed -i "s#@SP_CONTENT#$SP_CONTENT#g" ${K8S_FILE_NAME}.j2
-    #     jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
-    #     cat $K8S_FILE_NAME
-    #   fi
+    - |
+      echo $SP_FILE_TRANSFORM;
+      if [ ! -z "$SP_FILE_NAME" ];
+      then
+        if [ "$SP_FILE_TRANSFORM" == "true" ]; then
+          export SP_FILE=$SP_FILE_NAME.${TRANSFORM_CONFIG}.$SP_FILE_EXTENSION;
+        else
+          export SP_FILE=$SP_FILE_NAME.$SP_FILE_EXTENSION;
+        fi;
+        if [ ! -z "$REDMINE_IDS" ]; then
+          echo "===== CHANGE SP VERSION FOR $SP_FILE ... =====";
+          if curl --fail -o sp-result.xml -F file=@"$SP_FILE_PATH/$SP_FILE" -F "redmineIds=$REDMINE_IDS" -X POST $ROCKETOR_API_URL/Home/ChangeSpVersion; then
+            cp sp-result.xml "$SP_FILE_PATH/$SP_FILE";
+            echo "It's done";
+          fi;
+        fi;
+        SP_CONTENT=$(cat $SP_FILE_PATH/$SP_FILE)
+        echo $SP_CONTENT
+        # Replace @SP_CONTENT with actual content in the template file using awk for multi-line support
+        awk -v sp_content="$SP_CONTENT" '{gsub(/@SP_CONTENT/, sp_content); print}' ${K8S_FILE_NAME}.j2 > ${K8S_FILE_NAME}.j2.tmp && mv ${K8S_FILE_NAME}.j2.tmp ${K8S_FILE_NAME}.j2
+        jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
+        cat $K8S_FILE_NAME
+      fi
 
 .sync_argocd_app_files:
   script:
     - echo "===== SYNC ARGOCD APP FILES ... ====="
+
     - |
-      # Clone ArgoCD repository with authentication
       echo "Cloning ArgoCD repository..."
       ARGOCD_HOST=$(echo $ARGOCD_REPO_URL | sed 's|https://||')
       git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${ARGOCD_HOST} $ARGOCD_ROOT_FOLDER
       cd $ARGOCD_ROOT_FOLDER
-      
-      # Switch to target revision branch
       echo "Switching to branch: $ARGOCD_TARGET_REVISION"
       git switch $ARGOCD_TARGET_REVISION
 
-      ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-
+    - ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+    - |
       APPLICATION_ROOT_FOLDER=applications/templates
-      # Check if template folder exists, create if not
       if [ ! -d "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH" ];
       then
         echo "Creating template folder: $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH"
         mkdir -p "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH"
       fi
-
-      # Copy the generated template file to the template folder
       echo "Copying $ARGOCD_APP_TEMPLATE_FILE_NAME to $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"
       cp ../$ARGOCD_APP_TEMPLATE_FILE_NAME "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"
 
+    - |
       CHART_ROOT_FOLDER=charts
-      # Check if chart folder exists, create if not
       if [ ! -d "$CHART_ROOT_FOLDER/$APPLICATION_PATH" ];
       then
         echo "Creating chart folder: $CHART_ROOT_FOLDER/$APPLICATION_PATH"
         mkdir -p "$CHART_ROOT_FOLDER/$APPLICATION_PATH"
       fi
-
-      # Copy the generated chart file to the chart folder
       echo "Copying $ARGOCD_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
       cp ../$ARGOCD_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
-
-      # Copy the generated values file to the chart folder
       echo "Copying $K8S_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
       cp ../$K8S_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
 
-      # Commit and push changes
-      git config user.email "rocketor.vn@spvn.local"
-      git config user.name "rocketor.vn"
-      git add -A
-      git commit -m "[${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}] $CI_COMMIT_MESSAGE"
-      git push origin $ARGOCD_TARGET_REVISION
+    - |
+      if git diff --quiet && git diff --cached --quiet;
+      then
+        echo "No changes detected. Skipping commit and push."
+      else
+        echo "Changes detected. Committing and pushing..."        
+        git config user.email "rocketor.vn@spvn.local"
+        git config user.name "rocketor.vn"
+        git add -A
+        git commit -m "[${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}] $CI_COMMIT_MESSAGE"
+        git push origin $ARGOCD_TARGET_REVISION
+      fi
 
 .deploy_k8s:
   script:

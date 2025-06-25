@@ -63,7 +63,20 @@
   script:
     - echo $VARS_DATA > VARS_DATA.json
     - ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-    - echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME ... =====";
+
+    - echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME for secret ... =====";
+    - curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$K8S_REF
+    - sed -i "s/@APP_NAME/imagepullsecrets/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s/@ENV_NAME/${ENV_NAME_LOWER/[0-9]/}/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s|@DEST_NAME|${ENV_NAME_LOWER/[0-9]/}|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s|@SRC_PATH|$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - sed -i "s/@SRC_TARGET_REVISION/$ARGOCD_TARGET_REVISION/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME}
+    - cat $ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME
+
+    - echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME for application ... =====";
     - curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
     - sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
@@ -75,52 +88,68 @@
     - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${ARGOCD_APP_TEMPLATE_FILE_NAME}
     - cat $ARGOCD_APP_TEMPLATE_FILE_NAME
 
-    - echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME ... =====";
+    - echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME for secret ... =====";
+    - curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$K8S_REF
+    - sed -i "s/@APP_NAME/imagepullsecrets/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - sed -i "s/@DEP_NAME/imagepullsecrets/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - sed -i "s/@DEP_VERSION/1.0.0/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_SECRET_APP_CHART_FILE_NAME}
+    - cat $ARGOCD_SECRET_APP_CHART_FILE_NAME
+
+    - echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME for application ... =====";
     - curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - sed -i "s/@DEP_NAME/k8sdeployments/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+    - sed -i "s/@DEP_VERSION/1.3.1/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_APP_CHART_FILE_NAME}
     - cat $ARGOCD_APP_CHART_FILE_NAME
+
+    - echo "===== GENERATE $IMAGE_PULL_SECRETS_FILE_NAME ... =====";
+    - curl --fail -o ${IMAGE_PULL_SECRETS_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$IMAGE_PULL_SECRETS_FILE_PATH/raw?ref=$K8S_REF
+    - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${IMAGE_PULL_SECRETS_FILE_NAME}.j2
+    - sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${IMAGE_PULL_SECRETS_FILE_NAME}.j2
+    - sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${IMAGE_PULL_SECRETS_FILE_NAME}.j2
+    - jinja render -d ./VARS_DATA.json -t ./${IMAGE_PULL_SECRETS_FILE_NAME}.j2 -o ./${IMAGE_PULL_SECRETS_FILE_NAME}
+    - cat $IMAGE_PULL_SECRETS_FILE_NAME
 
     - echo "===== GENERATE $K8S_FILE_NAME ... =====";
     - curl --fail -o ${K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$K8S_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${K8S_FILE_NAME}.j2
-    - sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${K8S_FILE_NAME}.j2
-    - sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${K8S_FILE_NAME}.j2
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${K8S_FILE_NAME}.j2
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${K8S_FILE_NAME}.j2
     - sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${K8S_FILE_NAME}.j2
-    - jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
-    - cat $K8S_FILE_NAME
     - |
-      if [ ! -z "$CONFIG_FILE_NAME" ];
-      then
-        CONFIG_CONTENT=$(cat $CONFIG_FILE_PATH/$CONFIG_FILE)
-        jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME} -e "config_content='$CONFIG_CONTENT'"
-      fi
-    - |
-      echo $SP_FILE_TRANSFORM;
       if [ ! -z "$SP_FILE_NAME" ];
       then
-        if [ "$SP_FILE_TRANSFORM" == "true" ]; then
+        if [ "$SP_FILE_TRANSFORM" == "true" ];
+        then
           export SP_FILE=$SP_FILE_NAME.${TRANSFORM_CONFIG}.$SP_FILE_EXTENSION;
         else
           export SP_FILE=$SP_FILE_NAME.$SP_FILE_EXTENSION;
-        fi;
-        if [ ! -z "$REDMINE_IDS" ]; then
+        fi
+        if [ ! -z "$REDMINE_IDS" ];
+        then
           echo "===== CHANGE SP VERSION FOR $SP_FILE ... =====";
           if curl --fail -o sp-result.xml -F file=@"$SP_FILE_PATH/$SP_FILE" -F "redmineIds=$REDMINE_IDS" -X POST $ROCKETOR_API_URL/Home/ChangeSpVersion; then
             cp sp-result.xml "$SP_FILE_PATH/$SP_FILE";
             echo "It's done";
-          fi;
-        fi;
-        SP_CONTENT=$(cat $SP_FILE_PATH/$SP_FILE)
-        echo $SP_CONTENT
-        # Replace @SP_CONTENT with actual content in the template file using awk for multi-line support
-        awk -v sp_content="$SP_CONTENT" '{gsub(/@SP_CONTENT/, sp_content); print}' ${K8S_FILE_NAME}.j2 > ${K8S_FILE_NAME}.j2.tmp && mv ${K8S_FILE_NAME}.j2.tmp ${K8S_FILE_NAME}.j2
-        jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
-        cat $K8S_FILE_NAME
+          fi
+        fi
+        awk -v sp_content="$(< "$SP_FILE_PATH/$SP_FILE")" \
+          '{gsub(/@SP_CONTENT/, sp_content); print}' \
+          "${K8S_FILE_NAME}.j2" > "${K8S_FILE_NAME}.j2.tmp" \
+          && mv "${K8S_FILE_NAME}.j2.tmp" "${K8S_FILE_NAME}.j2"
       fi
+    - |
+      if [ ! -z "$CONFIG_FILE_NAME" ];
+      then
+        jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME} -e "config_content='$(< "$CONFIG_FILE_PATH/$CONFIG_FILE")'"
+      else
+        jinja render -d ./VARS_DATA.json -t ./${K8S_FILE_NAME}.j2 -o ./${K8S_FILE_NAME}
+      fi
+    - cat $K8S_FILE_NAME
 
 .sync_argocd_app_files:
   script:
@@ -131,30 +160,48 @@
       ARGOCD_HOST=$(echo $ARGOCD_REPO_URL | sed 's|https://||')
       git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${ARGOCD_HOST} $ARGOCD_ROOT_FOLDER
       cd $ARGOCD_ROOT_FOLDER
-      echo "Switching to branch: $ARGOCD_TARGET_REVISION"
+      echo "Switching to branch: $ARGOCD_TARGET_REVISION..."
       git switch $ARGOCD_TARGET_REVISION
 
     - ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
     - |
       APPLICATION_ROOT_FOLDER=applications/templates
+      if [ ! -d "$APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME" ];
+      then
+        echo "Creating secret template folder: $APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME"
+        mkdir -p "$APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME"
+      fi
+      echo "Copying $ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME to $APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/${ENV_NAME_LOWER/[0-9]/}.yaml..."
+      cp ../$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME "$APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/${ENV_NAME_LOWER/[0-9]/}.yaml"
+
       if [ ! -d "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH" ];
       then
-        echo "Creating template folder: $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH"
+        echo "Creating application template folder: $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH..."
         mkdir -p "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH"
       fi
-      echo "Copying $ARGOCD_APP_TEMPLATE_FILE_NAME to $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"
-      cp ../$ARGOCD_APP_TEMPLATE_FILE_NAME "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"
+      echo "Copying $ARGOCD_APP_TEMPLATE_FILE_NAME to $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml..."
+      cp ../$ARGOCD_APP_TEMPLATE_FILE_NAME "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"      
 
     - |
       CHART_ROOT_FOLDER=charts
+      if [ ! -d "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME" ];
+      then
+        echo "Creating secret chart folder: $CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME..."
+        mkdir -p "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME"
+      fi
+      echo "Copying $ARGOCD_SECRET_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/Chart.yaml..."
+      cp ../$ARGOCD_SECRET_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/Chart.yaml"
+      echo "Copying $IMAGE_PULL_SECRETS_FILE_NAME to $CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/values-${ENV_NAME_LOWER/[0-9]/}.yaml..."
+      cp ../$IMAGE_PULL_SECRETS_FILE_NAME "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/values-${ENV_NAME_LOWER/[0-9]/}.yaml"
+
       if [ ! -d "$CHART_ROOT_FOLDER/$APPLICATION_PATH" ];
       then
-        echo "Creating chart folder: $CHART_ROOT_FOLDER/$APPLICATION_PATH"
+        echo "Creating application chart folder: $CHART_ROOT_FOLDER/$APPLICATION_PATH..."
         mkdir -p "$CHART_ROOT_FOLDER/$APPLICATION_PATH"
       fi
-      echo "Copying $ARGOCD_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
+      echo "Copying $ARGOCD_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml..."
       cp ../$ARGOCD_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
-      echo "Copying $K8S_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
+      echo "Copying $K8S_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml..."
       cp ../$K8S_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
 
     - |
@@ -162,9 +209,9 @@
       then
         echo "No changes detected. Skipping commit and push."
       else
-        echo "Changes detected. Committing and pushing..."        
-        git config user.email "rocketor.vn@spvn.local"
-        git config user.name "rocketor.vn"
+        echo "Changes detected. Committing and pushing..."
+        git config user.email $ROCKETOR_GIT_EMAIL
+        git config user.name $ROCKETOR_GIT_USER
         git add -A
         git commit -m "[${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}] $CI_COMMIT_MESSAGE"
         git push origin $ARGOCD_TARGET_REVISION

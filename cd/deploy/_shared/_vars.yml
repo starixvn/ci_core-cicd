@@ -4,8 +4,12 @@ variables:
   DOCKER_COMPOSE_REF: main
   K8S_FILE_NAME: k8sdeployments-values.yaml
   K8S_FILE_PATH: "cd%2f_templates%2f${K8S_FILE_NAME}.j2"
+  IMAGE_PULL_SECRETS_FILE_NAME: imagepullsecrets-values.yaml
+  IMAGE_PULL_SECRETS_FILE_PATH: "cd%2f_templates%2f${IMAGE_PULL_SECRETS_FILE_NAME}.j2"
   K8S_REF: argocd
-
+  ARGOCD_SECRET_ROOT_FOLDER: _shared/secrets
+  ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME: argocd-secret-app-template.yaml
+  ARGOCD_SECRET_APP_CHART_FILE_NAME: argocd-secret-app-chart.yaml
   ARGOCD_APP_TEMPLATE_FILE_NAME: argocd-app-template.yaml
   ARGOCD_APP_TEMPLATE_FILE_PATH: "cd%2f_templates%2f${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2"
   ARGOCD_APP_CHART_FILE_NAME: argocd-app-chart.yaml
@@ -13,3 +17,5 @@ variables:
   ARGOCD_REPO_URL: "https://gitlab.nexdev.net/gitlab-sentry/zdemogroup/demo-argocd.git"
   ARGOCD_ROOT_FOLDER: demo-argocd
   ARGOCD_TARGET_REVISION: main
+  ROCKETOR_GIT_EMAIL: rocketor.vn@spvn.local
+  ROCKETOR_GIT_USER: rocketor.vn

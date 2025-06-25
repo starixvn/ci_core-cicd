@@ -48,6 +48,7 @@
 {#---------sp_file---------#}
 {% if services[0].sp_file_name is defined and services[0].sp_file_name != '' %}
   {% set sp_file = services[0].sp_file_name ~ '.' ~ services[0].sp_file_extension | default("xml") %}
+  {% set sp_content = '@SP_CONTENT' %}
   {% set sp_container_path = services[0].sp_container_path | default ('App_Data') %}
 {% endif %}
 {#---------end sp_file---------#}
@@ -71,17 +72,6 @@
 {#---------timeout_server---------#}
 {% set timeout_server = services[0].timeout_server | default('') %}
 {#---------end timeout_server---------#}
-
-{#---------sp_content---------#}
-{% set sp_content = '@SP_CONTENT' %}
-{#---------end sp_content---------#}
-
-############# image pullsecrets values #############
-imagepullsecrets:
-  imageCredentials:
-    registry: "oci://@REGISTRY_IMAGE/charts"
-    username: @REGISTRY_USERNAME
-    password: @REGISTRY_PASSWORD
 
 ############# k8s deployments values #############
 k8sdeployments:
@@ -109,20 +99,16 @@ k8sdeployments:
   configFile:
     path: "{{ container_root_path }}/{{ config_container_path }}"
     name: "{{ config_file }}"    
-    {% if config_content is defined %}
     content: |
       {{ config_content | trim("'") | indent(6) }}
-    {% endif %}
   {% endif %}
 
   {% if sp_file is defined %}
   spFile:
     path: "{{container_root_path}}/{{sp_container_path}}"
     name: "{{sp_file}}"    
-    {% if sp_content is defined and sp_content | length > 0 %}
     content: |
       {{ sp_content | indent(6) }}
-    {% endif %}
   {% endif %}
 
   {% if org_name == "luminet" %}

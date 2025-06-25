@@ -5,6 +5,8 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  labels:
+    app: @APP_NAME
 spec:
   destination:
     namespace: @STACK_NAME

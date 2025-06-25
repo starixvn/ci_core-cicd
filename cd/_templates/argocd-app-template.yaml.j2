@@ -6,7 +6,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   labels:
-    app: @APP_NAME
+    app: @STACK_NAME-@APP_NAME
 spec:
   destination:
     namespace: @STACK_NAME
@@ -19,3 +19,6 @@ spec:
     helm:
       valueFiles:
         - values-@ENV_NAME.yaml
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

@@ -52,6 +52,7 @@ include:
 
 .base_deploy_k8s:
   stage: deploy
+  image: $DOCKER_REG_LOCAL_URL/base/docker:24.0.4-bash-jq-jinja-argocd
   extends:
     - .env
   script:

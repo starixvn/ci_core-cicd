@@ -61,7 +61,7 @@
 
 .generate-argocd-template-files: &generate-argocd-template-files
   - |
-    echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME for secret ... =====";
+    echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for secret...";
     curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
     sed -i "s/@APP_NAME/$IMAGE_PULL_SECRETS_CHART_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
     sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
@@ -72,7 +72,7 @@
     sed -i "s/@SRC_TARGET_REVISION/$ARGOCD_TARGET_REVISION/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME}
   - |
-    echo "===== GENERATE $ARGOCD_APP_TEMPLATE_FILE_NAME for application ... =====";
+    echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for application...";
     curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
     sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
     sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
@@ -85,7 +85,7 @@
 
 .generate-argocd-chart-files: &generate-argocd-chart-files
   - |
-    echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME for secret ... =====";
+    echo "Generating $ARGOCD_APP_CHART_FILE_NAME for secret...";
     curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
     sed -i "s/@APP_NAME/$IMAGE_PULL_SECRETS_CHART_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
@@ -93,7 +93,7 @@
     sed -i "s/@DEP_VERSION/$IMAGE_PULL_SECRETS_CHART_VERSION/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_SECRET_APP_CHART_FILE_NAME}
   - |
-    echo "===== GENERATE $ARGOCD_APP_CHART_FILE_NAME for application ... =====";
+    echo "Generating $ARGOCD_APP_CHART_FILE_NAME for application...";
     curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
     sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
     sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
@@ -103,14 +103,14 @@
 
 .generate-argocd-values-files: &generate-argocd-values-files
   - |
-    echo "===== GENERATE $ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME ... =====";
+    echo "Generating $ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME...";
     curl --fail -o ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_IMAGE_PULL_SECRETS_FILE_PATH/raw?ref=$ARGOCD_REF
     sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2
     sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2
     sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2 -o ./${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}
   - |
-    echo "===== GENERATE $ARGOCD_K8S_FILE_NAME ... =====";
+    echo "Generating $ARGOCD_K8S_FILE_NAME...";
     curl --fail -o ${ARGOCD_K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_K8S_FILE_PATH/raw?ref=$ARGOCD_REF
     sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_K8S_FILE_NAME}.j2
     sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${ARGOCD_K8S_FILE_NAME}.j2
@@ -120,10 +120,7 @@
     cat $ARGOCD_K8S_FILE_NAME.preview
     if [ ! -z "$SP_FILE_NAME" ];
     then
-      awk -v sp_content="$(< "$SP_FILE_PATH/$SP_FILE")" \
-        '{gsub(/@SP_CONTENT/, sp_content); print}' \
-        "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" \
-        && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
+      awk -v sp_content="$(< "$SP_FILE_PATH/$SP_FILE")" '{gsub(/@SP_CONTENT/, sp_content); print}' "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
     fi
     if [ ! -z "$CONFIG_FILE_NAME" ];
     then
@@ -134,121 +131,125 @@
 
 .prepare_argocd_app_files:
   script:
+    - echo "===== PREPARING ARGOCD APP FILES ... ====="
     - echo $VARS_DATA > VARS_DATA.json
     - ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
     - *generate-argocd-template-files
     - *generate-argocd-chart-files
     - *generate-argocd-values-files
 
+.clone_argocd_repo: &clone_argocd_repo
+  - |
+    echo "Cloning ArgoCD repository..."
+    ARGOCD_REPO_HOST=$(echo $ARGOCD_REPO_URL | sed 's|https://||')
+    git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${ARGOCD_REPO_HOST} $ARGOCD_ROOT_FOLDER
+    cd $ARGOCD_ROOT_FOLDER
+    echo "Switching to branch: $ARGOCD_TARGET_REVISION..."
+    git switch $ARGOCD_TARGET_REVISION
+
+.copy_helper: &copy_helper
+  - |
+    copy_file() {
+      local source_file="$1"
+      local dest_path="$2"
+      local dest_dir=$(dirname "$dest_path")
+
+      if [ ! -d "$dest_dir" ];
+      then
+        echo "Creating folder: $dest_dir"
+        mkdir -p "$dest_dir"
+      fi
+      echo "Copying $source_file to $dest_path..."
+      cp "../$source_file" "$dest_path"
+    }
+
+.copy_application_files: &copy_application_files
+  - |
+    copy_file "$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME" "applications/templates/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/${ENV_NAME_LOWER/[0-9]/}.yaml"
+    copy_file "$ARGOCD_APP_TEMPLATE_FILE_NAME" "applications/templates/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"
+
+.copy_chart_files: &copy_chart_files
+  - |
+    copy_file "$ARGOCD_SECRET_APP_CHART_FILE_NAME" "charts/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/Chart.yaml"
+    copy_file "$ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME" "charts/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/values-${ENV_NAME_LOWER/[0-9]/}.yaml"
+    copy_file "$ARGOCD_APP_CHART_FILE_NAME" "charts/$APPLICATION_PATH/Chart.yaml"
+    copy_file "$ARGOCD_K8S_FILE_NAME" "charts/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
+
+.push_to_argocd_repo: &push_to_argocd_repo
+  - |
+    if [ -n "$(git status --porcelain)" ];
+    then
+      echo "Pushing to ArgoCD repository..."
+      git config user.email $ROCKETOR_GIT_EMAIL
+      git config user.name $ROCKETOR_GIT_USER
+      git add -A
+      git commit -m "[${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}] $CI_COMMIT_MESSAGE"
+
+      MAX_RETRIES=3
+      RETRY_COUNT=0
+      while [ $RETRY_COUNT -lt $MAX_RETRIES ];
+      do
+        echo "Pulling latest changes from remote repository..."
+        git pull origin $ARGOCD_TARGET_REVISION --rebase
+        echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES to push changes..."
+        if git push origin $ARGOCD_TARGET_REVISION;
+        then
+          break
+        else
+          RETRY_COUNT=$((RETRY_COUNT + 1))
+          if [ $RETRY_COUNT -lt $MAX_RETRIES ];
+          then
+            SLEEP_TIME=$((RANDOM % 5 + 1))
+            echo "Waiting $SLEEP_TIME seconds before retrying..."
+            sleep $SLEEP_TIME
+          fi
+        fi
+      done
+    else
+      echo "No changes detected. Skipping commit and push."
+    fi
+
+.sync_argocd_app_helper: &sync_argocd_app_helper
+  - |
+    sync_argocd_application() {
+      local app_name="$1"
+      local template_file="$2"
+
+      echo "Creating $app_name if not exists..."
+      argocd app create -f "../$template_file" --upsert --grpc-web
+      # echo "Checking if $app_name needs sync..."
+      # if ! argocd app diff "$app_name" --refresh --grpc-web --exit-code;
+      # then
+      #   echo "Changes detected. Triggering sync $app_name..."
+      #   argocd app sync "$app_name" --grpc-web
+      # else
+      #   echo "No manifest changes. Skipping sync for $app_name."
+      # fi
+      echo "Triggering sync $app_name..."
+      argocd app sync "$app_name" --grpc-web
+      echo "Waiting for $app_name healthy status..."
+      argocd app wait "$app_name" --health --timeout $ARGOCD_SYNC_TIMEOUT --grpc-web
+    }
+
+.sync_argocd_apps: &sync_argocd_apps
+  - |
+    echo "Logging into Argo CD..."
+    argocd login $ARGOCD_HOST --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --insecure --grpc-web
+  - *sync_argocd_app_helper
+  - |
+    sync_argocd_application "${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/}" "$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME"
+    sync_argocd_application "${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
+
 .sync_argocd_app_files:
   script:
     - echo "===== SYNC ARGOCD APP FILES ... ====="
-
-    - |
-      echo "Cloning ArgoCD repository..."
-      ARGOCD_REPO_HOST=$(echo $ARGOCD_REPO_URL | sed 's|https://||')
-      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${ARGOCD_REPO_HOST} $ARGOCD_ROOT_FOLDER
-      cd $ARGOCD_ROOT_FOLDER
-      echo "Switching to branch: $ARGOCD_TARGET_REVISION..."
-      git switch $ARGOCD_TARGET_REVISION
-
+    - *clone_argocd_repo
     - ENV_NAME_LOWER=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-    - |
-      APPLICATION_ROOT_FOLDER=applications/templates
-      if [ ! -d "$APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME" ];
-      then
-        echo "Creating secret template folder: $APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME"
-        mkdir -p "$APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME"
-      fi
-      echo "Copying $ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME to $APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/${ENV_NAME_LOWER/[0-9]/}.yaml..."
-      cp ../$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME "$APPLICATION_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/${ENV_NAME_LOWER/[0-9]/}.yaml"
-
-      if [ ! -d "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH" ];
-      then
-        echo "Creating application template folder: $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH..."
-        mkdir -p "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH"
-      fi
-      echo "Copying $ARGOCD_APP_TEMPLATE_FILE_NAME to $APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml..."
-      cp ../$ARGOCD_APP_TEMPLATE_FILE_NAME "$APPLICATION_ROOT_FOLDER/$APPLICATION_PATH/${ENV_NAME_LOWER}.yaml"      
-
-    - |
-      CHART_ROOT_FOLDER=charts
-      if [ ! -d "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME" ];
-      then
-        echo "Creating secret chart folder: $CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME..."
-        mkdir -p "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME"
-      fi
-      echo "Copying $ARGOCD_SECRET_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/Chart.yaml..."
-      cp ../$ARGOCD_SECRET_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/Chart.yaml"
-      echo "Copying $ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME to $CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/values-${ENV_NAME_LOWER/[0-9]/}.yaml..."
-      cp ../$ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME "$CHART_ROOT_FOLDER/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/values-${ENV_NAME_LOWER/[0-9]/}.yaml"
-
-      if [ ! -d "$CHART_ROOT_FOLDER/$APPLICATION_PATH" ];
-      then
-        echo "Creating application chart folder: $CHART_ROOT_FOLDER/$APPLICATION_PATH..."
-        mkdir -p "$CHART_ROOT_FOLDER/$APPLICATION_PATH"
-      fi
-      echo "Copying $ARGOCD_APP_CHART_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml..."
-      cp ../$ARGOCD_APP_CHART_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/Chart.yaml"
-      echo "Copying $ARGOCD_K8S_FILE_NAME to $CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml..."
-      cp ../$ARGOCD_K8S_FILE_NAME "$CHART_ROOT_FOLDER/$APPLICATION_PATH/values-${ENV_NAME_LOWER}.yaml"
-
-    - |
-      if [ -n "$(git status --porcelain)" ];
-      then
-        echo "===== PUSHING TO ARGOCD REPO ... ====="
-        git config user.email $ROCKETOR_GIT_EMAIL
-        git config user.name $ROCKETOR_GIT_USER
-        git add -A
-        git commit -m "[${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}] $CI_COMMIT_MESSAGE"
-        
-        MAX_RETRIES=3
-        RETRY_COUNT=0
-        while [ $RETRY_COUNT -lt $MAX_RETRIES ];
-        do
-          echo "Pulling latest changes from remote repository..."
-          git pull origin $ARGOCD_TARGET_REVISION --rebase
-          echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES to push changes..."
-          if git push origin $ARGOCD_TARGET_REVISION;
-          then
-            break
-          else
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-          fi
-        done
-      else
-        echo "===== NO CHANGES DETECTED. SKIPPING COMMIT AND PUSH. ====="
-      fi
-    
-    - |
-      echo "===== SYNC ARGOCD APP ... ====="
-      echo "Logging into Argo CD..."
-      argocd login $ARGOCD_HOST --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --insecure --grpc-web
-
-      echo "Creating ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/} if not exists..."
-      argocd app create -f "../$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME" --upsert --grpc-web
-      echo "Checking if ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/} needs sync..."
-      if ! argocd app diff "${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/}" --refresh --grpc-web --exit-code; then
-        echo "Changes detected. Triggering sync ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/}..."
-        argocd app sync ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/} --grpc-web
-      else
-        echo "No manifest changes. Skipping sync for ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/}."
-      fi
-      echo "Waiting for ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/} sync + healthy status..."
-      argocd app wait ${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_NAME_LOWER/[0-9]/} --health --sync --timeout $ARGOCD_SYNC_TIMEOUT --grpc-web
-
-      echo "Creating ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER} if not exists..."
-      argocd app create -f "../$ARGOCD_APP_TEMPLATE_FILE_NAME" --upsert --grpc-web
-      echo "Checking if ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER} needs sync..."
-      if ! argocd app diff "${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}" --refresh --grpc-web --exit-code;
-      then
-        echo "Changes detected. Triggering sync ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}..."
-        argocd app sync ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER} --grpc-web
-      else
-        echo "No manifest changes. Skipping sync for ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER}."
-      fi
-      echo "Waiting for ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER} sync + healthy status..."
-      argocd app wait ${STACK_NAME}-${APP_NAME}-${ENV_NAME_LOWER} --health --sync --timeout $ARGOCD_SYNC_TIMEOUT --grpc-web
+    - *copy_helper
+    - *copy_application_files
+    - *copy_chart_files
+    - *push_to_argocd_repo
+    - *sync_argocd_apps
 
 .deploy_k8s:
   script:

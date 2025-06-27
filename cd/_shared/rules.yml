@@ -48,6 +48,12 @@
 .if_not_deploy_k8s: &if_not_deploy_k8s
   if: $ORCHESTRATION != "k8s"
 
+.if_argo_cluster: &if_argo_cluster
+  if: $ARGO_CLUSTER != ""
+
+.if_not_argo_cluster: &if_not_argo_cluster
+  if: $ARGO_CLUSTER == ""
+
 .if_multi_clusters: &if_multi_clusters
   if: $MULTI_CLUSTER == "true"
 
@@ -118,6 +124,15 @@
     - <<: *if_multi_clusters
       when: never
     - <<: *if_not_deploy_k8s
+      when: never
+    - <<: *if_argo_cluster
+      when: never
+  deploy_k8s_argocd:
+    - <<: *if_multi_clusters
+      when: never
+    - <<: *if_not_deploy_k8s
+      when: never
+    - <<: *if_not_argo_cluster
       when: never
   update_k8s_ingress:
     - <<: *if_update_k8s_ingress

@@ -8,7 +8,7 @@ include:
         curl --fail -F file=@"$CONFIG_FILE_PATH/$CONFIG_FILE" -F "serviceName=${SERVICE_NAME}_${DEPLOY_ENV}" -X POST $ROCKETOR_API_URL/Home/ImportConnectionString;
     fi
 
-.change-version-and-sync-sp: &change-version-and-sync-sp
+.change-version: &change-version
   - echo $SP_FILE_TRANSFORM;
   - if [ ! -z "$SP_FILE_NAME" ];
     then
@@ -24,6 +24,11 @@ include:
           echo "It's done";
         fi;
       fi;
+    fi
+
+.sync-sp: &sync-sp
+  - if [ ! -z "$SP_FILE_NAME" ];
+    then
       echo "===== SYNC $SP_FILE ... =====";
       curl --retry-max-time 60 --retry 1 --fail -F jobid=$CI_JOB_ID -F env=$DEPLOY_ENV -F host=$SERVER_IP -F port=$SERVER_PORT -F user=$SERVER_USER -F remotePath="$WORKING_PATH/$DEPLOY_ENV/configs/$SP_FILE_NAME.$SP_FILE_EXTENSION" -F file=@"$SP_FILE_PATH/$SP_FILE" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN;
     fi
@@ -43,7 +48,8 @@ include:
     - !reference [.generate-and-sync-docker-compose, script]
     - !reference [.sync-config, script]
     - *import-connection-string
-    - *change-version-and-sync-sp
+    - *change-version
+    - *sync-sp
     - !reference [.remove-old-swarm-configs, script]
     - *remove-old-swarm-sp-configs    
     - !reference [.deploy-swarm-service, script]
@@ -52,15 +58,26 @@ include:
 
 .base_deploy_k8s:
   stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare_k8s_deployments_values, script]
+    - !reference [.sync-config, script]
+    - *import-connection-string
+    - *change-version
+    - *sync-sp
+    - !reference [.deploy_k8s, script]
+  tags:
+    - docker
+
+.base_deploy_k8s_argocd:
+  stage: deploy
   image: $DOCKER_REG_LOCAL_URL/base/docker:24.0.4-bash-jq-jinja-argocd
   extends:
     - .env
   script:
-    # - !reference [.prepare_k8s_deployments_values, script]
-    # - !reference [.sync-config, script]
-    # - *import-connection-string
-    # - *change-version-and-sync-sp
-    # - !reference [.deploy_k8s, script]
+    - *import-connection-string
+    - *change-version
     - !reference [.prepare_argocd_app_files, script]
     - !reference [.sync_argocd_app_files, script]
   tags:

@@ -2,6 +2,7 @@
 deploy_{{ item.type }}_{{ item.name | lower | replace(' ', '') }}:
   variables:
     DEPLOYMENT_API: {{ item.deploy_api_link }}
+    ARGO_CLUSTER: {{ item.argo_cluster }}
     REGISTRY_IMAGE: {{ item.registry }}
     SERVER_IP: {{ item.server_ip }}
     SERVER_USER: {{ item.ssh_user }}
@@ -10,6 +11,8 @@ deploy_{{ item.type }}_{{ item.name | lower | replace(' ', '') }}:
   extends:
   {% if item.type == "swarm" %}
     - .base_deploy_stack_swarm
+  {% elif item.argo_cluster | length > 0 %}
+    - .base_deploy_k8s_argocd
   {% else %}
     - .base_deploy_k8s
   {% endif %}

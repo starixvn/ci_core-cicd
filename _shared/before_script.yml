@@ -40,6 +40,7 @@ before_script:
   - echo $DOCKER_NETWORK_NAME
   - |
     echo $DEPLOYMENT_API
+    echo $ARGO_CLUSTER
     echo $REGISTRY_IMAGE
     echo $SERVER_IP
     echo $SERVER_USER

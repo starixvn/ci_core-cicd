@@ -59,48 +59,98 @@
     - echo "Remote path --> $WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME"    
     - curl --retry-max-time 60 --retry 1 --fail -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F remotePath="$WORKING_PATH/$DEPLOY_ENV/$K8S_FILE_NAME" -F file=@"$K8S_FILE_NAME" $DEPLOYMENT_API/scp?token=$DEPLOY_API_TOKEN
 
+.deploy_k8s:
+  script:
+    - echo "===== DEPLOYING K8S RESOURCES ... =====";
+    - |
+      RELEASE_NAME=${SERVICE_NAME}_${DEPLOY_ENV/_/}
+      echo $RELEASE_NAME
+      CHART_BASE_URL=oci://${REGISTRY_IMAGE}/charts
+      echo $CHART_BASE_URL
+      if [ ! -z "$CONFIG_FILE_NAME" ];
+      then
+        CONFIG_DEST_FILE_NAME=configs/$CONFIG_DEST_FILE
+      fi
+      echo $CONFIG_DEST_FILE_NAME
+      if [ ! -z "$SP_FILE_NAME" ];
+      then
+        SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
+      fi
+      echo $SP_DEST_FILE_NAME
+    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.3.1 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;
+
+.update_k8s_ingress:
+  script:
+    - echo "===== UPDATING K8S INGRESS ... =====";
+    - |
+      RELEASE_NAME=${SERVICE_NAME}_${DEPLOY_ENV/_/}
+      echo $RELEASE_NAME
+      CHART_BASE_URL=oci://${REGISTRY_IMAGE}/charts
+      echo $CHART_BASE_URL
+      if [ ! -z "$CONFIG_FILE_NAME" ];
+      then
+        CONFIG_DEST_FILE_NAME=configs/$CONFIG_DEST_FILE
+      fi
+      echo $CONFIG_DEST_FILE_NAME
+      if [ ! -z "$SP_FILE_NAME" ];
+      then
+        SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
+      fi
+      echo $SP_DEST_FILE_NAME
+    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.3.1 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME -F enableIngress=$ENABLE_INGRESS $DEPLOYMENT_API/updateIngress?token=$DEPLOY_API_TOKEN;
+
+# === ARGOCD ===
+.generate_template_helper: &generate_template_helper
+  - |
+    generate_argocd_template() {
+      local type="$1"
+      local app_name="$2"
+      local env_name="$3"
+      local src_path="$4"
+      local output_file="$5"
+
+      echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for $type...";
+      curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
+      sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s/@ENV_NAME/$env_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s/@DEST_NAME/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s|@SRC_PATH|$src_path|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s/@SRC_TARGET_REVISION/$ARGOCD_TARGET_REVISION/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${output_file}
+    }
+
 .generate-argocd-template-file: &generate-argocd-template-file
   - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+  - *generate_template_helper
   - |
-    echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for secret...";
-    curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
-    sed -i "s/@APP_NAME/$IMAGE_PULL_SECRETS_CHART_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@ENV_NAME/${ENV_VERSION_NAME//[0-9]/}/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@DEST_NAME/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s|@SRC_PATH|$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@SRC_TARGET_REVISION/$ARGOCD_TARGET_REVISION/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME}
+    generate_argocd_template "secret" "$IMAGE_PULL_SECRETS_CHART_NAME" "${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME" "$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME"
+    generate_argocd_template "application" "$APP_NAME" "${ENV_VERSION_NAME}" "$APPLICATION_PATH" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
+
+.generate_chart_helper: &generate_chart_helper
   - |
-    echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for application...";
-    curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
-    sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@ENV_NAME/${ENV_VERSION_NAME}/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@DEST_NAME/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s|@SRC_PATH|$APPLICATION_PATH|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    sed -i "s/@SRC_TARGET_REVISION/$ARGOCD_TARGET_REVISION/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${ARGOCD_APP_TEMPLATE_FILE_NAME}
+    generate_argocd_chart() {
+      local type="$1"
+      local app_name="$2"
+      local dep_name="$3"
+      local dep_version="$4"
+      local output_file="$5"
+
+      echo "Generating $ARGOCD_APP_CHART_FILE_NAME for $type...";
+      curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
+      sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+      sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+      sed -i "s/@DEP_NAME/$dep_name/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+      sed -i "s/@DEP_VERSION/$dep_version/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+      jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${output_file}
+    }
 
 .generate-argocd-chart-file: &generate-argocd-chart-file
+  - *generate_chart_helper
   - |
-    echo "Generating $ARGOCD_APP_CHART_FILE_NAME for secret...";
-    curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
-    sed -i "s/@APP_NAME/$IMAGE_PULL_SECRETS_CHART_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    sed -i "s/@DEP_NAME/$IMAGE_PULL_SECRETS_CHART_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    sed -i "s/@DEP_VERSION/$IMAGE_PULL_SECRETS_CHART_VERSION/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_SECRET_APP_CHART_FILE_NAME}
-  - |
-    echo "Generating $ARGOCD_APP_CHART_FILE_NAME for application...";
-    curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
-    sed -i "s/@APP_NAME/$APP_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    sed -i "s/@DEP_NAME/$K8S_DEPLOYMENTS_CHART_NAME/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    sed -i "s/@DEP_VERSION/$K8S_DEPLOYMENTS_CHART_VERSION/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${ARGOCD_APP_CHART_FILE_NAME}
+    generate_argocd_chart "secret" "$IMAGE_PULL_SECRETS_CHART_NAME" "$IMAGE_PULL_SECRETS_CHART_NAME" "$IMAGE_PULL_SECRETS_CHART_VERSION" "$ARGOCD_SECRET_APP_CHART_FILE_NAME"
+    generate_argocd_chart "application" "$APP_NAME" "$K8S_DEPLOYMENTS_CHART_NAME" "$K8S_DEPLOYMENTS_CHART_VERSION" "$ARGOCD_APP_CHART_FILE_NAME"
 
 .generate-argocd-values-file: &generate-argocd-values-file
   - |
@@ -229,7 +279,6 @@
         echo "Creating $app_name if not exists..."
         argocd app create -f "../$template_file" --upsert --grpc-web
       fi
-      echo "Checking if $app_name needs sync..."
       if ! argocd app diff "$app_name" --refresh --grpc-web --exit-code;
       then
         echo "Changes detected. Triggering sync $app_name..."
@@ -273,43 +322,3 @@
     - ACTION_NAME=update-ingress
     - *push_to_argocd_repo
     - *sync_argocd_app
-
-.deploy_k8s:
-  script:
-    - echo "===== DEPLOYING K8S RESOURCES ... =====";
-    - |
-      RELEASE_NAME=${SERVICE_NAME}_${DEPLOY_ENV/_/}
-      echo $RELEASE_NAME
-      CHART_BASE_URL=oci://${REGISTRY_IMAGE}/charts
-      echo $CHART_BASE_URL
-      if [ ! -z "$CONFIG_FILE_NAME" ];
-      then
-        CONFIG_DEST_FILE_NAME=configs/$CONFIG_DEST_FILE
-      fi
-      echo $CONFIG_DEST_FILE_NAME
-      if [ ! -z "$SP_FILE_NAME" ];
-      then
-        SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
-      fi
-      echo $SP_DEST_FILE_NAME
-    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.3.1 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME $DEPLOYMENT_API/deployKubernetes?token=$DEPLOY_API_TOKEN;
-
-.update_k8s_ingress:
-  script:
-    - echo "===== UPDATING K8S INGRESS ... =====";
-    - |
-      RELEASE_NAME=${SERVICE_NAME}_${DEPLOY_ENV/_/}
-      echo $RELEASE_NAME
-      CHART_BASE_URL=oci://${REGISTRY_IMAGE}/charts
-      echo $CHART_BASE_URL
-      if [ ! -z "$CONFIG_FILE_NAME" ];
-      then
-        CONFIG_DEST_FILE_NAME=configs/$CONFIG_DEST_FILE
-      fi
-      echo $CONFIG_DEST_FILE_NAME
-      if [ ! -z "$SP_FILE_NAME" ];
-      then
-        SP_DEST_FILE_NAME=configs/$SP_FILE_NAME.$SP_FILE_EXTENSION
-      fi
-      echo $SP_DEST_FILE_NAME
-    - curl --retry-max-time 60 --retry 1 --fail --no-progress-meter -F pipelineId=$CI_PIPELINE_ID -F env=$DEPLOY_ENV -F workingDirectory=$WORKING_PATH -F releaseName=$RELEASE_NAME -F chartBaseUrl=$CHART_BASE_URL -F chartVersion=1.3.1 -F registryUser=$DOCKER_REG_LOCAL_USERNAME -F registryPassword=$DOCKER_REG_LOCAL_PASSWORD -F configFileName=$CONFIG_DEST_FILE_NAME -F spFileName=$SP_DEST_FILE_NAME -F namespace=$STACK_NAME -F enableIngress=$ENABLE_INGRESS $DEPLOYMENT_API/updateIngress?token=$DEPLOY_API_TOKEN;

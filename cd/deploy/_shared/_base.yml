@@ -282,7 +282,7 @@
       if ! argocd app diff "$app_name" --refresh --grpc-web --exit-code;
       then
         echo "Changes detected. Triggering sync $app_name..."
-        argocd app sync "$app_name" --prune --grpc-web
+        argocd app sync "$app_name" --prune --replace --grpc-web
       else
         echo "No manifest changes. Skipping sync for $app_name."
       fi

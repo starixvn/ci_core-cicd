@@ -86,6 +86,7 @@ k8sdeployments:
   image:
     name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-@COMMIT_HASH"
     pullPolicy: Always
+    pullSecretName: argocd-regcred-secret
 
   healthCheck:
     enabled: {{ enable_health_check }}

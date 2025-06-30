@@ -283,6 +283,9 @@
       then
         echo "Changes detected. Triggering sync $app_name..."
         argocd app sync "$app_name" --prune --replace --grpc-web
+
+        echo "Waiting for $app_name sync status..."
+        argocd app wait "$app_name" --sync --timeout $ARGOCD_SYNC_TIMEOUT --grpc-web
       else
         echo "No manifest changes. Skipping sync for $app_name."
       fi

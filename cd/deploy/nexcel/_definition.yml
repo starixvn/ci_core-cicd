@@ -78,8 +78,8 @@ include:
   script:
     - *import-connection-string
     - *change-version
-    - !reference [.prepare_argocd_app_files, script]
-    - !reference [.sync_argocd_app_files, script]
+    - !reference [.prepare_argocd_app_file, script]
+    - !reference [.deploy_argocd_application, script]
   tags:
     - docker
 
@@ -90,5 +90,17 @@ include:
   script:
     - !reference [.prepare_k8s_deployments_values, script]
     - !reference [.update_k8s_ingress, script]
+  tags:
+    - docker
+
+.base_update_k8s_ingress_argocd:
+  stage: deploy
+  image: $DOCKER_REG_LOCAL_URL/base/docker:24.0.4-bash-jq-jinja-argocd
+  extends:
+    - .env
+  script:
+    - *change-version
+    - !reference [.prepare_argocd_values_file, script]
+    - !reference [.update_ingress_argocd_application, script]
   tags:
     - docker

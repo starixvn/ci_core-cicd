@@ -137,6 +137,13 @@
   update_k8s_ingress:
     - <<: *if_update_k8s_ingress
       when: on_success
+    - <<: *if_argo_cluster
+      when: never
+  update_k8s_ingress_argocd:
+    - <<: *if_update_k8s_ingress
+      when: on_success
+    - <<: *if_not_argo_cluster
+      when: never
   deploy_multi_clusters:
     - <<: *if_not_multi_clusters
       when: never

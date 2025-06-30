@@ -29,3 +29,10 @@ update_k8s_ingress:
   rules:
     - !reference [.cd_rules, deploy_k8s]
     - !reference [.cd_rules, update_k8s_ingress]
+
+update_k8s_ingress_argocd:
+  extends:
+    - .base_update_k8s_ingress_argocd
+  rules:
+    - !reference [.cd_rules, deploy_k8s_argocd]
+    - !reference [.cd_rules, update_k8s_ingress_argocd]

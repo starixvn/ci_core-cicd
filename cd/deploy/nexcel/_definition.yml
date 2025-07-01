@@ -8,7 +8,7 @@ include:
         curl --fail -F file=@"$CONFIG_FILE_PATH/$CONFIG_FILE" -F "serviceName=${SERVICE_NAME}_${DEPLOY_ENV}" -X POST $ROCKETOR_API_URL/Home/ImportConnectionString;
     fi
 
-.change-version: &change-version
+.change-sp-version: &change-sp-version
   - echo $SP_FILE_TRANSFORM;
   - if [ ! -z "$SP_FILE_NAME" ];
     then
@@ -48,7 +48,7 @@ include:
     - !reference [.generate-and-sync-docker-compose, script]
     - !reference [.sync-config, script]
     - *import-connection-string
-    - *change-version
+    - *change-sp-version
     - *sync-sp
     - !reference [.remove-old-swarm-configs, script]
     - *remove-old-swarm-sp-configs    
@@ -64,7 +64,7 @@ include:
     - !reference [.prepare_k8s_deployments_values, script]
     - !reference [.sync-config, script]
     - *import-connection-string
-    - *change-version
+    - *change-sp-version
     - *sync-sp
     - !reference [.deploy_k8s, script]
   tags:
@@ -72,12 +72,11 @@ include:
 
 .base_deploy_k8s_argocd:
   stage: deploy
-  image: $DOCKER_REG_LOCAL_URL/base/docker:24.0.4-bash-jq-jinja-argocd
   extends:
     - .env
   script:
     - *import-connection-string
-    - *change-version
+    - *change-sp-version
     - !reference [.prepare_argocd_app_file, script]
     - !reference [.deploy_argocd_application, script]
   tags:
@@ -95,11 +94,10 @@ include:
 
 .base_update_k8s_ingress_argocd:
   stage: deploy
-  image: $DOCKER_REG_LOCAL_URL/base/docker:24.0.4-bash-jq-jinja-argocd
   extends:
     - .env
   script:
-    - *change-version
+    - *change-sp-version
     - !reference [.prepare_argocd_values_file, script]
     - !reference [.update_ingress_argocd_application, script]
   tags:

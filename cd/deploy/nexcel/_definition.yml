@@ -92,13 +92,13 @@ include:
   tags:
     - docker
 
-.base_update_k8s_ingress_argocd:
+.base_sync_argocd_app:
   stage: deploy
   extends:
     - .env
   script:
     - *change-sp-version
     - !reference [.prepare_argocd_values_file, script]
-    - !reference [.update_ingress_argocd_application, script]
+    - !reference [.sync_argocd_application, script]
   tags:
     - docker

@@ -103,13 +103,12 @@
 .generate_template_helper: &generate_template_helper
   - |
     generate_argocd_template() {
-      local type="$1"
-      local app_name="$2"
-      local env_name="$3"
-      local src_path="$4"
-      local output_file="$5"
+      local app_name="$1"
+      local env_name="$2"
+      local src_path="$3"
+      local output_file="$4"
 
-      echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for $type...";
+      echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for $app_name...";
       curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
       sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
@@ -125,19 +124,18 @@
   - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
   - *generate_template_helper
   - |
-    generate_argocd_template "secret" "$IMAGE_PULL_SECRETS_CHART_NAME" "${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME" "$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME"
-    generate_argocd_template "application" "$APP_NAME" "${ENV_VERSION_NAME}" "$APPLICATION_PATH" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
+    generate_argocd_template "$PREREQUISITES_CHART_NAME" "${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_PREREQUISITES_ROOT_FOLDER/$STACK_NAME" "$ARGOCD_PREREQUISITES_APP_TEMPLATE_FILE_NAME"
+    generate_argocd_template "$APP_NAME" "${ENV_VERSION_NAME}" "$APPLICATION_PATH" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
 
 .generate_chart_helper: &generate_chart_helper
   - |
     generate_argocd_chart() {
-      local type="$1"
-      local app_name="$2"
-      local dep_name="$3"
-      local dep_version="$4"
-      local output_file="$5"
+      local app_name="$1"
+      local dep_name="$2"
+      local dep_version="$3"
+      local output_file="$4"
 
-      echo "Generating $ARGOCD_APP_CHART_FILE_NAME for $type...";
+      echo "Generating $ARGOCD_APP_CHART_FILE_NAME for $app_name...";
       curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
       sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
       sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
@@ -149,17 +147,17 @@
 .generate-argocd-chart-file: &generate-argocd-chart-file
   - *generate_chart_helper
   - |
-    generate_argocd_chart "secret" "$IMAGE_PULL_SECRETS_CHART_NAME" "$IMAGE_PULL_SECRETS_CHART_NAME" "$IMAGE_PULL_SECRETS_CHART_VERSION" "$ARGOCD_SECRET_APP_CHART_FILE_NAME"
-    generate_argocd_chart "application" "$APP_NAME" "$K8S_DEPLOYMENTS_CHART_NAME" "$K8S_DEPLOYMENTS_CHART_VERSION" "$ARGOCD_APP_CHART_FILE_NAME"
+    generate_argocd_chart "$PREREQUISITES_CHART_NAME" "$PREREQUISITES_CHART_NAME" "$PREREQUISITES_CHART_VERSION" "$ARGOCD_PREREQUISITES_APP_CHART_FILE_NAME"
+    generate_argocd_chart "$APP_NAME" "$K8S_DEPLOYMENTS_CHART_NAME" "$K8S_DEPLOYMENTS_CHART_VERSION" "$ARGOCD_APP_CHART_FILE_NAME"
 
 .generate-argocd-values-file: &generate-argocd-values-file
   - |
-    echo "Generating $ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME...";
-    curl --fail -o ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_IMAGE_PULL_SECRETS_FILE_PATH/raw?ref=$ARGOCD_REF
-    sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2
-    sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2
-    sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2
-    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}.j2 -o ./${ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME}
+    echo "Generating $ARGOCD_PREREQUISITES_FILE_NAME...";
+    curl --fail -o ${ARGOCD_PREREQUISITES_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_PREREQUISITES_FILE_PATH/raw?ref=$ARGOCD_REF
+    sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_PREREQUISITES_FILE_NAME}.j2
+    sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${ARGOCD_PREREQUISITES_FILE_NAME}.j2
+    sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${ARGOCD_PREREQUISITES_FILE_NAME}.j2
+    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_PREREQUISITES_FILE_NAME}.j2 -o ./${ARGOCD_PREREQUISITES_FILE_NAME}
   - |
     echo "Generating $ARGOCD_K8S_FILE_NAME...";
     curl --fail -o ${ARGOCD_K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_K8S_FILE_PATH/raw?ref=$ARGOCD_REF
@@ -221,17 +219,17 @@
 
 .copy_template_file: &copy_template_file
   - |
-    copy_file "$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME" "applications/templates/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/${ENV_VERSION_NAME//[0-9]/}.yaml"
+    copy_file "$ARGOCD_PREREQUISITES_APP_TEMPLATE_FILE_NAME" "applications/templates/$ARGOCD_PREREQUISITES_ROOT_FOLDER/$STACK_NAME/${ENV_VERSION_NAME//[0-9]/}.yaml"
     copy_file "$ARGOCD_APP_TEMPLATE_FILE_NAME" "applications/templates/$APPLICATION_PATH/${ENV_VERSION_NAME}.yaml"
 
 .copy_values_file: &copy_values_file
   - |
-    copy_file "$ARGOCD_IMAGE_PULL_SECRETS_FILE_NAME" "charts/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/values-${ENV_VERSION_NAME//[0-9]/}.yaml"
+    copy_file "$ARGOCD_PREREQUISITES_FILE_NAME" "charts/$ARGOCD_PREREQUISITES_ROOT_FOLDER/$STACK_NAME/values-${ENV_VERSION_NAME//[0-9]/}.yaml"
     copy_file "$ARGOCD_K8S_FILE_NAME" "charts/$APPLICATION_PATH/values-${ENV_VERSION_NAME}.yaml"
 
 .copy_chart_file: &copy_chart_file
   - |
-    copy_file "$ARGOCD_SECRET_APP_CHART_FILE_NAME" "charts/$ARGOCD_SECRET_ROOT_FOLDER/$STACK_NAME/Chart.yaml"
+    copy_file "$ARGOCD_PREREQUISITES_APP_CHART_FILE_NAME" "charts/$ARGOCD_PREREQUISITES_ROOT_FOLDER/$STACK_NAME/Chart.yaml"
     copy_file "$ARGOCD_APP_CHART_FILE_NAME" "charts/$APPLICATION_PATH/Chart.yaml"
 
 .push_to_argocd_repo: &push_to_argocd_repo
@@ -277,7 +275,7 @@
       if [ $ACTION_TYPE == "deploy" ];
       then
         echo "Creating $app_name if not exists..."
-        argocd app create -f "../$template_file" --sync-option CreateNamespace=true --upsert --grpc-web
+        argocd app create -f "../$template_file" --upsert --grpc-web
       fi
       if ! argocd app diff "$app_name" --refresh --grpc-web --exit-code;
       then
@@ -299,7 +297,7 @@
     argocd login $ARGOCD_HOST --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --insecure --grpc-web
   - *sync_argocd_app_helper
   - |
-    sync_argocd_app "${STACK_NAME}-${IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_SECRET_APP_TEMPLATE_FILE_NAME"
+    sync_argocd_app "${STACK_NAME}-${PREREQUISITES_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_PREREQUISITES_APP_TEMPLATE_FILE_NAME"
     sync_argocd_app "${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
 
 .deploy_argocd_application:

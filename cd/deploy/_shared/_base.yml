@@ -275,26 +275,26 @@
       if [ $ACTION_TYPE == "deploy" ];
       then
         echo "Creating $app_name if not exists..."
-        argocd app create -f "../$template_file" --upsert --grpc-web
+        argocd app create -f "../$template_file" --upsert
       fi
-      if ! argocd app diff "$app_name" --refresh --grpc-web --exit-code;
+      if ! argocd app diff "$app_name" --refresh --exit-code;
       then
         echo "Changes detected. Triggering sync $app_name..."
-        argocd app sync "$app_name" --prune --replace --grpc-web
+        argocd app sync "$app_name" --prune --replace
 
         echo "Waiting for $app_name sync status..."
-        argocd app wait "$app_name" --sync --timeout $ARGOCD_SYNC_TIMEOUT --grpc-web
+        argocd app wait "$app_name" --sync --timeout $ARGOCD_SYNC_TIMEOUT
       else
         echo "No manifest changes. Skipping sync for $app_name."
       fi
       echo "Waiting for $app_name healthy status..."
-      argocd app wait "$app_name" --health --timeout $ARGOCD_SYNC_TIMEOUT --grpc-web
+      argocd app wait "$app_name" --health --timeout $ARGOCD_SYNC_TIMEOUT
     }
 
 .sync_argocd_app: &sync_argocd_app
   - |
-    echo "Logging into Argo CD..."
-    argocd login $ARGOCD_HOST --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --insecure --grpc-web
+    echo "ArgoCD Server: $ARGOCD_SERVER"
+    export ARGOCD_OPTS="--grpc-web"
   - *sync_argocd_app_helper
   - |
     sync_argocd_app "${STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"

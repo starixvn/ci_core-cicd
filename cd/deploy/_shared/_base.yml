@@ -242,7 +242,7 @@
       git config user.email $ROCKETOR_GIT_EMAIL
       git config user.name $ROCKETOR_GIT_USER
       git add -A
-      git commit -m "[$CI_COMMIT_TAG] $CI_COMMIT_MESSAGE"
+      git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $CI_COMMIT_MESSAGE"
 
       MAX_RETRIES=3
       RETRY_COUNT=0
@@ -274,10 +274,10 @@
       local app_name="$1"
       local template_file="$2"
 
-      if [[ $CI_COMMIT_TAG =~ ^deploy- ]];
+      if [ $ACTION_TYPE == "deploy" ];
       then
         echo "Creating $app_name if not exists..."
-        argocd app create -f "../$template_file" --upsert --grpc-web
+        argocd app create -f "../$template_file" --sync-option CreateNamespace=true --upsert --grpc-web
       fi
       if ! argocd app diff "$app_name" --refresh --grpc-web --exit-code;
       then
@@ -311,15 +311,26 @@
     - *copy_template_file
     - *copy_chart_file
     - *copy_values_file
+    - ACTION_TYPE=deploy
     - *push_to_argocd_repo
     - *sync_argocd_app
+
+.process_sync_argocd_application: &process_sync_argocd_application
+  - *clone_argocd_repo
+  - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+  - *copy_file_helper
+  - *copy_values_file
+  - *push_to_argocd_repo
+  - *sync_argocd_app
+
+.update_k8s_ingress_argocd:
+  script:
+    - echo "===== UPDATE INGRESS ARGOCD APPLICATION ... ====="
+    - ACTION_TYPE=update-ingress
+    - *process_sync_argocd_application
 
 .sync_argocd_application:
   script:
     - echo "===== SYNC ARGOCD APPLICATION ... ====="
-    - *clone_argocd_repo
-    - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-    - *copy_file_helper
-    - *copy_values_file
-    - *push_to_argocd_repo
-    - *sync_argocd_app
+    - ACTION_TYPE=sync-argo-app
+    - *process_sync_argocd_application

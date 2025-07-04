@@ -144,9 +144,12 @@
       when: on_success
     - <<: *if_argo_cluster
       when: never
-  sync_argocd_app:
+  update_k8s_ingress_argocd:
     - <<: *if_update_k8s_ingress
       when: on_success
+    - <<: *if_not_argo_cluster
+      when: never
+  sync_argocd_app:
     - <<: *if_sync_argocd_app
       when: on_success
     - <<: *if_not_argo_cluster

@@ -242,7 +242,7 @@
       git add -A
       git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $CI_COMMIT_MESSAGE"
 
-      MAX_RETRIES=3
+      MAX_RETRIES=10
       RETRY_COUNT=0
       while [ $RETRY_COUNT -lt $MAX_RETRIES ];
       do
@@ -274,21 +274,18 @@
 
       if [ $ACTION_TYPE == "deploy" ];
       then
-        echo "Creating $app_name if not exists..."
+        echo "===== Creating $app_name if not exists... ====="
         argocd app create -f "../$template_file" --upsert
       fi
       if ! argocd app diff "$app_name" --refresh --exit-code;
       then
-        echo "Changes detected. Triggering sync $app_name..."
-        argocd app sync "$app_name" --prune --replace
-
-        echo "Waiting for $app_name sync status..."
-        argocd app wait "$app_name" --sync --timeout $ARGOCD_SYNC_TIMEOUT
+        echo "===== Changes detected. Triggering sync $app_name... ====="
+        argocd app sync "$app_name" --prune --replace --output tree
       else
-        echo "No manifest changes. Skipping sync for $app_name."
+        echo "===== No manifest changes. Skipping sync for $app_name... ====="
       fi
-      echo "Waiting for $app_name healthy status..."
-      argocd app wait "$app_name" --health --timeout $ARGOCD_SYNC_TIMEOUT
+      echo "===== Waiting for $app_name sync and healthy status... ====="
+      argocd app wait "$app_name" --sync --health --timeout $ARGOCD_SYNC_TIMEOUT --output tree
     }
 
 .sync_argocd_app: &sync_argocd_app

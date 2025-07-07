@@ -1,5 +1,6 @@
 include:
   - cd/deploy/_shared/_base.yml
+  - cd/deploy/_shared/_argocd.yml
 
 .import-connection-string: &import-connection-string
   - if [[ ! -z "$CONFIG_FILE_NAME" && $DEPLOY_ENV =~ ^(SIT|UAT|PROD|ALPHAPROD|FPSPROD) ]];

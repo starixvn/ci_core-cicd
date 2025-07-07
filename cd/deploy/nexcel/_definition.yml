@@ -98,7 +98,7 @@ include:
     - .env
   script:
     - *change-sp-version
-    - !reference [.prepare_k8s_deployments_values, script]
+    - !reference [.prepare_argocd_values_file, script]
     - !reference [.update_k8s_ingress_argocd, script]
   tags:
     - docker

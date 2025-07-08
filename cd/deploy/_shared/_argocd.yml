@@ -178,12 +178,12 @@
       if ! argocd app diff "$app_name" --refresh --exit-code > /dev/null;
       then
         echo "===== $app_name: Changes detected. Triggering sync... ====="
-        argocd app sync "$app_name" --prune --replace --output tree=detailed
+        argocd app sync "$app_name" --prune --replace
       else
         echo "===== $app_name: No manifest changes. Skipping sync... ====="
       fi
       echo "===== $app_name: Waiting for application sync and healthy status... ====="
-      argocd app wait "$app_name" --sync --health --timeout $ARGOCD_SYNC_TIMEOUT --output tree=detailed
+      argocd app wait "$app_name" --sync --health --timeout $ARGOCD_SYNC_TIMEOUT
     }
 
 .sync_argocd_app: &sync_argocd_app

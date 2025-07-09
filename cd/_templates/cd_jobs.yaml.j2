@@ -1,5 +1,6 @@
 {% for item in clusters %}
-deploy_{{ item.type }}_{{ item.name | lower | replace(' ', '') }}:
+{% set has_argo_cluster = item.argo_cluster | length > 0 %}
+deploy_{{ item.type }}{% if has_argo_cluster %}_argocd{% endif %}_{{ item.name | lower | replace(' ', '') }}:
   variables:
     DEPLOYMENT_API: {{ item.deploy_api_link }}
     ARGO_CLUSTER: {{ item.argo_cluster }}
@@ -11,7 +12,7 @@ deploy_{{ item.type }}_{{ item.name | lower | replace(' ', '') }}:
   extends:
   {% if item.type == "swarm" %}
     - .base_deploy_stack_swarm
-  {% elif item.argo_cluster | length > 0 %}
+  {% elif has_argo_cluster %}
     - .base_deploy_k8s_argocd
   {% else %}
     - .base_deploy_k8s

@@ -169,19 +169,20 @@
     sync_argocd_app() {
       local app_name="$1"
       local template_file="$2"
+      local force_sync="${3:-false}"
 
       if [ $ACTION_TYPE == "deploy" ];
       then
         echo "===== $app_name: Creating application if not exists... ====="
         argocd app create -f "../$template_file" --upsert
       fi
-      if ! argocd app diff "$app_name" --refresh --exit-code > /dev/null;
+
+      if [ "$force_sync" == "true" ] || ! argocd app diff "$app_name" --exit-code > /dev/null;
       then
-        echo "===== $app_name: Changes detected. Triggering sync... ====="
+        echo "===== $app_name: Triggering sync... ====="
         argocd app sync "$app_name" --prune --replace
-      else
-        echo "===== $app_name: No manifest changes. Skipping sync... ====="
       fi
+
       echo "===== $app_name: Waiting for application sync and healthy status... ====="
       argocd app wait "$app_name" --sync --health --timeout $ARGOCD_SYNC_TIMEOUT
     }
@@ -193,7 +194,7 @@
   - *sync_argocd_app_helper
   - |
     sync_argocd_app "${STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
-    sync_argocd_app "${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
+    sync_argocd_app "${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME" "true"
 
 .deploy_argocd_application:
   script:

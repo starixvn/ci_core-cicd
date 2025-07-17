@@ -11,7 +11,7 @@
       sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s/@ENV_NAME/$env_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-      sed -i "s/@DEST_NAME/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s/@ARGO_CLUSTER/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s|@SRC_PATH|$src_path|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${output_file}
@@ -142,9 +142,9 @@
       while [ $RETRY_COUNT -lt $MAX_RETRIES ];
       do
         echo "Pulling latest changes from remote repository..."
-        git pull origin $ARGOCD_TARGET_REVISION --rebase
+        git pull origin main --rebase
         echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES to push changes..."
-        if git push origin $ARGOCD_TARGET_REVISION;
+        if git push origin main;
         then
           break
         else

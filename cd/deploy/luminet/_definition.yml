@@ -1,5 +1,6 @@
 include:
   - cd/deploy/_shared/_base.yml
+  - cd/deploy/_shared/_argocd.yml
 
 .base_deploy_stack_swarm:
   stage: deploy
@@ -25,6 +26,16 @@ include:
   tags:
     - docker
 
+.base_deploy_k8s_argocd:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare_argocd_app_file, script]
+    - !reference [.deploy_argocd_application, script]
+  tags:
+    - docker
+
 .base_update_k8s_ingress:
   stage: deploy
   extends:
@@ -34,3 +45,21 @@ include:
     - !reference [.update_k8s_ingress, script]
   tags:
     - docker
+
+.base_update_k8s_ingress_argocd:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare_argocd_values_file, script]
+    - !reference [.update_k8s_ingress_argocd, script]
+  tags:
+    - docker
+
+.base_sync_argocd_app:
+  stage: deploy
+  extends:
+    - .env
+  script:
+    - !reference [.prepare_argocd_values_file, script]
+    - !reference [.sync_argocd_application, script]

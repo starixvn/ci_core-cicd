@@ -16,9 +16,30 @@ deploy_k8s:
     - !reference [.cd_rules, deploy_k8s]
     - !reference [.cd_rules, deploy]
 
+deploy_k8s_argocd:
+  extends:
+    - .base_deploy_k8s_argocd
+  rules:
+    - !reference [.cd_rules, deploy_k8s_argocd]
+    - !reference [.cd_rules, deploy]
+
 update_k8s_ingress:
   extends:
     - .base_update_k8s_ingress
   rules:
     - !reference [.cd_rules, deploy_k8s]
     - !reference [.cd_rules, update_k8s_ingress]
+
+update_k8s_ingress_argocd:
+  extends:
+    - .base_update_k8s_ingress_argocd
+  rules:
+    - !reference [.cd_rules, deploy_k8s_argocd]
+    - !reference [.cd_rules, update_k8s_ingress_argocd]
+
+sync_argocd_app:
+  extends:
+    - .base_sync_argocd_app
+  rules:
+    - !reference [.cd_rules, deploy_k8s_argocd]
+    - !reference [.cd_rules, sync_argocd_app]

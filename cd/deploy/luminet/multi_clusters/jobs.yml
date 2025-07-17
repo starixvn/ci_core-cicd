@@ -12,7 +12,7 @@ deploy_multi_clusters:
       - artifact: $CD_JOBS_FILE_NAME
         job: prepare_cd_jobs
       - project: ci/core-cicd
-        ref: main
+        ref: argocd
         file: 'cd/deploy/luminet/multi_clusters/_mixing.yml'
     strategy: depend
   rules:

@@ -21,9 +21,7 @@ variables:
   ARGOCD_APP_TEMPLATE_FILE_PATH: "cd%2f_templates%2fargocd%2f${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2"
   ARGOCD_APP_CHART_FILE_NAME: app-chart.yaml
   ARGOCD_APP_CHART_FILE_PATH: "cd%2f_templates%2fargocd%2f${ARGOCD_APP_CHART_FILE_NAME}.j2"
-  ARGOCD_REPO_URL: "https://gitlab.nexdev.net/gitlab-sentry/zdemogroup/demo-argocd.git"
-  ARGOCD_ROOT_FOLDER: demo-argocd
-  ARGOCD_TARGET_REVISION: main
+  ARGOCD_ROOT_FOLDER: argocd
   ARGOCD_SYNC_TIMEOUT: 300
-  ROCKETOR_GIT_EMAIL: rocketor.vn@spvn.local
+  ROCKETOR_GIT_EMAIL: rocketor.vn@starixsoft.com
   ROCKETOR_GIT_USER: rocketor.vn

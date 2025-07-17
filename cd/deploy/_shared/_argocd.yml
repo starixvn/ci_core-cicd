@@ -14,7 +14,6 @@
       sed -i "s/@DEST_NAME/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s|@SRC_PATH|$src_path|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s|@SRC_REPO_URL|$ARGOCD_REPO_URL|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-      sed -i "s/@SRC_TARGET_REVISION/$ARGOCD_TARGET_REVISION/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 -o ./${output_file}
     }
 
@@ -96,8 +95,6 @@
     ARGOCD_REPO_HOST=$(echo $ARGOCD_REPO_URL | sed 's|https://||')
     git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@${ARGOCD_REPO_HOST} $ARGOCD_ROOT_FOLDER
     cd $ARGOCD_ROOT_FOLDER
-    echo "Switching to branch: $ARGOCD_TARGET_REVISION..."
-    git switch $ARGOCD_TARGET_REVISION
 
 .copy_file_helper: &copy_file_helper
   - |

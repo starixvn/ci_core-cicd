@@ -22,7 +22,7 @@
   - *generate_template_helper
   - |
     generate_argocd_template "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME" "${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_ROOT_FOLDER/$STACK_NAME" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
-    generate_argocd_template "$APP_NAME" "${ENV_VERSION_NAME}" "$APPLICATION_PATH" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
+    generate_argocd_template "$FORMATED_APP_NAME" "${ENV_VERSION_NAME}" "$APPLICATION_PATH" "$ARGOCD_APP_TEMPLATE_FILE_NAME"
 
 .generate_chart_helper: &generate_chart_helper
   - |
@@ -45,7 +45,7 @@
   - *generate_chart_helper
   - |
     generate_argocd_chart "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME" "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME" "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_VERSION" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_CHART_FILE_NAME"
-    generate_argocd_chart "$APP_NAME" "$K8S_DEPLOYMENTS_CHART_NAME" "$K8S_DEPLOYMENTS_CHART_VERSION" "$ARGOCD_APP_CHART_FILE_NAME"
+    generate_argocd_chart "$FORMATED_APP_NAME" "$K8S_DEPLOYMENTS_CHART_NAME" "$K8S_DEPLOYMENTS_CHART_VERSION" "$ARGOCD_APP_CHART_FILE_NAME"
 
 .generate-argocd-values-file: &generate-argocd-values-file
   - |
@@ -79,6 +79,7 @@
   script:
     - echo "===== PREPARING ARGOCD APP FILE ... ====="
     - echo $VARS_DATA > VARS_DATA.json
+    - FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
     - *generate-argocd-template-file
     - *generate-argocd-chart-file
     - *generate-argocd-values-file
@@ -135,7 +136,7 @@
       git config user.email $ROCKETOR_GIT_EMAIL
       git config user.name $ROCKETOR_GIT_USER
       git add -A
-      git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $CI_COMMIT_MESSAGE"
+      git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${FORMATED_APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $CI_COMMIT_MESSAGE"
 
       MAX_RETRIES=10
       RETRY_COUNT=0
@@ -197,13 +198,14 @@
   - *sync_argocd_app_helper
   - |
     sync_argocd_app "${STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
-    sync_argocd_app "${STACK_NAME}-${APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME" "true"
+    sync_argocd_app "${STACK_NAME}-${FORMATED_APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME" "true"
 
 .deploy_argocd_application:
   script:
     - echo "===== DEPLOY ARGOCD APPLICATION ... ====="
     - *clone_argocd_repo
     - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+    - FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
     - *copy_file_helper
     - *copy_template_file
     - *copy_chart_file
@@ -215,6 +217,7 @@
 .process_sync_argocd_application: &process_sync_argocd_application
   - *clone_argocd_repo
   - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+  - FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
   - *copy_file_helper
   - *copy_values_file
   - *push_to_argocd_repo

@@ -2,6 +2,7 @@ deploy_multi_clusters:
   stage: deploy
   variables:
     DEPLOY_BY: $DEPLOY_BY
+    TRIGGER_BY: $TRIGGER_BY
     DEPLOY_VERSION: $DEPLOY_VERSION
     ENV_NAME: $ENV_NAME
     REDMINE_IDS: $REDMINE_IDS

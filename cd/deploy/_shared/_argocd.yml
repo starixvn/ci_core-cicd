@@ -136,7 +136,7 @@
       git config user.email $ROCKETOR_GIT_EMAIL
       git config user.name $ROCKETOR_GIT_USER
       git add -A
-      git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${FORMATED_APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $CI_COMMIT_MESSAGE"
+      git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${FORMATED_APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $TRIGGER_BY $CI_COMMIT_MESSAGE"
 
       MAX_RETRIES=10
       RETRY_COUNT=0

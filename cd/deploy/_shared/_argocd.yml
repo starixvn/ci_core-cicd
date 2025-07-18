@@ -1,3 +1,8 @@
+.prepare_variables: &prepare_variables
+  - |
+    ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+    FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
+
 .generate_template_helper: &generate_template_helper
   - |
     generate_argocd_template() {
@@ -18,7 +23,6 @@
     }
 
 .generate-argocd-template-file: &generate-argocd-template-file
-  - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
   - *generate_template_helper
   - |
     generate_argocd_template "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME" "${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_ROOT_FOLDER/$STACK_NAME" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
@@ -74,21 +78,6 @@
     else
       jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME}
     fi
-
-.prepare_argocd_app_file:
-  script:
-    - echo "===== PREPARING ARGOCD APP FILE ... ====="
-    - echo $VARS_DATA > VARS_DATA.json
-    - FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
-    - *generate-argocd-template-file
-    - *generate-argocd-chart-file
-    - *generate-argocd-values-file
-
-.prepare_argocd_values_file:
-  script:
-    - echo "===== PREPARING ARGOCD VALUES FILE ... ====="
-    - echo $VARS_DATA > VARS_DATA.json
-    - *generate-argocd-values-file
 
 .clone_argocd_repo: &clone_argocd_repo
   - |
@@ -200,28 +189,41 @@
     sync_argocd_app "${STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
     sync_argocd_app "${STACK_NAME}-${FORMATED_APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME" "true"
 
-.deploy_argocd_application:
-  script:
-    - echo "===== DEPLOY ARGOCD APPLICATION ... ====="
-    - *clone_argocd_repo
-    - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-    - FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
-    - *copy_file_helper
-    - *copy_template_file
-    - *copy_chart_file
-    - *copy_values_file
-    - ACTION_TYPE=deploy
-    - *push_to_argocd_repo
-    - *sync_argocd_app
-
 .process_sync_argocd_application: &process_sync_argocd_application
+  - *prepare_variables
   - *clone_argocd_repo
-  - ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-  - FORMATED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
   - *copy_file_helper
   - *copy_values_file
   - *push_to_argocd_repo
   - *sync_argocd_app
+
+.prepare_argocd_app_file:
+  script:
+    - echo "===== PREPARING ARGOCD APP FILE ... ====="
+    - echo $VARS_DATA > VARS_DATA.json
+    - *prepare_variables
+    - *generate-argocd-template-file
+    - *generate-argocd-chart-file
+    - *generate-argocd-values-file
+
+.prepare_argocd_values_file:
+  script:
+    - echo "===== PREPARING ARGOCD VALUES FILE ... ====="
+    - echo $VARS_DATA > VARS_DATA.json
+    - *generate-argocd-values-file
+
+.deploy_argocd_application:
+  script:
+    - echo "===== DEPLOY ARGOCD APPLICATION ... ====="
+    - ACTION_TYPE=deploy
+    - *prepare_variables
+    - *clone_argocd_repo
+    - *copy_file_helper
+    - *copy_template_file
+    - *copy_chart_file
+    - *copy_values_file
+    - *push_to_argocd_repo
+    - *sync_argocd_app
 
 .update_k8s_ingress_argocd:
   script:

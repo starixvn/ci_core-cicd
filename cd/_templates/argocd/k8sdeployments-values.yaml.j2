@@ -43,13 +43,13 @@
 
 {% set container_root_path = services[0].container_root_path | default ('/app') %}
 {% set config_container_path = services[0].config_container_path | default ('.') %}
-{% set config_content = '@CONFIG_CONTENT' %}
+{% set config_content %}@CONFIG_CONTENT{% endset %}
 {#---------end config_file---------#}
 
 {#---------sp_file---------#}
 {% if services[0].sp_file_name is defined and services[0].sp_file_name != '' %}
   {% set sp_file = services[0].sp_file_name ~ '.' ~ services[0].sp_file_extension | default("xml") %}
-  {% set sp_content = '@SP_CONTENT' %}
+  {% set sp_content %}@SP_CONTENT{% endset %}
   {% set sp_container_path = services[0].sp_container_path | default ('App_Data') %}
 {% endif %}
 {#---------end sp_file---------#}

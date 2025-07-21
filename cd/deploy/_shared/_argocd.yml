@@ -173,7 +173,7 @@
       if [ "$force_sync" == "true" ] || ! argocd app diff "$app_name" --exit-code > /dev/null;
       then
         echo "===== $app_name: Triggering sync... ====="
-        argocd app sync "$app_name" --prune --replace
+        argocd app sync "$app_name" --prune
       fi
 
       echo "===== $app_name: Waiting for application sync and healthy status... ====="

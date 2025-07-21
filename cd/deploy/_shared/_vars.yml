@@ -10,7 +10,7 @@ variables:
   K8S_DEPLOYMENTS_CHART_NAME: k8sdeployments
   K8S_DEPLOYMENTS_CHART_VERSION: 1.3.2
   ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_ROOT_FOLDER: _shared/namespace-imagepullsecrets
-  ARGOCD_REF: argocd
+  ARGOCD_REF: main
   ARGOCD_K8S_FILE_NAME: k8sdeployments-values.yaml
   ARGOCD_K8S_FILE_PATH: "cd%2f_templates%2fargocd%2f${ARGOCD_K8S_FILE_NAME}.j2"
   ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_FILE_NAME: namespace-imagepullsecrets-values.yaml

@@ -43,6 +43,7 @@
 
 {% set container_root_path = services[0].container_root_path | default ('/app') %}
 {% set config_container_path = services[0].config_container_path | default ('.') %}
+{% set config_content = '@CONFIG_CONTENT' %}
 {#---------end config_file---------#}
 
 {#---------sp_file---------#}
@@ -100,9 +101,9 @@ k8sdeployments:
   configFile:
     path: "{{ container_root_path }}/{{ config_container_path }}"
     name: "{{ config_file }}"    
-    {% if config_content | length > 2 %}
+    {% if config_content | length > 15 %}
     content: |
-      {{ config_content | trim("'") | indent(6) }}
+      {{ config_content | indent(6) }}
     {% endif %}
   {% endif %}
 

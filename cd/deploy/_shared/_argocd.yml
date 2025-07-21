@@ -74,10 +74,9 @@
     fi
     if [ ! -z "$CONFIG_FILE_NAME" ];
     then
-      jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME} -e "config_content='$(< "$CONFIG_FILE_PATH/$CONFIG_FILE")'"
-    else
-      jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME}
+      awk -v config_content="$(< "$CONFIG_FILE_PATH/$CONFIG_FILE")" '{gsub(/@CONFIG_CONTENT/, config_content); print}' "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
     fi
+    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME}
 
 .clone_argocd_repo: &clone_argocd_repo
   - |

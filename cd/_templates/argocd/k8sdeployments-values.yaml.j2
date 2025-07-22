@@ -43,13 +43,17 @@
 
 {% set container_root_path = services[0].container_root_path | default ('/app') %}
 {% set config_container_path = services[0].config_container_path | default ('.') %}
-{% set config_content %}@CONFIG_CONTENT{% endset %}
+{% set config_content %}
+@CONFIG_CONTENT
+{% endset %}
 {#---------end config_file---------#}
 
 {#---------sp_file---------#}
 {% if services[0].sp_file_name is defined and services[0].sp_file_name != '' %}
   {% set sp_file = services[0].sp_file_name ~ '.' ~ services[0].sp_file_extension | default("xml") %}
-  {% set sp_content %}@SP_CONTENT{% endset %}
+  {% set sp_content %}
+  @SP_CONTENT
+  {% endset %}
   {% set sp_container_path = services[0].sp_container_path | default ('App_Data') %}
 {% endif %}
 {#---------end sp_file---------#}
@@ -101,7 +105,7 @@ k8sdeployments:
   configFile:
     path: "{{ container_root_path }}/{{ config_container_path }}"
     name: "{{ config_file }}"    
-    {% if config_content | length > 15 %}
+    {% if config_content | length > 17 %}
     content: |
       {{ config_content | indent(6) }}
     {% endif %}
@@ -111,7 +115,7 @@ k8sdeployments:
   spFile:
     path: "{{container_root_path}}/{{sp_container_path}}"
     name: "{{sp_file}}"    
-    {% if sp_content | length > 11 %}
+    {% if sp_content | length > 15 %}
     content: |
       {{ sp_content | indent(6) }}
     {% endif %}

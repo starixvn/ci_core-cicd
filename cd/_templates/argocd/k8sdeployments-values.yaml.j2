@@ -19,6 +19,10 @@
 {% set max_unavailable = 0 if update_order == 'start-first' else '1' %}
 {#---------end max_unavailable---------#}
 
+{#---------rollme---------#}
+{% set rollme_value = '@ROLLME_VALUE' %}
+{#---------end rollme---------#}
+
 {#---------enable_health_check---------#}
 {% set disable_health_check = services[0].disable_health_check | default(false) %}
 {% set enable_health_check = (true if not disable_health_check or disable_health_check == 'false' else false) | lower %}
@@ -87,6 +91,8 @@ k8sdeployments:
   rollingUpdate:
     maxSurge: 25%
     maxUnavailable: {{ max_unavailable }}
+
+  rollme: {{ rollme_value }}
 
   image:
     name: "@REGISTRY_IMAGE/{{team_name}}/{{project_name}}_{{service_name}}:{{environment}}-@COMMIT_HASH"

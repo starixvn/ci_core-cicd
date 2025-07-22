@@ -67,15 +67,22 @@
     sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${ARGOCD_K8S_FILE_NAME}.j2
     sed -i "s|@COMMIT_HASH|$CI_COMMIT_SHORT_SHA|g" ${ARGOCD_K8S_FILE_NAME}.j2
     sed -i "s/@ROLLME_VALUE/$(date +%s%N | sha256sum | cut -c1-5)/g" ${ARGOCD_K8S_FILE_NAME}.j2
-    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME}.preview
+    cp ${ARGOCD_K8S_FILE_NAME}.j2 ${ARGOCD_K8S_FILE_NAME}.j2.preview
+    sed -i "s/@SP_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2.preview
+    sed -i "s/@CONFIG_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2.preview
+    jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2.preview -o ./${ARGOCD_K8S_FILE_NAME}.preview
     cat $ARGOCD_K8S_FILE_NAME.preview
     if [ ! -z "$SP_FILE_NAME" ];
     then
       awk -v content="$(< "$SP_FILE_PATH/$SP_FILE")" '/@SP_CONTENT/ { print content; next } { print }' "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
+    else
+      sed -i "s/@SP_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2
     fi
     if [ ! -z "$CONFIG_FILE_NAME" ];
     then
       awk -v content="$(< "$CONFIG_FILE_PATH/$CONFIG_FILE")" '/@CONFIG_CONTENT/ { print content; next } { print }' "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
+    else
+      sed -i "s/@CONFIG_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2
     fi
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME}
 

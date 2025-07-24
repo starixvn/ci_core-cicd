@@ -1,6 +1,7 @@
 .prepare_variables: &prepare_variables
   - |
     ENV_VERSION_NAME=$(echo ${DEPLOY_ENV} | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+    FORMATTED_STACK_NAME=$(echo "$STACK_NAME" | sed 's/_/-/g')
     FORMATTED_APP_NAME=$(echo "$APP_NAME" | sed 's/_/-/g')
 
 .generate_template_helper: &generate_template_helper
@@ -14,7 +15,7 @@
       echo "Generating $ARGOCD_APP_TEMPLATE_FILE_NAME for $app_name...";
       curl --fail -o ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_TEMPLATE_FILE_PATH/raw?ref=$ARGOCD_REF
       sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
-      sed -i "s/@STACK_NAME/$STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
+      sed -i "s/@STACK_NAME/$FORMATTED_STACK_NAME/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s/@ENV_NAME/$env_name/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s/@ARGO_CLUSTER/$ARGO_CLUSTER/g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
       sed -i "s|@SRC_PATH|$src_path|g" ${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2
@@ -132,7 +133,7 @@
       git config user.email $ROCKETOR_GIT_EMAIL
       git config user.name $ROCKETOR_GIT_USER
       git add -A
-      git commit -m "[${ACTION_TYPE}-${STACK_NAME}-${FORMATTED_APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $TRIGGER_BY $CI_COMMIT_MESSAGE"
+      git commit -m "[${ACTION_TYPE}-${FORMATTED_STACK_NAME}-${FORMATTED_APP_NAME}-${ENV_VERSION_NAME}-${CI_COMMIT_SHORT_SHA}] $TRIGGER_BY $CI_COMMIT_MESSAGE"
 
       MAX_RETRIES=10
       RETRY_COUNT=0
@@ -193,8 +194,8 @@
     export ARGOCD_OPTS="--grpc-web"
   - *sync_argocd_app_helper
   - |
-    sync_argocd_app "${STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
-    sync_argocd_app "${STACK_NAME}-${FORMATTED_APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME" "true"
+    sync_argocd_app "${FORMATTED_STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"
+    sync_argocd_app "${FORMATTED_STACK_NAME}-${FORMATTED_APP_NAME}-${ENV_VERSION_NAME}" "$ARGOCD_APP_TEMPLATE_FILE_NAME" "true"
 
 .process_sync_argocd_application: &process_sync_argocd_application
   - *prepare_variables

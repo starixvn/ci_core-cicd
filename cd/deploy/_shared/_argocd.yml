@@ -52,6 +52,31 @@
     generate_argocd_chart "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME" "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME" "$NAMESPACE_IMAGE_PULL_SECRETS_CHART_VERSION" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_CHART_FILE_NAME"
     generate_argocd_chart "$FORMATTED_APP_NAME" "$K8S_DEPLOYMENTS_CHART_NAME" "$K8S_DEPLOYMENTS_CHART_VERSION" "$ARGOCD_APP_CHART_FILE_NAME"
 
+.replace_content_helper: &replace_content_helper
+  - |
+    replace_file_content() {
+      local placeholder="$1"
+      local source_file_name="$2"
+      local source_file="$3"
+      local target_file="$4"
+
+      if [ ! -z "$source_file_name" ];
+      then
+        awk '
+          /^'"$placeholder"'$/ {
+            while ((getline line < "'"$source_file"'") > 0) {
+              print line
+            }
+            close("'"$source_file"'")
+            next
+          }
+          { print }
+        ' "$target_file" > "${target_file}.tmp" && mv "${target_file}.tmp" "$target_file"
+      else
+        sed -i "s/$placeholder//g" "$target_file"
+      fi
+    }
+
 .generate-argocd-values-file: &generate-argocd-values-file
   - |
     echo "Generating $ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_FILE_NAME...";
@@ -60,6 +85,7 @@
     sed -i "s/@REGISTRY_USERNAME/$DOCKER_REG_LOCAL_USERNAME/g" ${ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_FILE_NAME}.j2
     sed -i "s/@REGISTRY_PASSWORD/$DOCKER_REG_LOCAL_PASSWORD/g" ${ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_FILE_NAME}.j2
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_FILE_NAME}.j2 -o ./${ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_FILE_NAME}
+  - *replace_content_helper
   - |
     echo "Generating $ARGOCD_K8S_FILE_NAME...";
     curl --fail -o ${ARGOCD_K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_K8S_FILE_PATH/raw?ref=$ARGOCD_REF
@@ -73,18 +99,8 @@
     sed -i "s/@CONFIG_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2.preview
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2.preview -o ./${ARGOCD_K8S_FILE_NAME}.preview
     cat $ARGOCD_K8S_FILE_NAME.preview
-    if [ ! -z "$SP_FILE_NAME" ];
-    then
-      awk -v content="$(< "$SP_FILE_PATH/$SP_FILE")" '/@SP_CONTENT/ { print content; next } { print }' "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
-    else
-      sed -i "s/@SP_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2
-    fi
-    if [ ! -z "$CONFIG_FILE_NAME" ];
-    then
-      awk -v content="$(< "$CONFIG_FILE_PATH/$CONFIG_FILE")" '/@CONFIG_CONTENT/ { print content; next } { print }' "${ARGOCD_K8S_FILE_NAME}.j2" > "${ARGOCD_K8S_FILE_NAME}.j2.tmp" && mv "${ARGOCD_K8S_FILE_NAME}.j2.tmp" "${ARGOCD_K8S_FILE_NAME}.j2"
-    else
-      sed -i "s/@CONFIG_CONTENT//g" ${ARGOCD_K8S_FILE_NAME}.j2
-    fi
+    replace_file_content "@SP_CONTENT" "$SP_FILE_NAME" "$SP_FILE_PATH/$SP_FILE" "${ARGOCD_K8S_FILE_NAME}.j2"
+    replace_file_content "@CONFIG_CONTENT" "$CONFIG_FILE_NAME" "$CONFIG_FILE_PATH/$CONFIG_FILE" "${ARGOCD_K8S_FILE_NAME}.j2"
     jinja render -d ./VARS_DATA.json -t ./${ARGOCD_K8S_FILE_NAME}.j2 -o ./${ARGOCD_K8S_FILE_NAME}
 
 .clone_argocd_repo: &clone_argocd_repo

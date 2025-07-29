@@ -40,7 +40,7 @@
       echo "Generating $ARGOCD_APP_CHART_FILE_NAME for $app_name...";
       curl --fail -o ${ARGOCD_APP_CHART_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$ARGOCD_APP_CHART_FILE_PATH/raw?ref=$ARGOCD_REF
       sed -i "s/@APP_NAME/$app_name/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
-      sed -i "s|@REGISTRY_IMAGE|$REGISTRY_IMAGE|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
+      sed -i "s|@REGISTRY_URL|$DOCKER_REG_LOCAL_URL|g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
       sed -i "s/@DEP_NAME/$dep_name/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
       sed -i "s/@DEP_VERSION/$dep_version/g" ${ARGOCD_APP_CHART_FILE_NAME}.j2
       jinja render -d ./VARS_DATA.json -t ./${ARGOCD_APP_CHART_FILE_NAME}.j2 -o ./${output_file}

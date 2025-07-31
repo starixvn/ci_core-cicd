@@ -62,16 +62,23 @@
 
       if [ ! -z "$source_file_name" ];
       then
-        awk '
-          /^'"$placeholder"'$/ {
-            while ((getline line < "'"$source_file"'") > 0) {
-              print line
+        if [ -f "$source_file" ];
+        then
+          awk '
+            /^'"$placeholder"'$/ {
+              while ((getline line < "'"$source_file"'") > 0) {
+                print line
+              }
+              close("'"$source_file"'")
+              next
             }
-            close("'"$source_file"'")
-            next
-          }
-          { print }
-        ' "$target_file" > "${target_file}.tmp" && mv "${target_file}.tmp" "$target_file"
+            { print }
+          ' "$target_file" > "${target_file}.tmp" && mv "${target_file}.tmp" "$target_file"
+        else
+          echo ""
+          echo "File $source_file does not exist."
+          exit 1
+        fi
       else
         sed -i "s/$placeholder//g" "$target_file"
       fi

@@ -9,10 +9,16 @@
       else
       echo "$PROJECT_NAME";
       fi
-    - if [ "$SONAR_PROJECT_GROUP" != "" ] && [[ $PROJECT_NAME != ${SONAR_PROJECT_GROUP}* ]]; then
-      export PROJECT_NAME=$SONAR_PROJECT_GROUP-$PROJECT_NAME;
-      export SONAR_PROJECT_NAME=$PROJECT_NAME;
-      echo $SONAR_PROJECT_NAME;
+    - |
+      if [ "$SONAR_PROJECT_GROUP" != "" ]; then
+        if [[ $PROJECT_NAME != ${SONAR_PROJECT_GROUP}* ]]; then
+          export PROJECT_NAME=$SONAR_PROJECT_GROUP-$PROJECT_NAME;
+          export SONAR_PROJECT_NAME=$PROJECT_NAME;
+          echo $SONAR_PROJECT_NAME;
+        else
+          export SONAR_PROJECT_NAME=$PROJECT_NAME;
+          echo $SONAR_PROJECT_NAME;
+        fi
       fi
   allow_failure: false
   tags:

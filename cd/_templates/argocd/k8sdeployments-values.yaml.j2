@@ -7,7 +7,7 @@
 {% set replicas_name = 'number_of_replicas_' ~ env %}
 {% set replicas = services[0][replicas_name] | default(1) | int %}
 
-{% if env in ["prod","alphaprod","fpsprod","awsprod"] %}
+{% if env in ["prod","alphaprod","fpsprod","awsprod","klprod","alphaklprod","fpsklprod"] %}
   {% set replica_count = [services[0].number_of_replicas_prod | default(1) | int, 6] | min %}
 {% else %}
   {% set replica_count = [replicas, 2] | min %}

@@ -19,3 +19,12 @@ spec:
     helm:
       valueFiles:
         - values-@ENV_NAME.yaml
+  {% if "@APP_NAME" == "namespace-imagepullsecrets" %}
+  ignoreDifferences:
+  - kind: Namespace
+    jsonPointers:
+    - /metadata/annotations/argocd.argoproj.io~1tracking-id
+  - kind: Secret
+    jsonPointers:
+    - /metadata/annotations/argocd.argoproj.io~1tracking-id
+  {% endif %}

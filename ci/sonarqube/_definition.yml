@@ -50,6 +50,7 @@
       -Dsonar.sources=${SRC_PATH}
       -Dsonar.tests=${TEST_PATH}
       -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
+      -Dsonar.scanner.skipJreProvisioning=true
 
 .sonar_dotnet:
   extends: .sonar_common
@@ -76,6 +77,7 @@
       /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
       /d:sonar.cs.vstest.reportsPaths=**/*.trx
       /d:sonar.sourceEncoding=UTF-8
+      /d:sonar.scanner.skipJreProvisioning=true
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
@@ -102,6 +104,7 @@
       /d:sonar.tests=${TEST_PATH}
       /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
       /d:sonar.sourceEncoding=UTF-8
+      /d:sonar.scanner.skipJreProvisioning=true
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
@@ -126,3 +129,4 @@
       -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
       -Dproject.settings=./sonarqube.analysis.properties
       -Dsonar.sources=.
+      -Dsonar.scanner.skipJreProvisioning=true

@@ -188,6 +188,41 @@
       echo "No changes detected. Skipping commit and push."
     fi
 
+.retry_command_helper: &retry_command_helper
+  - |
+    retry_command() {
+      local command="$1"
+      local max_retries="${2:-3}"
+      local base_delay="${3:-5}"
+      local max_delay="${4:-60}"
+      local retry_count=0
+
+      while [ $retry_count -lt $max_retries ]; do
+        echo "Attempt $((retry_count + 1)) of $max_retries: $command"
+
+        if eval "$command"; then
+          return 0
+        fi
+
+        local exit_code=$?
+        retry_count=$((retry_count + 1))
+
+        if [ $retry_count -lt $max_retries ]; then
+          # Calculate delay with exponential backoff: base_delay * 2^retry_count, capped at max_delay
+          local delay=$(( base_delay * (1 << retry_count) ))
+          if [ $delay -gt $max_delay ]; then
+            delay=$max_delay
+          fi
+
+          echo "Command failed with exit code $exit_code. Retrying in $delay seconds..."
+          sleep $delay
+        else
+          echo "Command failed after $max_retries attempts with exit code $exit_code"
+          return $exit_code
+        fi
+      done
+    }
+
 .sync_argocd_app_helper: &sync_argocd_app_helper
   - |
     sync_argocd_app() {
@@ -198,7 +233,11 @@
       if [ $ACTION_TYPE == "deploy" ];
       then
         echo "===== $app_name: Creating application if not exists... ====="
-        argocd app create -f "../$template_file" --upsert
+        retry_command "argocd app create -f \"../$template_file\" --upsert"
+        if [ $? -ne 0 ]; then
+          echo "Failed to create ArgoCD application $app_name after retries"
+          exit 1
+        fi
       fi
 
       if [ "$force_sync" == "true" ] || ! argocd app diff "$app_name" --exit-code > /dev/null;
@@ -215,6 +254,7 @@
   - |
     echo "ArgoCD Server: $ARGOCD_SERVER"
     export ARGOCD_OPTS="--grpc-web"
+  - *retry_command_helper
   - *sync_argocd_app_helper
   - |
     sync_argocd_app "${FORMATTED_STACK_NAME}-${NAMESPACE_IMAGE_PULL_SECRETS_CHART_NAME}-${ENV_VERSION_NAME//[0-9]/}" "$ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_TEMPLATE_FILE_NAME"

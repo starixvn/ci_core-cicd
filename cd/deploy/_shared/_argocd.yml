@@ -231,7 +231,7 @@
 .prepare_argocd_app_file:
   script:
     - echo "===== PREPARING ARGOCD APP FILE ... ====="
-    - echo $VARS_DATA > VARS_DATA.json
+    - echo "$VARS_DATA" > VARS_DATA.json
     - *prepare_variables
     - *generate-argocd-template-file
     - *generate-argocd-chart-file
@@ -240,7 +240,7 @@
 .prepare_argocd_values_file:
   script:
     - echo "===== PREPARING ARGOCD VALUES FILE ... ====="
-    - echo $VARS_DATA > VARS_DATA.json
+    - echo "$VARS_DATA" > VARS_DATA.json
     - *generate-argocd-values-file
 
 .deploy_argocd_application:

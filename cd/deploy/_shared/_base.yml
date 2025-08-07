@@ -7,7 +7,7 @@
   script:
     - echo "$DEPLOYMENT_API - $SERVER_USER"
     - echo "===== GENERATE docker-compose.yml ... =====";
-    - echo $VARS_DATA > VARS_DATA.json
+    - echo "$VARS_DATA" > VARS_DATA.json
     - curl --fail -o ${DOCKER_COMPOSE_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$DOCKER_COMPOSE_FILE_PATH/raw?ref=$DOCKER_COMPOSE_REF
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${DOCKER_COMPOSE_FILE_NAME}.j2
     - jinja render -d ./VARS_DATA.json -t ./${DOCKER_COMPOSE_FILE_NAME}.j2 -o ./${DOCKER_COMPOSE_FILE_NAME}
@@ -47,7 +47,7 @@
 .prepare_k8s_deployments_values:
   script:
     - echo "===== GENERATE k8sdeployments-values.yaml ... =====";
-    - echo $VARS_DATA > VARS_DATA.json
+    - echo "$VARS_DATA" > VARS_DATA.json
     - curl --fail -o ${K8S_FILE_NAME}.j2 --header "PRIVATE-TOKEN:$CI_JOB_TOKEN" $GITLAB_API_URL/projects/ci%2fcore-cicd/repository/files/$K8S_FILE_PATH/raw?ref=$K8S_REF
     - sed -i "s/@DEPLOY_ENVIRONMENT/$ENV_NAME/g" ${K8S_FILE_NAME}.j2
     - sed -i "s/@DEPLOY_VERSION/$DEPLOY_VERSION/g" ${K8S_FILE_NAME}.j2

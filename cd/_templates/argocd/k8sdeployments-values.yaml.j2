@@ -217,3 +217,10 @@ k8sdeployments:
     # readOnlyRootFilesystem: true
     # runAsNonRoot: true
     # runAsUser: 1000
+
+  {% if services[0].cronjob is defined %}
+  cronjob:
+    enabled: true
+    schedule: "{{ services[0].cronjob.schedule }}"
+    suspend: {{ services[0].cronjob.suspend }}
+  {% endif %}

@@ -243,7 +243,11 @@
       if [ "$force_sync" == "true" ] || ! argocd app diff "$app_name" --exit-code > /dev/null;
       then
         echo "===== $app_name: Triggering sync... ====="
-        argocd app sync "$app_name" --prune --retry-limit 3
+        retry_command "argocd app sync \"$app_name\" --prune"
+        if [ $? -ne 0 ]; then
+          echo "Failed to sync ArgoCD application $app_name after retries"
+          exit 1
+        fi
       fi
 
       echo "===== $app_name: Waiting for application sync and healthy status... ====="

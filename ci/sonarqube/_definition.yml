@@ -92,7 +92,18 @@
   needs: ["unit_test_dotnet", "unit_test_js"]
   dependencies: ["unit_test_dotnet", "unit_test_js"]
   script:
-    - ls
+    - ls 
+    - |
+      # Convert relative paths to absolute paths in lcov.info file
+      if [ -f "$SRC_PATH/reports/coverage/lcov.info" ]; then
+        echo "Converting lcov.info paths to absolute..."
+        cat "$SRC_PATH/reports/coverage/lcov.info" | sed "s|SF:|SF:$(pwd)/|" > "$SRC_PATH/reports/coverage/lcov.info.tmp"
+        mv "$SRC_PATH/reports/coverage/lcov.info.tmp" "$SRC_PATH/reports/coverage/lcov.info"
+        echo "Updated lcov.info with absolute paths:"
+        head -5 "$SRC_PATH/reports/coverage/lcov.info"
+      else
+        echo "Warning: lcov.info file not found at $SRC_PATH/reports/coverage/lcov.info"
+      fi
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
       /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
       /d:sonar.token=$SONAR_TOKEN

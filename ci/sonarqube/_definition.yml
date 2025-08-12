@@ -78,6 +78,7 @@
       /d:sonar.cs.vstest.reportsPaths=**/*.trx
       /d:sonar.sourceEncoding=UTF-8
       /d:sonar.scanner.skipJreProvisioning=true
+      /d:sonar.projectBaseDir="$CI_PROJECT_DIR/$SONAR_PROJECT_BASE_DIR"
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN
@@ -105,6 +106,7 @@
       /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
       /d:sonar.sourceEncoding=UTF-8
       /d:sonar.scanner.skipJreProvisioning=true
+      /d:sonar.projectBaseDir="$CI_PROJECT_DIR/$SONAR_PROJECT_BASE_DIR"
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN

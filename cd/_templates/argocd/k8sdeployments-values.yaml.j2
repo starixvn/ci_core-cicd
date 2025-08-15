@@ -84,6 +84,8 @@
 
 ############# k8s deployments values #############
 k8sdeployments:
+  department: @DEPARTMENT
+
   replicaCount: {{ replica_count }}
   revisionHistoryLimit: 5
   environment: {{ environment | lower | replace('_','') }}

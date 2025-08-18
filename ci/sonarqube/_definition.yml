@@ -44,7 +44,7 @@
       -Dsonar.qualitygate.wait=true
       -Dsonar.projectKey=$PROJECT_NAME
       -Dsonar.projectName="$SONAR_PROJECT_NAME"
-      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
+      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME}"
       -Dproject.settings=./sonarqube.analysis.properties
       -Dsonar.javascript.lcov.reportPaths=**/lcov.info
       -Dsonar.sources=${SRC_PATH}
@@ -70,7 +70,7 @@
   script:
     - ls
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
-      /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
+      /v:"${CI_COMMIT_REF_NAME}"
       /d:sonar.token=$SONAR_TOKEN
       /d:sonar.host.url=$SONAR_HOST_URL
       /d:sonar.qualitygate.wait=true
@@ -105,7 +105,7 @@
         echo "Warning: lcov.info file not found at $SRC_PATH/reports/coverage/lcov.info"
       fi
     - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
-      /v:"${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
+      /v:"${CI_COMMIT_REF_NAME}"
       /d:sonar.token=$SONAR_TOKEN
       /d:sonar.host.url=$SONAR_HOST_URL
       /d:sonar.qualitygate.wait=true
@@ -139,7 +139,7 @@
       -Dsonar.qualitygate.wait=true
       -Dsonar.projectKey=$PROJECT_NAME
       -Dsonar.projectName="$SONAR_PROJECT_NAME"
-      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME} ($CI_COMMIT_SHORT_SHA) [${CI_JOB_ID}]"
+      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME}"
       -Dproject.settings=./sonarqube.analysis.properties
       -Dsonar.sources=.
       -Dsonar.scanner.skipJreProvisioning=true

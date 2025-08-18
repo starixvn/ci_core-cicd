@@ -4,8 +4,10 @@
   tags:
     - ci
   before_script:
-    - if [ "$NPM_LUMI_HOST" != "" ]; then
-        npm set registry $NPM_LUMI_HOST;
+    - |
+      if [ "$NPM_LOCAL_HOST" != "" ]; then
+        echo "Using local npm registry: $NPM_LOCAL_HOST"
+        npm set registry $NPM_LOCAL_HOST
       fi
     - yarn global add jest@28.1.3
     - echo $SRC_PATH

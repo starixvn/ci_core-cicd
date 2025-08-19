@@ -1,7 +1,6 @@
 .scan_build_image:
   script:
     - |
-      set -euo pipefail
       wget https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/.trivyignore.yml
       wget --no-verbose https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz?inline=false -O - | tar -zxvf -
       cat .trivyignore.yml
@@ -18,12 +17,6 @@
           exit 1
         fi
       fi
-  tags:
-    - docker
-  artifacts:
-    when: always
-    paths:
-      - ${DEFECTDOJO_SCAN_FILE}
 
 .build:default:image:
   stage: build
@@ -128,4 +121,3 @@
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
-    

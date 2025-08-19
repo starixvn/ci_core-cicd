@@ -1,5 +1,4 @@
 .defectdojo_upload:
-  image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21
   script:
     - set -euo pipefail
     - export DEFECTDOJO_SOFT_FAIL=true
@@ -236,7 +235,3 @@
           echo "Upload Defect Dojo Completed"
         fi
       fi
-
-  allow_failure: true
-  tags:
-    - docker

@@ -1,5 +1,8 @@
 include:
   - cd/build_docker/linux/_definition.yml
+  - cd/build_docker/linux/report_defectdojo/_definition.yml
+  - cd/build_docker/linux/report_defectdojo/_vars.yml
+
 
 build_multistage_env:
   extends:

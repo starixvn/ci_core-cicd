@@ -1,11 +1,29 @@
 .scan_build_image:
   script:
     - |
+      set -euo pipefail
       wget https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/.trivyignore.yml
       wget --no-verbose https://gitlab.nexdev.net/NEXOPS/tools/trivy-scan/-/raw/main/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz?inline=false -O - | tar -zxvf -
       cat .trivyignore.yml
-    - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 0 --scanners vuln --severity HIGH $BUILD_IMAGE
-    - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 1 --scanners vuln --severity CRITICAL $BUILD_IMAGE || curl -s -H "ROCKETOR-TOKEN:$ROCKETOR_TOKEN" "$ROCKETOR_API_URL/api/Deploy/CanBypassCVE?service=$SERVICE_NAME" | grep -q "true"
+    - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 0 --scanners vuln --severity HIGH,CRITICAL $BUILD_IMAGE
+    - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 0 --scanners vuln --severity CRITICAL $BUILD_IMAGE  --format json --output ${DEFECTDOJO_SCAN_FILE}
+    - !reference [.defectdojo_upload, script]
+    - |
+      if [ -f "${DEFECTDOJO_SCAN_FILE}" ]; then
+        VULN_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' ${DEFECTDOJO_SCAN_FILE})
+        echo "Found $VULN_COUNT CRITICAL image vulnerabilities"
+        if [ "$VULN_COUNT" -gt 0 ]; then
+          echo "❌ CRITICAL image vulnerabilities detected"
+          echo "🚫 Skipping build image due to security vulnerabilities"
+          exit 1
+        fi
+      fi
+  tags:
+    - docker
+  artifacts:
+    when: always
+    paths:
+      - ${DEFECTDOJO_SCAN_FILE}
 
 .build:default:image:
   stage: build

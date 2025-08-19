@@ -1,0 +1,243 @@
+.defectdojo_upload:
+  image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21
+  script:
+    - set -euo pipefail
+    - apk add --no-cache bash curl jq coreutils >/dev/null 2>&1
+    - export DEFECTDOJO_SOFT_FAIL=true
+    - TODAY=`date +%Y-%m-%d`
+    - |
+      soft_fail() {
+        msg="$1"
+        if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ]; then
+          DEFECTDOJO_ERRORS=$(( ${DEFECTDOJO_ERRORS:-0} + 1 ))
+          export DEFECTDOJO_ERRORS
+          return 0
+        else
+          exit 1
+        fi
+      }
+
+      is_valid_json() {
+        echo "$1" | jq empty 2>/dev/null
+        return $?
+      }
+
+      parse_jq() {
+        local json_text="$1"
+        shift
+        if is_valid_json "$json_text"; then
+          echo "$json_text" | jq -r "$@" 2>/dev/null
+        else
+          echo ""
+        fi
+      }
+      DEFECTDOJO_CURRENT_STEP="init"
+      export DEFECTDOJO_CURRENT_STEP
+      set_step() {
+        DEFECTDOJO_CURRENT_STEP="$1"
+        export DEFECTDOJO_CURRENT_STEP
+      }
+      if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ]; then
+        set +e
+        set +u
+        set +o pipefail
+      fi
+
+      set_step "Check branch name"
+      BRANCH_NAME=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
+          | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
+      export DEFECTDOJO_ENGAGEMENT_NAME="$BRANCH_NAME"
+      if [ "$DEFECTDOJO_ENGAGEMENT_NAME" != "master" ]; then
+
+        echo "⚠️ Branch '$DEFECTDOJO_ENGAGEMENT_NAME' is not master. Skipping DefectDojo upload."
+      else
+        set_step "validate-input-variables"
+        for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
+          eval value='$'"$var"
+          if [ -z "$value" ]; then
+            soft_fail "$var is not set"
+          fi
+        done
+
+        handle_api_error() {
+          local status=$1
+          local body=$2
+          local action=$3
+          soft_fail "Failed to $action (HTTP $status)"
+        }
+
+        set_step "query-product-type"
+        RESPONSE=$(curl -s -w "\n%{http_code}" \
+          -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+          "${DEFECTDOJO_URL}/api/v2/product_types/?name=${DEFECTDOJO_DEPT}" || { soft_fail "Error: Failed to query product type"; })
+        STATUS=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | sed '$d')
+        COUNT=$(parse_jq "$BODY" '.count // 0')
+        if [ "$STATUS" -eq 200 ] && [ "${COUNT:-0}" -ge 1 ]; then
+          PRODUCT_TYPE_ID=$(parse_jq "$BODY" '.results[0].id')
+        else
+          if ! is_valid_json "$BODY"; then
+            soft_fail "Invalid API response (not JSON, possibly wrong URL)"
+          else
+            set_step "create-product-type"
+            JSON_PAYLOAD=$(jq -n \
+              --arg name "${DEFECTDOJO_DEPT}" \
+              --arg desc "Auto-created product type for ${DEFECTDOJO_DEPT}" \
+              '{name: $name, description: $desc}')
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+              -H "Content-Type: application/json" \
+              "${DEFECTDOJO_URL}/api/v2/product_types/" \
+              -d "$JSON_PAYLOAD" || { soft_fail "Error: Failed to create product type"; })
+            STATUS=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+            if [ "$STATUS" -eq 201 ]; then
+              PRODUCT_TYPE_ID=$(parse_jq "$BODY" '.id')
+            else
+              handle_api_error "$STATUS" "$BODY" "create product type"
+            fi
+          fi
+        fi
+
+        # products query
+        set_step "query-product"
+        PRODUCT_RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+          "${DEFECTDOJO_URL}/api/v2/products/?name=${DEFECTDOJO_PRODUCT_NAME}" || { soft_fail "Failed to query product"; })
+        PRODUCT_STATUS=$(echo "$PRODUCT_RESPONSE" | tail -n1)
+        PRODUCT_BODY=$(echo "$PRODUCT_RESPONSE" | sed '$d')
+        PRODUCT_COUNT=$(parse_jq "$PRODUCT_BODY" '.count // 0')
+        if [ "$PRODUCT_STATUS" -eq 200 ] && [ "${PRODUCT_COUNT:-0}" -ge 1 ]; then
+          PRODUCT_ID=$(parse_jq "$PRODUCT_BODY" '.results[0].id')
+        else
+          if ! is_valid_json "$PRODUCT_BODY"; then
+            soft_fail "Invalid API response (not JSON, possibly wrong URL)"
+          else
+            set_step "create-product"
+            CREATE_PRODUCT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+              -H "Content-Type: application/json" \
+              "${DEFECTDOJO_URL}/api/v2/products/" \
+              -d "{\"name\": \"${DEFECTDOJO_PRODUCT_NAME}\", \"description\": \"Auto-created product for ${DEFECTDOJO_PRODUCT_NAME}\", \"prod_type\": ${PRODUCT_TYPE_ID}}" \
+              || { soft_fail "Failed to create product"; })
+            CREATE_PRODUCT_STATUS=$(echo "$CREATE_PRODUCT_RESPONSE" | tail -n1)
+            CREATE_PRODUCT_BODY=$(echo "$CREATE_PRODUCT_RESPONSE" | sed '$d')
+            if [ "$CREATE_PRODUCT_STATUS" -eq 201 ]; then
+              PRODUCT_ID=$(parse_jq "$CREATE_PRODUCT_BODY" '.id')
+            else
+              handle_api_error "$CREATE_PRODUCT_STATUS" "$CREATE_PRODUCT_BODY" "create product"
+            fi
+          fi
+        fi
+
+        # engagements query
+        set_step "query-engagement"
+        ENGAGEMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+          "${DEFECTDOJO_URL}/api/v2/engagements/?product=${PRODUCT_ID}&name=${DEFECTDOJO_ENGAGEMENT_NAME}" || { soft_fail "Error: Failed to query engagement"; })
+        ENGAGEMENT_STATUS=$(echo "$ENGAGEMENT_RESPONSE" | tail -n1)
+        ENGAGEMENT_BODY=$(echo "$ENGAGEMENT_RESPONSE" | sed '$d')
+        ENGAGEMENT_COUNT=$(parse_jq "$ENGAGEMENT_BODY" '.count // 0')
+        if [ "$ENGAGEMENT_STATUS" -eq 200 ] && [ "${ENGAGEMENT_COUNT:-0}" -ge 1 ]; then
+          ENGAGEMENT_ID=$(parse_jq "$ENGAGEMENT_BODY" '.results[0].id')
+        else
+          if ! is_valid_json "$ENGAGEMENT_BODY"; then
+            soft_fail "Invalid API response (not JSON, possibly wrong URL)"
+          else
+            set_step "create-engagement"
+            ENGAGEMENT_JSON=$(jq -n \
+              --arg name "$DEFECTDOJO_ENGAGEMENT_NAME" \
+              --argjson product "$PRODUCT_ID" \
+              --arg engagement_type "CI/CD" \
+              --argjson deduplication_on_engagement "${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
+              --argjson threat_model "${DEFECTDOJO_ENGAGEMENT_THREAT_MODEL}" \
+              --argjson api_test "${DEFECTDOJO_ENGAGEMENT_API_TEST}" \
+              --argjson pen_test "${DEFECTDOJO_ENGAGEMENT_PEN_TEST}" \
+              --argjson check_list "${DEFECTDOJO_ENGAGEMENT_CHECK_LIST}" \
+              --arg target_start "$(date +%F)" \
+              --arg target_end "$(date -d "+${DEFECTDOJO_ENGAGEMENT_PERIOD} days" +%Y-%m-%d)" \
+              --arg status "${DEFECTDOJO_ENGAGEMENT_STATUS}" \
+              '{name: $name, product: $product, engagement_type: $engagement_type, target_start: $target_start, target_end: $target_end, status: $status, deduplication_on_engagement: $deduplication_on_engagement, threat_model: $threat_model, api_test: $api_test, pen_test: $pen_test, check_list: $check_list}')
+            CREATE_ENGAGEMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+              -H "Content-Type: application/json" \
+              "${DEFECTDOJO_URL}/api/v2/engagements/" \
+              -d "$ENGAGEMENT_JSON" || { soft_fail "Failed to create engagement"; })
+            CREATE_ENGAGEMENT_STATUS=$(echo "$CREATE_ENGAGEMENT_RESPONSE" | tail -n1)
+            CREATE_ENGAGEMENT_BODY=$(echo "$CREATE_ENGAGEMENT_RESPONSE" | sed '$d')
+            if [ "$CREATE_ENGAGEMENT_STATUS" -eq 201 ]; then
+              ENGAGEMENT_ID=$(parse_jq "$CREATE_ENGAGEMENT_BODY" '.id')
+            else
+              soft_fail "Failed to create engagement (HTTP $CREATE_ENGAGEMENT_STATUS)"
+            fi
+          fi
+        fi
+        set_step "check-scan-file"
+        test -f "${DEFECTDOJO_SCAN_FILE}" || { soft_fail "Trivy report not found"; }
+
+        # tests query to decide reimport/import
+        set_step "query-tests"
+        TESTS_JSON=$(curl -s -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+          "${DEFECTDOJO_URL}/api/v2/tests/?engagement=${ENGAGEMENT_ID}")
+        EXISTING_TITLE=$(parse_jq "$TESTS_JSON" --arg test_title "$DEFECTDOJO_ENGAGEMENT_NAME" '.results[] | select(.title==$test_title) | .title // empty')
+        EXISTING_TITLE=${EXISTING_TITLE:-""}
+
+        if [ "$EXISTING_TITLE" = "${DEFECTDOJO_ENGAGEMENT_NAME}" ]; then
+          set_step "reimport-scan"
+          TEST_ID=$(parse_jq "$TESTS_JSON" --arg test_title "$DEFECTDOJO_ENGAGEMENT_NAME" '.results[] | select(.title==$test_title) | .id')
+          REIMPORT_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${DEFECTDOJO_URL}/api/v2/reimport-scan/" \
+            -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+            -F "scan_type=${DEFECTDOJO_SCAN_TYPE}" \
+            -F "active=${DEFECTDOJO_SCAN_ACTIVE}" \
+            -F "verified=${DEFECTDOJO_SCAN_VERIFIED}" \
+            -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+            -F "engagement_type=CI/CD" \
+            -F "engagement_name=${DEFECTDOJO_ENGAGEMENT_NAME}" \
+            -F "engagement=${ENGAGEMENT_ID}" \
+            -F "do_not_reactivate=false" \
+            -F "test_type=${DEFECTDOJO_SCAN_TEST_TYPE}" \
+            -F "auto_create_context=${DEFECTDOJO_AUTO_CREATE_CONTEXT}" \
+            -F "deduplication_on_engagement=${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
+            -F "close_old_findings=${DEFECTDOJO_SCAN_CLOSE_OLD_FINDINGS}" \
+            -F "close_old_findings_product_scope=${DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE}" \
+            -F "test_title=${DEFECTDOJO_ENGAGEMENT_NAME}" \
+            -F "file=@${DEFECTDOJO_SCAN_FILE}" \
+            -F "source_code_management_server=${DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER}" \
+            -F "description=$CI_COMMIT_DESCRIPTION" \
+            2>/dev/null) || { soft_fail "reimport-scan request error"; }
+          [ "${REIMPORT_CODE}" -ge 200 ] && [ "${REIMPORT_CODE}" -lt 300 ] || soft_fail "reimport-scan failed (${REIMPORT_CODE})"
+        else
+          set_step "import-scan"
+          IMPORT_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
+            -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
+            -F "scan_date=$(date +%F)" \
+            -F "minimum_severity=${DEFECTDOJO_SCAN_MINIMUM_SEVERITY}" \
+            -F "scan_type=${DEFECTDOJO_SCAN_TYPE}" \
+            -F "active=${DEFECTDOJO_SCAN_ACTIVE}" \
+            -F "verified=${DEFECTDOJO_SCAN_VERIFIED}" \
+            -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+            -F "engagement_name=${DEFECTDOJO_ENGAGEMENT_NAME}" \
+            -F "engagement_type=CI/CD" \
+            -F "engagement=${ENGAGEMENT_ID}" \
+            -F "test_type=${DEFECTDOJO_SCAN_TEST_TYPE}" \
+            -F "auto_create_context=${DEFECTDOJO_AUTO_CREATE_CONTEXT}" \
+            -F "deduplication_on_engagement=${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
+            -F "close_old_findings=false" \
+            -F "close_old_findings_product_scope=${DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE}" \
+            -F "test_title=${DEFECTDOJO_ENGAGEMENT_NAME}" \
+            -F "file=@${DEFECTDOJO_SCAN_FILE}" \
+            -F "source_code_management_server=${DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER}" \
+            -F "description=${CI_COMMIT_DESCRIPTION}" \
+            -F "first_contacted=$(date +%F)" \
+            2>/dev/null) || { soft_fail "import-scan request error"; }
+          [ "${IMPORT_CODE}" -ge 200 ] && [ "${IMPORT_CODE}" -lt 300 ] || soft_fail "import-scan failed (${IMPORT_CODE})"
+        fi
+        if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ] && [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
+          echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
+        else
+          echo "Upload Defect Dojo Completed"
+        fi
+      fi
+
+  allow_failure: true
+  tags:
+    - docker

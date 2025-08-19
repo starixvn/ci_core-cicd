@@ -110,3 +110,4 @@
     - docker buildx imagetools create -t $CI_REGISTRY_IMAGE:$DEPLOY_ENV-latest $CI_REGISTRY_IMAGE:$DEPLOY_ENV-$CI_REGISTRY_IMAGE_VERSION
   tags:
     - docker
+    

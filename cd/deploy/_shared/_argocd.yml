@@ -206,7 +206,6 @@
           return 0
         fi
 
-        local exit_code=$?
         retry_count=$((retry_count + 1))
 
         if [ $retry_count -lt $max_retries ]; then
@@ -216,11 +215,11 @@
             delay=$max_delay
           fi
 
-          echo "Command failed with exit code $exit_code. Retrying in $delay seconds..."
+          echo "Command failed. Retrying in $delay seconds..."
           sleep $delay
         else
-          echo "Command failed after $max_retries attempts with exit code $exit_code"
-          return $exit_code
+          echo "Command failed after $max_retries attempts"
+          return 1
         fi
       done
     }

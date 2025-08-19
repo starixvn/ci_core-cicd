@@ -11,9 +11,8 @@
       if [ -f "${DEFECTDOJO_SCAN_FILE}" ]; then
         VULN_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' ${DEFECTDOJO_SCAN_FILE})
         echo "Found $VULN_COUNT CRITICAL image vulnerabilities"
-        if [ "$VULN_COUNT" -gt 0 ]; then
-          echo "❌ CRITICAL image vulnerabilities detected"
-          echo "🚫 Skipping build image due to security vulnerabilities"
+        if [ "$VULN_COUNT" -gt 0 ] && ! curl -s -H "ROCKETOR-TOKEN:$ROCKETOR_TOKEN" "$ROCKETOR_API_URL/api/Deploy/CanBypassCVE?service=$SERVICE_NAME" | grep -q "true"; then
+          echo "❌ CRITICAL image vulnerabilities detected. Skipping push image to registry."
           exit 1
         fi
       fi

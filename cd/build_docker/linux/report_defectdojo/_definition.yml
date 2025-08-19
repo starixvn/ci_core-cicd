@@ -2,7 +2,6 @@
   image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21
   script:
     - set -euo pipefail
-    - apk add --no-cache bash curl jq coreutils >/dev/null 2>&1
     - export DEFECTDOJO_SOFT_FAIL=true
     - TODAY=`date +%Y-%m-%d`
     - |

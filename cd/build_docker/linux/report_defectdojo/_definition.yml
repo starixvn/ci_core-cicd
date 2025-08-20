@@ -46,9 +46,8 @@
           "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
           | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
       export DEFECTDOJO_ENGAGEMENT_NAME="$BRANCH_NAME"
-      if [ "$DEFECTDOJO_ENGAGEMENT_NAME" != "master" ]; then
-
-        echo "⚠️ Branch '$DEFECTDOJO_ENGAGEMENT_NAME' is not master. Skipping DefectDojo upload."
+      if [ "$DEFECTDOJO_ENGAGEMENT_NAME" != "master" ] && [ "$DEFECTDOJO_ENGAGEMENT_NAME" != "main" ]; then
+        echo "⚠️ Branch '$DEFECTDOJO_ENGAGEMENT_NAME' is not master or main. Skipping DefectDojo upload."
       else
         set_step "validate-input-variables"
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do

@@ -152,7 +152,7 @@
               --argjson pen_test "${DEFECTDOJO_ENGAGEMENT_PEN_TEST}" \
               --argjson check_list "${DEFECTDOJO_ENGAGEMENT_CHECK_LIST}" \
               --arg target_start "$(date +%F)" \
-              --arg target_end "$(date -d "+${DEFECTDOJO_ENGAGEMENT_PERIOD} days" +%Y-%m-%d)" \
+              --arg target_end "$(date -d @$(( $(date +%s) + ${DEFECTDOJO_ENGAGEMENT_PERIOD}*24*3600 )) +%Y-%m-%d)" \
               --arg status "${DEFECTDOJO_ENGAGEMENT_STATUS}" \
               '{name: $name, product: $product, engagement_type: $engagement_type, target_start: $target_start, target_end: $target_end, status: $status, deduplication_on_engagement: $deduplication_on_engagement, threat_model: $threat_model, api_test: $api_test, pen_test: $pen_test, check_list: $check_list}')
             CREATE_ENGAGEMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \

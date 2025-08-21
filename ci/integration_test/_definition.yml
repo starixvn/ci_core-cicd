@@ -9,7 +9,7 @@
   before_script:
     - cp ./src/app-configs.IGT.js ./src/app-configs.IGT.original.js
     - cp ./configs/app-configs.IGT.js ./src/app-configs.IGT.js
-    - npm set registry $NPM_LUMI_HOST
+    - npm set registry $NPM_LOCAL_HOST
     - yarn install
   script:
     - npm run integration-test

@@ -13,7 +13,7 @@
     - echo $CI_COMMIT_REF_NAME
     - |
         if [ ! -d "node_modules" ]; then
-          npm set registry $NPM_LUMI_HOST
+          npm set registry $NPM_LOCAL_HOST
           yarn install
         fi
     - if [ "$COCOS_VERSION" == "" ]; then

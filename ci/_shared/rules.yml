@@ -23,6 +23,12 @@
 .if_disable_test_cocos: &if_disable_test_cocos
   if: $ENABLE_TEST_COCOS != "true"
 
+.if_enable_sonar_check: &if_enable_sonar_check
+  if: $ENABLE_SONAR_CHECK == "true"
+
+.if_disable_sonar_check: &if_disable_sonar_check
+  if: $ENABLE_SONAR_CHECK != "true"
+
 .if_child_pipeline: &if_child_pipeline
   if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
 
@@ -63,6 +69,15 @@
     - <<: *if_disable_test_js
       when: never
     - <<: *if_disable_test_dotnet
+      when: never
+    - *ci_always_rules
+  sonar_check:
+    - *ci_never_rules
+    - <<: *if_disable_sonar_check
+      when: never
+    - <<: *if_enable_test_dotnet
+      when: never
+    - <<: *if_enable_test_js
       when: never
     - *ci_always_rules
   integration_test_js:

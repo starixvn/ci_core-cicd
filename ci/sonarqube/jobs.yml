@@ -13,3 +13,7 @@ sonar_dotnet:
 sonar_dotnet_js:
   extends: .sonar_dotnet_js
   rules: !reference [.ci_rules, sonar_check_dotnet_js]
+
+sonar_check:
+  extends: .sonar_check
+  rules: !reference [.ci_rules, sonar_check]

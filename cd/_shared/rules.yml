@@ -186,6 +186,8 @@
       when: never
     - <<: *if_publish_nuget
       when: never
+    - if: $ENABLE_SONAR_CHECK == "true"
+      when: never
     - if: $CI_PIPELINE_SOURCE != "push"
       when: never
     - if: $CI_COMMIT_BRANCH

@@ -126,6 +126,33 @@
     paths:
       - packages/
 
+.sonar_sql:
+  extends: .sonar_common
+  image:
+    name: $SONAR_SCANNER_CLI_IMAGE
+  script:
+    - |
+      git config --global --add safe.directory $CI_PROJECT_DIR
+      git fetch origin $CI_DEFAULT_BRANCH
+      export CHANGED_FILES=$(git diff --name-only origin/$CI_DEFAULT_BRANCH...HEAD -- '*.sql' | tr '\n' ',' | sed 's/,$//')
+      echo "Changed SQL files: $CHANGED_FILES"
+      if [ -n "$CHANGED_FILES" ]; then
+        sonar-scanner \
+          -X \
+          -Dsonar.host.url=$SONAR_HOST_URL \
+          -Dsonar.token=$SONAR_TOKEN \
+          -Dsonar.sourceEncoding=UTF-8 \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.projectKey=$PROJECT_NAME \
+          -Dsonar.projectName="$SONAR_PROJECT_NAME" \
+          -Dsonar.projectVersion="${CI_COMMIT_REF_NAME}" \
+          -Dsonar.sources=. \
+          -Dsonar.inclusions="$CHANGED_FILES" \
+          -Dsonar.scanner.skipJreProvisioning=true
+      else
+        echo "No SQL file changes detected, skipping SonarQube scan."
+      fi
+
 .sonar_check:
   extends: .sonar_common
   image:

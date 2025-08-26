@@ -17,3 +17,7 @@ sonar_dotnet_js:
 sonar_check:
   extends: .sonar_check
   rules: !reference [.ci_rules, sonar_check]
+
+sonar_sql:
+  extends: .sonar_sql
+  rules: !reference [.ci_rules, sonar_check_sql]

@@ -29,6 +29,12 @@
 .if_disable_sonar_check: &if_disable_sonar_check
   if: $ENABLE_SONAR_CHECK != "true"
 
+.if_enable_sonar_sql: &if_enable_sonar_sql
+  if: $ENABLE_SONAR_SQL == "true"
+
+.if_disable_sonar_sql: &if_disable_sonar_sql
+  if: $ENABLE_SONAR_SQL != "true"
+
 .if_child_pipeline: &if_child_pipeline
   if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
 
@@ -74,6 +80,15 @@
   sonar_check:
     - *ci_never_rules
     - <<: *if_disable_sonar_check
+      when: never
+    - <<: *if_enable_test_dotnet
+      when: never
+    - <<: *if_enable_test_js
+      when: never
+    - *ci_always_rules
+  sonar_check_sql:
+    - *ci_never_rules
+    - <<: *if_disable_sonar_sql
       when: never
     - <<: *if_enable_test_dotnet
       when: never

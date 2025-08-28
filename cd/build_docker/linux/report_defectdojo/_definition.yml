@@ -1,55 +1,55 @@
 .defectdojo_upload:
   script:
-    - set -euo pipefail
-    - export DEFECTDOJO_SOFT_FAIL=true
-    - TODAY=`date +%Y-%m-%d`
     - |
-      soft_fail() {
-        msg="$1"
-        if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ]; then
-          DEFECTDOJO_ERRORS=$(( ${DEFECTDOJO_ERRORS:-0} + 1 ))
-          export DEFECTDOJO_ERRORS
-          return 0
-        else
-          exit 1
-        fi
-      }
+      defectdojo_upload() {
+        set -euo pipefail
+        export DEFECTDOJO_SOFT_FAIL=true
+        export DEFECTDOJO_ERRORS=0
+        
+        soft_fail() {
+          msg="$1"
+          if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ]; then
+            DEFECTDOJO_ERRORS=$(( ${DEFECTDOJO_ERRORS:-0} + 1 ))
+            export DEFECTDOJO_ERRORS
+            return 0
+          else
+            exit 1
+          fi
+        }
 
-      is_valid_json() {
-        echo "$1" | jq empty 2>/dev/null
-        return $?
-      }
+        is_valid_json() {
+          echo "$1" | jq empty 2>/dev/null
+          return $?
+        }
 
-      parse_jq() {
-        local json_text="$1"
-        shift
-        if is_valid_json "$json_text"; then
-          echo "$json_text" | jq -r "$@" 2>/dev/null
-        else
-          echo ""
-        fi
-      }
-      DEFECTDOJO_CURRENT_STEP="init"
-      export DEFECTDOJO_CURRENT_STEP
-      set_step() {
-        DEFECTDOJO_CURRENT_STEP="$1"
+        parse_jq() {
+          local json_text="$1"
+          shift
+          if is_valid_json "$json_text"; then
+            echo "$json_text" | jq -r "$@" 2>/dev/null
+          else
+            echo ""
+          fi
+        }
+        DEFECTDOJO_CURRENT_STEP="init"
         export DEFECTDOJO_CURRENT_STEP
-      }
-      if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ]; then
-        set +e
-        set +u
-        set +o pipefail
-      fi
-
-      set_step "Check branch name"
-      BRANCH_NAME=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
-          "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
-          | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
-      export DEFECTDOJO_ENGAGEMENT_NAME="$BRANCH_NAME"
-      if [ "$DEFECTDOJO_ENGAGEMENT_NAME" != "master" ] && [ "$DEFECTDOJO_ENGAGEMENT_NAME" != "main" ]; then
-        echo "⚠️ Branch '$DEFECTDOJO_ENGAGEMENT_NAME' is not master or main. Skipping DefectDojo upload."
-      else
-        set_step "validate-input-variables"
+        set_step() {
+          DEFECTDOJO_CURRENT_STEP="$1"
+          export DEFECTDOJO_CURRENT_STEP
+        }
+        
+        if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ]; then
+          set +e
+          set +u
+          set +o pipefail
+        fi
+        
+        set_step "get_engagement_name"
+        DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+            "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
+            | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
+        
+        set_step "validate_env_vars"
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
           eval value='$'"$var"
           if [ -z "$value" ]; then
@@ -64,7 +64,6 @@
           soft_fail "Failed to $action (HTTP $status)"
         }
 
-        set_step "query-product-type"
         RESPONSE=$(curl -s -w "\n%{http_code}" \
           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
           "${DEFECTDOJO_URL}/api/v2/product_types/?name=${DEFECTDOJO_DEPT}" || { soft_fail "Error: Failed to query product type"; })
@@ -77,7 +76,6 @@
           if ! is_valid_json "$BODY"; then
             soft_fail "Invalid API response (not JSON, possibly wrong URL)"
           else
-            set_step "create-product-type"
             JSON_PAYLOAD=$(jq -n \
               --arg name "${DEFECTDOJO_DEPT}" \
               --arg desc "Auto-created product type for ${DEFECTDOJO_DEPT}" \
@@ -98,7 +96,6 @@
         fi
 
         # products query
-        set_step "query-product"
         PRODUCT_RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
           "${DEFECTDOJO_URL}/api/v2/products/?name=${DEFECTDOJO_PRODUCT_NAME}" || { soft_fail "Failed to query product"; })
         PRODUCT_STATUS=$(echo "$PRODUCT_RESPONSE" | tail -n1)
@@ -110,7 +107,6 @@
           if ! is_valid_json "$PRODUCT_BODY"; then
             soft_fail "Invalid API response (not JSON, possibly wrong URL)"
           else
-            set_step "create-product"
             CREATE_PRODUCT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
               -H "Content-Type: application/json" \
@@ -128,7 +124,6 @@
         fi
 
         # engagements query
-        set_step "query-engagement"
         ENGAGEMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
           "${DEFECTDOJO_URL}/api/v2/engagements/?product=${PRODUCT_ID}&name=${DEFECTDOJO_ENGAGEMENT_NAME}" || { soft_fail "Error: Failed to query engagement"; })
         ENGAGEMENT_STATUS=$(echo "$ENGAGEMENT_RESPONSE" | tail -n1)
@@ -140,7 +135,6 @@
           if ! is_valid_json "$ENGAGEMENT_BODY"; then
             soft_fail "Invalid API response (not JSON, possibly wrong URL)"
           else
-            set_step "create-engagement"
             ENGAGEMENT_JSON=$(jq -n \
               --arg name "$DEFECTDOJO_ENGAGEMENT_NAME" \
               --argjson product "$PRODUCT_ID" \
@@ -168,19 +162,16 @@
             fi
           fi
         fi
-        set_step "check-scan-file"
         test -f "${DEFECTDOJO_SCAN_FILE}" || { soft_fail "Trivy report not found"; }
 
         # tests query to decide reimport/import
-        set_step "query-tests"
         TESTS_JSON=$(curl -s -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
           "${DEFECTDOJO_URL}/api/v2/tests/?engagement=${ENGAGEMENT_ID}")
-        EXISTING_TITLE=$(parse_jq "$TESTS_JSON" --arg test_title "$DEFECTDOJO_ENGAGEMENT_NAME" '.results[] | select(.title==$test_title) | .title // empty')
+        EXISTING_TITLE=$(parse_jq "$TESTS_JSON" --arg test_title "$DEFECTDOJO_TEST_TITLE" '.results[] | select(.title==$test_title) | .title // empty')
         EXISTING_TITLE=${EXISTING_TITLE:-""}
 
-        if [ "$EXISTING_TITLE" = "${DEFECTDOJO_ENGAGEMENT_NAME}" ]; then
-          set_step "reimport-scan"
-          TEST_ID=$(parse_jq "$TESTS_JSON" --arg test_title "$DEFECTDOJO_ENGAGEMENT_NAME" '.results[] | select(.title==$test_title) | .id')
+        if [ "$EXISTING_TITLE" = "${DEFECTDOJO_TEST_TITLE}" ]; then
+          TEST_ID=$(parse_jq "$TESTS_JSON" --arg test_title "$DEFECTDOJO_TEST_TITLE" '.results[] | select(.title==$test_title) | .id')
           REIMPORT_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${DEFECTDOJO_URL}/api/v2/reimport-scan/" \
             -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
             -F "scan_type=${DEFECTDOJO_SCAN_TYPE}" \
@@ -196,14 +187,15 @@
             -F "deduplication_on_engagement=${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
             -F "close_old_findings=${DEFECTDOJO_SCAN_CLOSE_OLD_FINDINGS}" \
             -F "close_old_findings_product_scope=${DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE}" \
-            -F "test_title=${DEFECTDOJO_ENGAGEMENT_NAME}" \
+            -F "test_title=${DEFECTDOJO_TEST_TITLE}" \
             -F "file=@${DEFECTDOJO_SCAN_FILE}" \
             -F "source_code_management_server=${DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER}" \
+            -F "environment=${DEFECTDOJO_SCAN_ENVIRONMENT}" \
+            -F "tags=env:${DEFECTDOJO_SCAN_ENVIRONMENT}" \
             -F "description=$CI_COMMIT_DESCRIPTION" \
             2>/dev/null) || { soft_fail "reimport-scan request error"; }
           [ "${REIMPORT_CODE}" -ge 200 ] && [ "${REIMPORT_CODE}" -lt 300 ] || soft_fail "reimport-scan failed (${REIMPORT_CODE})"
         else
-          set_step "import-scan"
           IMPORT_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
             -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
             -F "scan_date=$(date +%F)" \
@@ -220,17 +212,23 @@
             -F "deduplication_on_engagement=${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
             -F "close_old_findings=false" \
             -F "close_old_findings_product_scope=${DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE}" \
-            -F "test_title=${DEFECTDOJO_ENGAGEMENT_NAME}" \
+            -F "test_title=${DEFECTDOJO_TEST_TITLE}" \
             -F "file=@${DEFECTDOJO_SCAN_FILE}" \
             -F "source_code_management_server=${DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER}" \
             -F "description=${CI_COMMIT_DESCRIPTION}" \
             -F "first_contacted=$(date +%F)" \
+            -F "environment=${DEFECTDOJO_SCAN_ENVIRONMENT}" \
+            -F "tags=env:${DEFECTDOJO_SCAN_ENVIRONMENT}" \
             2>/dev/null) || { soft_fail "import-scan request error"; }
           [ "${IMPORT_CODE}" -ge 200 ] && [ "${IMPORT_CODE}" -lt 300 ] || soft_fail "import-scan failed (${IMPORT_CODE})"
         fi
-        if [ "${DEFECTDOJO_SOFT_FAIL:-false}" = "true" ] && [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
-          echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
+      }
+      if defectdojo_upload >/dev/null 2>&1; then
+        if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
+          echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}' (${DEFECTDOJO_ERRORS} errors)"
         else
           echo "Upload Defect Dojo Completed"
         fi
+      else
+        echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
       fi

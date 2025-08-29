@@ -59,11 +59,6 @@
           eval value='$'"$var"
           if [ -z "$value" ] || [ "$value" = "null" ]; then
             soft_fail "$var is not set"
-            echo "DEFECTDOJO_URL: $DEFECTDOJO_URL"
-            echo "DEFECTDOJO_API_KEY: [HIDDEN]"
-            echo "DEFECTDOJO_PRODUCT_NAME: $DEFECTDOJO_PRODUCT_NAME"
-            echo "DEFECTDOJO_DEPT: $DEFECTDOJO_DEPT"
-            echo "DEFECTDOJO_ENGAGEMENT_NAME: $DEFECTDOJO_ENGAGEMENT_NAME"
           fi
         done
 
@@ -241,4 +236,9 @@
         fi
       else
         echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
+        echo "DEFECTDOJO_URL: $DEFECTDOJO_URL"
+        echo "DEFECTDOJO_API_KEY: [HIDDEN]"
+        echo "DEFECTDOJO_PRODUCT_NAME: $DEFECTDOJO_PRODUCT_NAME"
+        echo "DEFECTDOJO_DEPT: $DEFECTDOJO_DEPT"
+        echo "DEFECTDOJO_ENGAGEMENT_NAME: $DEFECTDOJO_ENGAGEMENT_NAME"
       fi

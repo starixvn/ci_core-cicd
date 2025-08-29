@@ -48,10 +48,10 @@
         DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
             "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
             | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
+        
         if [ -n "$DEFECTDOJO_PRODUCT_NAME" ]; then
           DEFECTDOJO_PRODUCT_NAME=$(echo "$DEFECTDOJO_PRODUCT_NAME" | tr -d '[:space:]')
           export DEFECTDOJO_PRODUCT_NAME
-          echo "DEFECTDOJO_PRODUCT_NAME after removing spaces: $DEFECTDOJO_PRODUCT_NAME"
         fi
      
         set_step "validate_env_vars"

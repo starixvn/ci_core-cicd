@@ -52,8 +52,8 @@
         set_step "validate_env_vars"
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
           eval value='$'"$var"
-          if [ -z "$value" ]; then
-            soft_fail "$var is not set"
+          if [ -z "$value" ] || [ "$value" = "null" ] || [ -z "$(echo "$value" | tr -d '[:space:]')" ]; then
+            echo "Error: $var is required but not set, empty, or null"
           fi
         done
 
@@ -63,7 +63,11 @@
           local action=$3
           soft_fail "Failed to $action (HTTP $status)"
         }
-
+        if [ -n "$DEFECTDOJO_PRODUCT_NAME" ]; then
+          DEFECTDOJO_PRODUCT_NAME=$(echo "$DEFECTDOJO_PRODUCT_NAME" | tr -d '[:space:]')
+          export DEFECTDOJO_PRODUCT_NAME
+          echo "DEFECTDOJO_PRODUCT_NAME after removing spaces: $DEFECTDOJO_PRODUCT_NAME"
+        fi
         RESPONSE=$(curl -s -w "\n%{http_code}" \
           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
           "${DEFECTDOJO_URL}/api/v2/product_types/?name=${DEFECTDOJO_DEPT}" || { soft_fail "Error: Failed to query product type"; })

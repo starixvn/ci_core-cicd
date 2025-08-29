@@ -49,14 +49,6 @@
             "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
             | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
         
-        set_step "validate_env_vars"
-        for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
-          eval value='$'"$var"
-          if [ -z "$value" ] || [ "$value" = "null" ] || [ -z "$(echo "$value" | tr -d '[:space:]')" ]; then
-            soft_fail "$var is not set"
-          fi
-        done
-
         handle_api_error() {
           local status=$1
           local body=$2
@@ -227,12 +219,26 @@
           [ "${IMPORT_CODE}" -ge 200 ] && [ "${IMPORT_CODE}" -lt 300 ] || soft_fail "import-scan failed (${IMPORT_CODE})"
         fi
       }
-      if defectdojo_upload >/dev/null 2>&1; then
-        if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
-          echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}' (${DEFECTDOJO_ERRORS} errors)"
+      validate_required_vars() {
+        for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT; do
+          eval value='$'"$var"
+          if [ -z "$value" ] || [ "$value" = "null" ] || [ -z "$(echo "$value" | tr -d '[:space:]')" ]; then
+            return 1
+          fi
+        done
+        return 0
+      }
+      
+      if validate_required_vars; then
+        if defectdojo_upload >/dev/null 2>&1; then
+          if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
+            echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}' (${DEFECTDOJO_ERRORS} errors)"
+          else
+            echo "Upload Defect Dojo Completed"
+          fi
         else
-          echo "Upload Defect Dojo Completed"
+          echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
         fi
       else
-        echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
+        echo "DefectDojo upload skipped due to missing required variables"
       fi

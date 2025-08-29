@@ -44,7 +44,7 @@
           set +o pipefail
         fi
         
-        set_step "get_test_title"
+        set_step "get_branch_name"
         DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
             "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
             | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
@@ -52,12 +52,18 @@
           DEFECTDOJO_PRODUCT_NAME=$(echo "$DEFECTDOJO_PRODUCT_NAME" | tr -d '[:space:]')
           export DEFECTDOJO_PRODUCT_NAME
           echo "DEFECTDOJO_PRODUCT_NAME after removing spaces: $DEFECTDOJO_PRODUCT_NAME"
-        fi        
+        fi
+     
         set_step "validate_env_vars"
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT DEFECTDOJO_ENGAGEMENT_NAME ; do
           eval value='$'"$var"
           if [ -z "$value" ] || [ "$value" = "null" ]; then
             soft_fail "$var is not set"
+            echo "DEFECTDOJO_URL: $DEFECTDOJO_URL"
+            echo "DEFECTDOJO_API_KEY: [HIDDEN]"
+            echo "DEFECTDOJO_PRODUCT_NAME: $DEFECTDOJO_PRODUCT_NAME"
+            echo "DEFECTDOJO_DEPT: $DEFECTDOJO_DEPT"
+            echo "DEFECTDOJO_ENGAGEMENT_NAME: $DEFECTDOJO_ENGAGEMENT_NAME"
           fi
         done
 

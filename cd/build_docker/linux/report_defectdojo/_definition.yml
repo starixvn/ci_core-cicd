@@ -231,14 +231,14 @@
       if defectdojo_upload >/dev/null 2>&1; then
         if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
           echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}' (${DEFECTDOJO_ERRORS} errors)"
+          echo "DEFECTDOJO_URL: $DEFECTDOJO_URL"
+          echo "DEFECTDOJO_API_KEY: [HIDDEN]"
+          echo "DEFECTDOJO_PRODUCT_NAME: $DEFECTDOJO_PRODUCT_NAME"
+          echo "DEFECTDOJO_DEPT: $DEFECTDOJO_DEPT"
+          echo "DEFECTDOJO_ENGAGEMENT_NAME: $DEFECTDOJO_ENGAGEMENT_NAME"
         else
           echo "Upload Defect Dojo Completed"
         fi
       else
         echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}'"
-        echo "DEFECTDOJO_URL: $DEFECTDOJO_URL"
-        echo "DEFECTDOJO_API_KEY: [HIDDEN]"
-        echo "DEFECTDOJO_PRODUCT_NAME: $DEFECTDOJO_PRODUCT_NAME"
-        echo "DEFECTDOJO_DEPT: $DEFECTDOJO_DEPT"
-        echo "DEFECTDOJO_ENGAGEMENT_NAME: $DEFECTDOJO_ENGAGEMENT_NAME"
       fi

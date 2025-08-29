@@ -53,7 +53,7 @@
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
           eval value='$'"$var"
           if [ -z "$value" ] || [ "$value" = "null" ] || [ -z "$(echo "$value" | tr -d '[:space:]')" ]; then
-            echo "Error: $var is required but not set, empty, or null"
+            soft_fail "$var is not set"
           fi
         done
 

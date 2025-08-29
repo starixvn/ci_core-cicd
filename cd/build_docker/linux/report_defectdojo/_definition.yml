@@ -52,7 +52,7 @@
         set_step "validate_env_vars"
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
           eval value='$'"$var"
-          if [ -z "$value" ] || [ "$value" = "null" ]" ]; then
+          if [ -z "$value" ] || [ "$value" = "null" ]"; then
             soft_fail "$var is not set"
           fi
         done

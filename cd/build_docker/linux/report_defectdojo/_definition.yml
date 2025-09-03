@@ -84,17 +84,6 @@
           echo "✅ OK: DEFECTDOJO_PRODUCT_NAME = '${DEFECTDOJO_PRODUCT_NAME}'"
         fi
         
-        if [ -z "${DEFECTDOJO_DEPT:-}" ] || [ "${DEFECTDOJO_DEPT:-}" = "null" ]; then
-          echo "❌ ERROR: DEFECTDOJO_DEPT is not set or null (current value: '${DEFECTDOJO_DEPT:-<empty>}')"
-          VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
-          soft_fail "DEFECTDOJO_DEPT is not set"
-        else
-          echo "✅ OK: DEFECTDOJO_DEPT = '${DEFECTDOJO_DEPT}'"
-          if [[ "$DEFECTDOJO_DEPT" == *" "* ]]; then
-            echo "⚠️  WARNING: DEFECTDOJO_DEPT contains spaces, this might cause API issues"
-          fi
-        fi
-        
         echo "=== Environment variables check completed ==="
         echo "📊 Summary: $VALIDATION_ERRORS validation error(s) found"
         

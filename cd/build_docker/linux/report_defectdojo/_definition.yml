@@ -52,6 +52,7 @@
         if [ -n "$DEFECTDOJO_DEPT" ]; then
           DEFECTDOJO_DEPT=$(echo "$DEFECTDOJO_DEPT" | tr -d '[:space:]')
           export DEFECTDOJO_DEPT
+          export DEFECTDOJO_PRODUCT_NAME = "Gitlab_$CI_PROJECT_NAME-$DEFECTDOJO_DEPT"
         fi
 
         set_step "validate_env_vars"

@@ -56,51 +56,12 @@
         fi
 
         set_step "validate_env_vars"
-        echo "=== Checking DefectDojo environment variables ==="
-        VALIDATION_ERRORS=0
-        
-        if [ -z "${DEFECTDOJO_URL:-}" ] || [ "${DEFECTDOJO_URL:-}" = "null" ]; then
-          echo "❌ ERROR: DEFECTDOJO_URL is not set or null (current value: '${DEFECTDOJO_URL:-<empty>}')"
-          VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
-          soft_fail "DEFECTDOJO_URL is not set"
-        else
-          echo "✅ OK: DEFECTDOJO_URL = '${DEFECTDOJO_URL}'"
-        fi
-
-        if [ -z "${DEFECTDOJO_API_KEY:-}" ] || [ "${DEFECTDOJO_API_KEY:-}" = "null" ]; then
-          echo "❌ ERROR: DEFECTDOJO_API_KEY is not set or null"
-          VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
-          soft_fail "DEFECTDOJO_API_KEY is not set"
-        else
-          echo "✅ OK: DEFECTDOJO_API_KEY is set (length: ${#DEFECTDOJO_API_KEY} characters)"
-        fi
-
-        if [ -z "${DEFECTDOJO_PRODUCT_NAME:-}" ] || [ "${DEFECTDOJO_PRODUCT_NAME:-}" = "null" ]; then
-          echo "❌ ERROR: DEFECTDOJO_PRODUCT_NAME is not set or null (current value: '${DEFECTDOJO_PRODUCT_NAME:-<empty>}')"
-          VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
-          soft_fail "DEFECTDOJO_PRODUCT_NAME is not set"
-        else
-          echo "✅ OK: DEFECTDOJO_PRODUCT_NAME = '${DEFECTDOJO_PRODUCT_NAME}'"
-        fi
-
-        if [ -z "${DEFECTDOJO_DEPT:-}" ] || [ "${DEFECTDOJO_DEPT:-}" = "null" ]; then
-          echo "❌ ERROR: DEFECTDOJO_DEPT is not set or null (current value: '${DEFECTDOJO_DEPT:-<empty>}')"
-          VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
-          soft_fail "DEFECTDOJO_DEPT is not set"
-        else
-          echo "✅ OK: DEFECTDOJO_DEPT = '${DEFECTDOJO_DEPT}'"
-          # Kiểm tra thêm nếu có dấu cách (có thể gây lỗi với DefectDojo API)
-          if [[ "$DEFECTDOJO_DEPT" == *" "* ]]; then
-            echo "⚠️  WARNING: DEFECTDOJO_DEPT contains spaces, this might cause API issues"
+        for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
+          eval value='$'"$var"
+          if [ -z "$value" ]; then
+            soft_fail "$var is not set"
           fi
-        fi
-        
-        echo "=== Environment variables check completed ==="
-        echo "📊 Summary: $VALIDATION_ERRORS validation error(s) found"
-        
-        if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
-          echo "⚠️  Total validation errors: ${DEFECTDOJO_ERRORS}"
-        fi
+        done
 
         handle_api_error() {
           local status=$1
@@ -268,14 +229,9 @@
           [ "${IMPORT_CODE}" -ge 200 ] && [ "${IMPORT_CODE}" -lt 300 ] || soft_fail "import-scan failed (${IMPORT_CODE})"
         fi
       }
-      if defectdojo_upload; then
+      if defectdojo_upload >/dev/null 2>&1; then
         if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
           echo "Upload Defect Dojo Failed at '${DEFECTDOJO_CURRENT_STEP}' (${DEFECTDOJO_ERRORS} errors)"
-          echo "DEFECTDOJO_URL: $DEFECTDOJO_URL"
-          echo "DEFECTDOJO_API_KEY: [HIDDEN]"
-          echo "DEFECTDOJO_PRODUCT_NAME: $DEFECTDOJO_PRODUCT_NAME"
-          echo "DEFECTDOJO_DEPT: $DEFECTDOJO_DEPT"
-          echo "DEFECTDOJO_ENGAGEMENT_NAME: $DEFECTDOJO_ENGAGEMENT_NAME"
         else
           echo "Upload Defect Dojo Completed"
         fi

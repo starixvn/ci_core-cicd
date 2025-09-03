@@ -101,7 +101,6 @@
         if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
           echo "⚠️  Total validation errors: ${DEFECTDOJO_ERRORS}"
         fi
-        done
 
         handle_api_error() {
           local status=$1

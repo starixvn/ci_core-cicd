@@ -55,11 +55,21 @@
         fi
      
         set_step "validate_env_vars"
+        echo "=== Checking DefectDojo environment variables ==="
         for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT; do
           eval value='$'"$var"
+          echo "Checking $var: '${value:-<empty>}'"
           if [ -z "$value" ] || [ "$value" = "null" ]; then
+            echo "❌ ERROR: $var is not set or null"
             soft_fail "$var is not set"
+          else
+            echo "✅ OK: $var is set"
           fi
+        done
+        echo "=== Environment variables check completed ==="
+        if [ "${DEFECTDOJO_ERRORS:-0}" -gt 0 ]; then
+          echo "⚠️  Total validation errors: ${DEFECTDOJO_ERRORS}"
+        fi
         done
 
         handle_api_error() {

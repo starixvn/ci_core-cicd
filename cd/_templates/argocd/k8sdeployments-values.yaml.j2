@@ -168,7 +168,7 @@ k8sdeployments:
   {% if services[0].volumes is defined and services[0].volumes | length > 0 %}
   volumes:
     {% for volume in services[0].volumes %}
-    - name: {{ volume.name }}
+    - name: {{ volume.name | replace('_', '-') }}
       mountPath: {{ volume.mount_path }}
       sharedPVC: {{ volume.shared_pvc }}
     {% endfor %}

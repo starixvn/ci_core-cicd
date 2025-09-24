@@ -22,7 +22,7 @@ variables:
   DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE: false
   DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER: "GitLab"
   # ZAP Variables
-  APP_URL: "http:$host"
+  APP_URL: "http://sample-test.nexdev.net"
   ZAP_SCAN_ENABLED: true
   ZAP_FULL_SCAN_ENABLED: true
   HEALTH_CHECK_RETRIES: 5

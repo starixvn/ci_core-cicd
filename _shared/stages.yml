@@ -4,5 +4,6 @@ stages:
   - build-cocos-web
   - build
   - deploy
+  - dast
   - publish
   - post-deploy

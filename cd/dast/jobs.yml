@@ -4,12 +4,7 @@ include:
 dast:
   extends:
     - .zap_scan
-  needs:
-    - job: deploy_swarm
-      optional: true
-    - job: deploy_k8s
-      optional: true
-    - job: deploy_k8s_argocd
-      optional: true
-    - job: deploy_multi_clusters
-      optional: true
+  needs: 
+    - deploy_swarm 
+    - deploy_k8s  
+    - deploy_k8s_argocd

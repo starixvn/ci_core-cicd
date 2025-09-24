@@ -5,7 +5,7 @@
     - echo "Checking if the target is reachable..."
     - mkdir -p /zap/wrk
     - ln -s "$CI_PROJECT_DIR" /zap/wrk
-    # Tạo config file để ignore Info findings
+
     - |
       cat > /zap/wrk/zap-config.conf << EOF
       # ZAP Baseline Configuration
@@ -26,7 +26,6 @@
     - !reference [.upload_to_defectdojo, script]
     
 .upload_to_defectdojo:
-  stage: dast
   image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21
   before_script:
     - apk add --no-cache bash curl jq
@@ -167,7 +166,7 @@
       fi
 
 
-     # Ensure report exists
+    # Ensure report exists
     - test -f "${DEFECTDOJO_SCAN_FILE}" || { echo "❌ ZAP report not found"; exit 1; }
     - echo "🔎 Checking for existing Test titled ${DEFECTDOJO_TEST_TITLE}"
     - |

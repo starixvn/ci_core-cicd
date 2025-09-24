@@ -4,11 +4,5 @@ include:
 dast:
   extends:
     - .zap_scan
-  before_script:
-    - echo "=== DEBUG: DAST job is running ==="
-    - echo "Current job name: $CI_JOB_NAME"
-    - echo "Current stage: $CI_JOB_STAGE"
-    - echo "APP_URL: $APP_URL"
-    - echo "ZAP_FULL_SCAN_ENABLED: $ZAP_FULL_SCAN_ENABLED"
   rules:
     - when: on_success

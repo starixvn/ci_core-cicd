@@ -4,7 +4,5 @@ include:
 dast:
   extends:
     - .zap_scan
-  needs: 
-    - deploy_swarm 
-    - deploy_k8s  
-    - deploy_k8s_argocd
+  rules:
+    - when: on_success

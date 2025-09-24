@@ -27,8 +27,6 @@
 .upload_to_defectdojo:
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21
-  dependencies:
-    - zap_scan
   before_script:
     - apk add --no-cache bash curl jq
   script:

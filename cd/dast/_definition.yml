@@ -23,7 +23,8 @@
         zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
       fi
     - cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
-
+    - !reference [.upload_to_defectdojo, script]
+    
 .upload_to_defectdojo:
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21

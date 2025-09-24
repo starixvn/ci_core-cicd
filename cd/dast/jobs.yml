@@ -4,4 +4,3 @@ include:
 dast:
   extends:
     - .zap_scan
-    - .upload_to_defectdojo

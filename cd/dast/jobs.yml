@@ -1,0 +1,8 @@
+include:
+  - cd/dast/_definition.yml
+  - cd/dast/_vars.yml
+
+dast:
+  extends:
+    - .zap_scan
+    - .upload_to_defectdojo

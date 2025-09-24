@@ -25,7 +25,7 @@
     - cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
 
 .upload_to_defectdojo:
-  stage: upload_results
+  stage: dast
   image: $DOCKER_REG_LOCAL_URL/base/alpine:git-3.21
   dependencies:
     - zap_scan

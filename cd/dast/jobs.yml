@@ -5,8 +5,7 @@ include:
 dast:
   extends:
     - .zap_scan
-  rules:
-    - when: on_success
+
 # Test job to verify configuration
 test_dast:
   stage: dast

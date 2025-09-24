@@ -1,5 +1,6 @@
 .zap_scan:
   stage: dast
+  image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
   script:
     - echo "Checking if the target is reachable..."
     - mkdir -p /zap/wrk

@@ -5,7 +5,8 @@ include:
 dast:
   extends:
     - .zap_scan
-
+  dependencies:
+    - deploy_k8s
 # Test job to verify configuration
 test_dast:
   stage: dast

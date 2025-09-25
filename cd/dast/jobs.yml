@@ -2,31 +2,8 @@ include:
   - cd/dast/_definition.yml
   - cd/dast/_vars.yml
 
-test_debug_vars:
-  stage: dast
-  extends:
-    - .env
-  dependencies:
-    - prepare_vars
-    - deploy_k8s
-  script:
-    - echo "=== DEBUG VARS FROM .PRE STAGE ==="
-    - echo "APP_URL_TEST - $APP_URL_TEST"
-    - echo "APP_URL - $APP_URL"
-    - echo "DEPLOYED_HOST - $DEPLOYED_HOST"
-    - echo "DEBUG_SITE_URLS_DEFINED - $DEBUG_SITE_URLS_DEFINED"
-    - echo "DEBUG_SITE_URLS_LENGTH - $DEBUG_SITE_URLS_LENGTH"
-    - echo "DEBUG_SITE_URLS_DATA - $DEBUG_SITE_URLS_DATA"
-    - echo "DEBUG_EXTRACTED_HOST - $DEBUG_EXTRACTED_HOST"
-    - echo "ENABLE_INGRESS - $ENABLE_INGRESS"
-    - echo "=== FINAL RESOLVED VALUES ==="
-    - echo "Final APP_URL for DAST - $APP_URL"
-    - echo "Target URL will be - $APP_URL"
-  rules:
-    - when: manual
-
 dast:
   extends:
     - .zap_scan
   dependencies:
-    - prepare_vars
+    - deploy

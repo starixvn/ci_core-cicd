@@ -188,7 +188,7 @@
       when: never
     - if: $ENABLE_SONAR_SQL == "true"
       when: never
-    - if: $CI_PIPELINE_SOURCE != "push"
-      when: never
-    - if: $CI_COMMIT_BRANCH
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS == null'
       when: always

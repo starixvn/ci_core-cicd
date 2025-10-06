@@ -78,10 +78,10 @@
 .if_not_publish_nuget: &if_not_publish_nuget
   if: $PUBLISH_NUGET != "true"
 
-.if_value_exists: &if_site_url_exists
+.if_site_url_exists: &if_site_url_exists
   if: $site_url != null && $site_url != ""
 
-.if_value_not_exists: &if_site_url_not_exists
+.if_site_url_not_exists: &if_site_url_not_exists
   if: $site_url == null || $site_url == "" 
 
 .cd_rules:

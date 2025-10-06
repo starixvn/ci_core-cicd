@@ -177,9 +177,9 @@
   
   dast:
     - <<: *if_dast_not_enabled_ci
-      when: never
-    - <<: *if_dast_enabled_ci
       when: on_success
+    - <<: *if_dast_enabled_ci
+      when: never
 
   publish_npm:
     - <<: *if_not_publish_npm

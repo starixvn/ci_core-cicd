@@ -5,7 +5,6 @@ include:
 dast:
   extends:
     - .zap_scan
-  needs: ["prepare_vars"]
   rules: 
     - !reference [.cd_rules, dast]
     - !reference [.cd_rules, deploy]

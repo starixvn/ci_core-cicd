@@ -5,5 +5,3 @@ include:
 dast:
   extends:
     - .zap_scan
-  dependencies:
-    - deploy

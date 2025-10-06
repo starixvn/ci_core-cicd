@@ -177,8 +177,10 @@
   
   dast:
     - <<: *if_site_url_not_available
-      when: never
-    - *cd_success_rules
+      when: manual
+      allow_failure: true
+    - <<: *if_site_url_available
+      when: on_success
 
   publish_npm:
     - <<: *if_not_publish_npm

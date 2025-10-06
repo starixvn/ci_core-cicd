@@ -79,10 +79,10 @@
   if: $PUBLISH_NUGET != "true"
 
 .if_value_exists: &if_value_exists
-  if: $YOUR_VALUE != null && $YOUR_VALUE != ""
+  if: $site_url != null && $site_url != ""
 
 .if_value_not_exists: &if_value_not_exists
-  if: $YOUR_VALUE == null || $YOUR_VALUE == "" 
+  if: $site_url == null || $site_url == "" 
 
 .cd_rules:
   build_multistage:

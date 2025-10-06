@@ -177,6 +177,7 @@
   
   dast:
     - <<: *if_dast_not_enabled
+      when: never
     - *cd_success_rules
 
   publish_npm:

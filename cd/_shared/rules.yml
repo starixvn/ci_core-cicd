@@ -79,10 +79,10 @@
   if: $PUBLISH_NUGET != "true"
 
 .if_dast_enabled_ci: &if_dast_enabled_ci
-  if: $ENABLE_DAST_CI == "true"
+  if: $ENABLE_DAST == "true"
 
 .if_dast_not_enabled_ci: &if_dast_not_enabled_ci
-  if: $ENABLE_DAST_CI != "true" 
+  if: $ENABLE_DAST != "true" 
 
 .cd_rules:
   build_multistage:
@@ -177,9 +177,9 @@
   
   dast:
     - <<: *if_dast_not_enabled_ci
-      when: on_success
-    - <<: *if_dast_enabled_ci
       when: never
+    - <<: *if_dast_enabled_ci
+      when: on_success
 
   publish_npm:
     - <<: *if_not_publish_npm

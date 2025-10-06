@@ -78,11 +78,11 @@
 .if_not_publish_nuget: &if_not_publish_nuget
   if: $PUBLISH_NUGET != "true"
 
-.if_dast_enabled: &if_dast_enabled
-  if: $ENABLE_DAST == "true"
+.if_value_exists: &if_value_exists
+  if: $YOUR_VALUE != null && $YOUR_VALUE != ""
 
-.if_dast_not_enabled: &if_dast_not_enabled
-  if: $ENABLE_DAST != "true"
+.if_value_not_exists: &if_value_not_exists
+  if: $YOUR_VALUE == null || $YOUR_VALUE == "" 
 
 .cd_rules:
   build_multistage:
@@ -176,9 +176,10 @@
       when: never
   
   dast:
-    - <<: *if_dast_not_enabled
+    - if: $site_url == null || $site_url == ""
       when: never
-    - when: on_success
+    - if: $site_url != null && $site_url != ""
+      when: on_success
 
   publish_npm:
     - <<: *if_not_publish_npm

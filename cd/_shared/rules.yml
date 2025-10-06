@@ -177,8 +177,7 @@
   
   dast:
     - <<: *if_site_url_not_available
-      when: manual
-      allow_failure: true
+      when: never
     - <<: *if_site_url_available
       when: on_success
 

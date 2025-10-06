@@ -78,6 +78,18 @@
 .if_not_publish_nuget: &if_not_publish_nuget
   if: $PUBLISH_NUGET != "true"
 
+.if_site_url_available: &if_site_url_available
+  if: ($SITE_URL != "" && $SITE_URL != null) || ($APP_URL != "" && $APP_URL != null)
+
+.if_site_url_not_available: &if_site_url_not_available
+  if: ($SITE_URL == "" || $SITE_URL == null) && ($APP_URL == "" || $APP_URL == null)
+
+.if_dast_enabled: &if_dast_enabled
+  if: $ENABLE_DAST == "true"
+
+.if_dast_not_enabled: &if_dast_not_enabled
+  if: $ENABLE_DAST != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -168,6 +180,14 @@
   smoke_test:
     - <<: *if_env_not_prod
       when: never
+  
+  dast:
+    - <<: *if_dast_not_enabled
+      when: never
+    - <<: *if_site_url_not_available
+      when: never
+    - *cd_success_rules
+
   publish_npm:
     - <<: *if_not_publish_npm
       when: never

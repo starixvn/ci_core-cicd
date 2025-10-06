@@ -9,5 +9,13 @@ dast:
     - job: prepare_vars
       artifacts: true
     - job: deploy_k8s_argocd
+  before_script:
+    - source cd_vars.env || true
+    - |
+      if [ -z "$site_url" ] || [ "$site_url" = "" ]; then
+        echo "⚠️  site_url is not available, skipping DAST scan"
+        exit 0
+      fi
+    - echo "✅ site_url found: $site_url, proceeding with DAST scan"
   rules: 
     - !reference [.cd_rules, dast]

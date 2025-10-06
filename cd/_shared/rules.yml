@@ -79,16 +79,10 @@
   if: $PUBLISH_NUGET != "true"
 
 .if_site_url_available: &if_site_url_available
-  if: ($SITE_URL != "" && $SITE_URL != null) || ($APP_URL != "" && $APP_URL != null)
+  if: $site_url != ""
 
 .if_site_url_not_available: &if_site_url_not_available
-  if: ($SITE_URL == "" || $SITE_URL == null) && ($APP_URL == "" || $APP_URL == null)
-
-.if_dast_enabled: &if_dast_enabled
-  if: $ENABLE_DAST == "true"
-
-.if_dast_not_enabled: &if_dast_not_enabled
-  if: $ENABLE_DAST != "true"
+  if: $site_url == ""
 
 .cd_rules:
   build_multistage:
@@ -182,8 +176,6 @@
       when: never
   
   dast:
-    - <<: *if_dast_not_enabled
-      when: never
     - <<: *if_site_url_not_available
       when: never
     - *cd_success_rules

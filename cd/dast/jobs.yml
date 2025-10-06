@@ -5,7 +5,11 @@ include:
 dast:
   extends:
     - .zap_scan
-  needs: ["prepare_vars"]
+  needs:
+    - job: prepare_vars
+      artifacts: true
+    - job: deploy_k8s_argocd
+      artifacts: true
   rules: 
     - !reference [.cd_rules, dast]
     - !reference [.cd_rules, deploy]

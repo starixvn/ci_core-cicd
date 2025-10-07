@@ -138,7 +138,6 @@
       echo "Changed SQL files: $CHANGED_FILES"
       if [ -n "$CHANGED_FILES" ]; then
         sonar-scanner \
-          -X \
           -Dsonar.host.url=$SONAR_HOST_URL \
           -Dsonar.token=$SONAR_TOKEN \
           -Dsonar.sourceEncoding=UTF-8 \

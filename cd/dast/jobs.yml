@@ -9,5 +9,3 @@ dast:
     - job: prepare_vars
       artifacts: true
     - job: deploy_k8s_argocd
-  rules: 
-    - !reference [.cd_rules, dast]

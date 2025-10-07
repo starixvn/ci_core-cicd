@@ -8,7 +8,7 @@ dast:
   needs:
     - job: prepare_vars
       artifacts: true
-    # - job: deploy_k8s_argocd
+    - job: deploy_k8s_argocd
     # - job: deploy_swarm
     # - job: deploy_k8s
-    - job: deploy_multi_clusters
+    # - job: deploy_multi_clusters

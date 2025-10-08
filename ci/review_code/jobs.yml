@@ -1,0 +1,8 @@
+include:
+  - ci/review_code/_definition.yml
+  - ci/review_code/_vars.yml
+
+review_code:
+  extends: .review_code
+  rules: !reference [.ci_rules, review_code]
+  needs: []

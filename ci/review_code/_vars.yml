@@ -1,0 +1,2 @@
+variables:  
+  QODO_IMAGE: $DOCKER_REG_LOCAL_URL/docker-hub/codiumai/pr-agent:latest

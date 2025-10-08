@@ -1,5 +1,6 @@
 stages:
   - test
+  - review-code
   - transform-config
   - build-cocos-web
   - build

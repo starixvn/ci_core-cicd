@@ -115,3 +115,8 @@
     - if: '$CI_COMMIT_BRANCH'
       when: on_failure
     - when: never
+  review_code:
+    - *ci_never_rules
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never

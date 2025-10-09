@@ -44,7 +44,7 @@
         cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi
-    - export DEFECTDOJO_TEST_TITLE = Test
+    - export DEFECTDOJO_TEST_TITLE="Test"
     - !reference [.defectdojo_upload, script]
     - echo $DEFECTDOJO_URL
     - echo $DEFECTDOJO_API_KEY

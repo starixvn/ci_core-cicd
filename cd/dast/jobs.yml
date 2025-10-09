@@ -1,7 +1,9 @@
 include:
   - cd/dast/_definition.yml
   - cd/dast/_vars.yml
-
+  - cd/build_docker/linux/report_defectdojo/_definition.yml
+  - cd/build_docker/linux/report_defectdojo/_vars.yml
+  
 dast:
   extends:
     - .zap_scan

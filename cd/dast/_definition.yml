@@ -45,11 +45,6 @@
         echo "✅ ZAP scan completed"
       fi
     - !reference [.upload_to_defectdojo, script]
-    - echo $DEFECTDOJO_URL
-    - echo $DEFECTDOJO_API_KEY
-    - echo $DEFECTDOJO_PRODUCT_NAME
-    - echo $DEFECTDOJO_DEPT
-    - echo $DEFECTDOJO_TEST_TITLE
   tags:
     - docker
 

@@ -4,5 +4,5 @@ include:
   - cd/deploy/nexcel/jobs.yml
   - cd/deploy/nexcel/multi_clusters/jobs.yml
   - cd/auto_deploy/jobs.yml
-  - cd/dast/jobs.yml
+  # - cd/dast/jobs.yml
   - cd/publish_nuget/jobs.yml

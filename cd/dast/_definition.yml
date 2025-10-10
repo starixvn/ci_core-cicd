@@ -44,7 +44,7 @@
         cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi
-    # - !reference [.defectdojo_upload, script]
+    - !reference [.defectdojo_upload, script]
     # - echo $DEFECTDOJO_URL
     # - echo $DEFECTDOJO_API_KEY
     # - echo $DEFECTDOJO_PRODUCT_NAME

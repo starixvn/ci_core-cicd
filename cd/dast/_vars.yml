@@ -1,8 +1,8 @@
 variables:
-#    #Defect Dojo Variable
-#   DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
-  # DEFECTDOJO_SCAN_FILE: "zap-report.xml"  # Commented to avoid override from build job
-  # DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
+   #Defect Dojo Variable
+  DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
+  DEFECTDOJO_SCAN_FILE: "zap-report.xml"  # Commented to avoid override from build job
+  DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
 
   # ZAP Variables
   APP_URL: http://$site_url

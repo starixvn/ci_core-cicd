@@ -30,7 +30,6 @@
       # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
       # 10109	IGNORE	(Modern Web Application)
       EOF
-
         # Run ZAP scan
         if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
           echo "Starting ZAP FULL scan..."

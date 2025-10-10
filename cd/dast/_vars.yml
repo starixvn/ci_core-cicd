@@ -2,7 +2,7 @@ variables:
    #Defect Dojo Variable
   DEFECTDOJO_SCAN_FILE: "zap-report.xml"
   DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
-#   DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
+  DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
 
 
 

@@ -7,6 +7,10 @@
     - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 0 --scanners vuln --severity HIGH,CRITICAL $BUILD_IMAGE
     - ./trivy image --server $TRIVY_SERVER --token $TRIVY_TOKEN --ignore-unfixed --ignorefile .trivyignore.yml --exit-code 0 --scanners vuln --severity CRITICAL $BUILD_IMAGE  --format json --output ${DEFECTDOJO_SCAN_FILE}
     - !reference [.defectdojo_upload, script]
+    - echo $DEFECTDOJO_URL
+    - echo $DEFECTDOJO_API_KEY
+    - echo $DEFECTDOJO_PRODUCT_NAME
+    - echo $DEFECTDOJO_DEPT
     - |
       if [ -f "${DEFECTDOJO_SCAN_FILE}" ]; then
         VULN_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' ${DEFECTDOJO_SCAN_FILE})
@@ -16,6 +20,7 @@
           exit 1
         fi
       fi
+
 
 .build:default:image:
   stage: build

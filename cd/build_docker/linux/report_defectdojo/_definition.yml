@@ -45,9 +45,17 @@
         fi
         
         set_step "get_engagement_name"
-        DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
-            "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
-            | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
+        # Set DEFECTDOJO_TEST_TITLE based on scan type
+        if [ "$DEFECTDOJO_SCAN_TYPE" = "ZAP Scan" ]; then
+            DEFECTDOJO_TEST_TITLE="$APP_URL"
+            echo "✅ Using APP_URL for ZAP Scan: $DEFECTDOJO_TEST_TITLE"
+        else
+            # Default for Trivy Scan and others - use branch name
+            DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+                "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
+                | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
+            echo "✅ Using branch name for Trivy Scan: $DEFECTDOJO_TEST_TITLE"
+        fi
 
         if [ -n "$DEFECTDOJO_DEPT" ]; then
           DEFECTDOJO_DEPT=$(echo "$DEFECTDOJO_DEPT" | tr -d '[:space:]')

@@ -23,7 +23,7 @@
 
         
         # Prepare URLs for both HTTP and HTTPS
-        HTTP_URL="http://$APP_URL"
+
         HTTPS_URL="https://$APP_URL"
         
         echo "🔍 Will scan both:"
@@ -60,11 +60,11 @@
         }
 
         # Run scans for both HTTP and HTTPS
-        run_zap_scan "$HTTP_URL" "http"
+
         run_zap_scan "$HTTPS_URL" "https"
         
         # Copy reports
-        cp /zap/wrk/zap-report-http.xml "$CI_PROJECT_DIR/" 2>/dev/null || echo "⚠️ HTTP report not found"
+
         cp /zap/wrk/zap-report-https.xml "$CI_PROJECT_DIR/" 2>/dev/null || echo "⚠️ HTTPS report not found"
         
         # Merge reports or use the first available one

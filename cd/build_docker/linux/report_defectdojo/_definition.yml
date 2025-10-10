@@ -51,7 +51,7 @@
             BRANCH_NAME=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
                 "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
                 | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
-            DEFECTDOJO_TEST_TITLE="${BRANCH_NAME}_${APP_URL}"
+            DEFECTDOJO_TEST_TITLE="${BRANCH_NAME}_${site_url}"
             echo "✅ Using branchname_APP_URL for ZAP Scan: $DEFECTDOJO_TEST_TITLE"
         else
             # Default for Trivy Scan and others - use branch name

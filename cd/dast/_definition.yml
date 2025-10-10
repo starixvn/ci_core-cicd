@@ -1,10 +1,6 @@
 .zap_scan:
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
-  variables:
-    DEFECTDOJO_SCAN_FILE: "zap-report.xml"
-    DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
-    DEFECTDOJO_TEST_TITLE: "$APP_URL"
   before_script:
     - echo "Starting ZAP scan preparation"
     - echo "Target URL - $APP_URL"
@@ -20,15 +16,7 @@
         exit 0
       else
         echo "✅ APP_URL is valid: $APP_URL"
-
-        
-        # Prepare URLs for both HTTP and HTTPS
-
-        HTTPS_URL="https://$APP_URL"
-        
-        echo "🔍 Will scan both:"
-        echo "  - HTTP:  $HTTP_URL"
-        echo "  - HTTPS: $HTTPS_URL"
+        echo "Checking if the target is reachable..."
         
         # Prepare ZAP workspace
         mkdir -p /zap/wrk
@@ -43,43 +31,18 @@
       # 10109	IGNORE	(Modern Web Application)
       EOF
 
-        # Function to run ZAP scan
-        run_zap_scan() {
-          local target_url=$1
-          local report_suffix=$2
-          
-          echo "🚀 Starting ZAP scan for: $target_url"
-          
-          if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
-            echo "Starting ZAP FULL scan for $target_url..."
-            zap-full-scan.py -t "$target_url" -x "zap-report-${report_suffix}.xml" -I -c /zap/wrk/zap-config.conf || echo "⚠️ ZAP scan failed for $target_url"
-          else
-            echo "Starting ZAP baseline scan for $target_url..."
-            zap-baseline.py -t "$target_url" -x "zap-report-${report_suffix}.xml" -I -c /zap/wrk/zap-config.conf || echo "⚠️ ZAP scan failed for $target_url"
-          fi
-        }
-
-        # Run scans for both HTTP and HTTPS
-
-        run_zap_scan "$HTTPS_URL" "https"
-        
-        # Copy reports
-
-        cp /zap/wrk/zap-report-https.xml "$CI_PROJECT_DIR/" 2>/dev/null || echo "⚠️ HTTPS report not found"
-        
-        # Merge reports or use the first available one
-        if [ -f "$CI_PROJECT_DIR/zap-report-https.xml" ]; then
-          cp "$CI_PROJECT_DIR/zap-report-https.xml" "$CI_PROJECT_DIR/zap-report.xml"
-          echo "✅ Using HTTPS report as primary"
-        elif [ -f "$CI_PROJECT_DIR/zap-report-http.xml" ]; then
-          cp "$CI_PROJECT_DIR/zap-report-http.xml" "$CI_PROJECT_DIR/zap-report.xml"
-          echo "✅ Using HTTP report as primary"
+        # Run ZAP scan
+        if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
+          echo "Starting ZAP FULL scan..."
+          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
         else
-          echo "❌ No ZAP reports generated"
-          exit 1
+          echo "Starting ZAP baseline scan..."
+          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
         fi
         
-        echo "✅ ZAP scan completed for both HTTP and HTTPS"
+        # Copy report and upload to DefectDojo
+        cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
+        echo "✅ ZAP scan completed"
       fi
     - !reference [.defectdojo_upload, script]
 

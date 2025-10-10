@@ -1,6 +1,8 @@
 .zap_scan:
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
+  variables:
+    DEFECTDOJO_SCAN_FILE: "zap-report.xml"
   before_script:
     - echo "Starting ZAP scan preparation"
     - echo "Target URL - $APP_URL"

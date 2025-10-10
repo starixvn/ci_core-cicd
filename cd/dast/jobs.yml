@@ -9,6 +9,8 @@ dast:
   extends:
     - .zap_scan
   needs:
+    - job: prepare_vars
+      artifacts: true
     - job: deploy_k8s_argocd
       optional: true
     - job: deploy_swarm

@@ -11,6 +11,8 @@
     - echo $DEFECTDOJO_API_KEY
     - echo $DEFECTDOJO_PRODUCT_NAME
     - echo $DEFECTDOJO_DEPT
+    - echo $DEFECTDOJO_TEST_TITLE
+    - echo $DEFECTDOJO_ENGAGEMENT_NAME
     - |
       if [ -f "${DEFECTDOJO_SCAN_FILE}" ]; then
         VULN_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' ${DEFECTDOJO_SCAN_FILE})

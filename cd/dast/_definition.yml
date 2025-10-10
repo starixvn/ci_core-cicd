@@ -4,6 +4,7 @@
   variables:
     DEFECTDOJO_SCAN_FILE: "zap-report.xml"
     DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
+    DEFECTDOJO_TEST_TITLE: "$APP_URL"
   before_script:
     - echo "Starting ZAP scan preparation"
     - echo "Target URL - $APP_URL"

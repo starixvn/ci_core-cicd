@@ -45,11 +45,9 @@
         fi
         
         set_step "DEFECTDOJO_TEST_TITLE"
-        if [ -z "$DEFECTDOJO_TEST_TITLE" ]; then
-          DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
-              "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
-              | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
-        fi
+        DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+            "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
+            | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
 
         if [ -n "$DEFECTDOJO_DEPT" ]; then
           DEFECTDOJO_DEPT=$(echo "$DEFECTDOJO_DEPT" | tr -d '[:space:]')

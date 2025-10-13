@@ -48,6 +48,12 @@
         cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi
+      if zap-cli status -m 1 -a; then
+        echo "No High or Medium vulnerabilities found."
+      else
+        echo "High or Medium vulnerabilities found! Failing build."
+        exit 1
+      fi
     - !reference [.defectdojo_upload, script]
   tags:
     - docker

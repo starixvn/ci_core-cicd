@@ -31,9 +31,9 @@
         cat > /zap/wrk/zap-config.conf << EOF
       # ZAP Baseline Configuration
       # Ignore Info level findings
-      # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
-      # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
-      # 10109	IGNORE	(Modern Web Application)
+      10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+      10027	IGNORE	(Information Disclosure - Suspicious Comments)
+      10109	IGNORE	(Modern Web Application)
       EOF
         # Run ZAP scan
         if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then

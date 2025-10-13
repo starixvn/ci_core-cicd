@@ -48,13 +48,13 @@
         cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi      
-      # Fail if Low vulnerabilities (for testing)
-      if grep -Eiq "<riskdesc>Low" zap-report.xml; then
-        echo "❌ Low vulnerabilities found! Failing build."
-        exit 1
-      else
-        echo "✅ No Low vulnerabilities found."
-      fi
+      # # Fail if Low vulnerabilities (for testing)
+      # if grep -Eiq "<riskdesc>Low" zap-report.xml; then
+      #   echo "❌ Low vulnerabilities found! Failing build."
+      #   exit 1
+      # else
+      #   echo "✅ No Low vulnerabilities found."
+      # fi
     - !reference [.defectdojo_upload, script]
   tags:
     - docker

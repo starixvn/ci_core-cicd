@@ -38,22 +38,17 @@
         # Run ZAP scan
         if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
           echo "Starting ZAP FULL scan..."
-          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -c /zap/wrk/zap-config.conf
         else
           echo "Starting ZAP baseline scan..."
-          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+          zap-baseline.py -t "$APP_URL" -x zap-report.xml -c /zap/wrk/zap-config.conf
         fi
         
         # Copy report and upload to DefectDojo
         cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi
-      if zap-cli status -m 1 -a; then
-        echo "No High or Medium vulnerabilities found."
-      else
-        echo "High or Medium vulnerabilities found! Failing build."
-        exit 1
-      fi
+      cat /zap/wrk/zap-report.xml
     - !reference [.defectdojo_upload, script]
   tags:
     - docker

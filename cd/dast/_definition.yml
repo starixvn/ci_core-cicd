@@ -23,9 +23,9 @@
 
       cat > /zap/wrk/zap-config.conf << EOF
       # Ignore Info-level alerts
-      10015 IGNORE
-      10027 IGNORE
-      10109 IGNORE
+      # 10015 IGNORE
+      # 10027 IGNORE
+      # 10109 IGNORE
       EOF
 
       echo "🔎 Starting ZAP baseline scan..."

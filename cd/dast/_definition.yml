@@ -11,29 +11,43 @@
     - echo "Target URL - $APP_URL"
     - echo "Full scan enabled - $ZAP_FULL_SCAN_ENABLED"
   script:
-    - echo "Running ZAP scan..."
+    - echo "Checking APP_URL availability..."
+    - echo "APP_URL = $APP_URL"
     - |
       if [ -z "$APP_URL" ] || [ "$APP_URL" = "http://" ] || [ "$APP_URL" = "https://" ]; then
         echo "❌ APP_URL is empty or invalid: '$APP_URL'"
+        echo "Cannot perform DAST scan without valid target URL"
+        echo "Skipping ZAP scan..."
         exit 0
-      fi
+      else
+        echo "✅ APP_URL is valid: $APP_URL"
+        echo "Checking if the target is reachable..."
+        
+        # Prepare ZAP workspace
+        mkdir -p /zap/wrk
+        ln -s "$CI_PROJECT_DIR" /zap/wrk
 
-      mkdir -p /zap/wrk
-      ln -s "$CI_PROJECT_DIR" /zap/wrk
-
-      cat > /zap/wrk/zap-config.conf << EOF
-      # Ignore Info-level alerts
-      # 10015 IGNORE
-      # 10027 IGNORE
-      # 10109 IGNORE
+        # Create ZAP configuration
+        cat > /zap/wrk/zap-config.conf << EOF
+      # ZAP Baseline Configuration
+      # Ignore Info level findings
+      # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+      # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
+      # 10109	IGNORE	(Modern Web Application)
       EOF
-
-      echo "🔎 Starting ZAP baseline scan..."
-      zap-baseline.py -t "$APP_URL" -x /zap/wrk/zap-report.xml -c /zap/wrk/zap-config.conf -I
-
-      cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
-
-      echo "Checking for High or Critical findings..."
+        # Run ZAP scan
+        if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
+          echo "Starting ZAP FULL scan..."
+          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+        else
+          echo "Starting ZAP baseline scan..."
+          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+        fi
+        
+        # Copy report and upload to DefectDojo
+        cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
+        echo "✅ ZAP scan completed"
+      fi      
       if grep -Eiq "<riskdesc>(High|Critical)" zap-report.xml; then
         echo "❌ High or Critical vulnerabilities found! Failing build."
         exit 1

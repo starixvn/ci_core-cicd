@@ -50,8 +50,7 @@
                 "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
                 | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
         if [ "$DEFECTDOJO_SCAN_TYPE" = "ZAP Scan" ]; then
-            DEFECTDOJO_TEST_TITLE="$DEFECTDOJO_TEST_TITLE_$APP_URL"
-
+            DEFECTDOJO_TEST_TITLE="${DEFECTDOJO_TEST_TITLE}_${site_url}"
         else
             echo "✅ Using branch name for Trivy Scan: $DEFECTDOJO_TEST_TITLE"
         fi

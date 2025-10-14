@@ -44,9 +44,6 @@
           echo "Starting ZAP baseline scan..."
           zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
         fi
-        
-        # Copy report and upload to DefectDojo
-        cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi
     - !reference [.defectdojo_upload, script]

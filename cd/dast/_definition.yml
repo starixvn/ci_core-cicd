@@ -2,7 +2,7 @@
   variables:
     #Defect Dojo Variable
     DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
-    DEFECTDOJO_SCAN_FILE: "$CI_PROJECT_DIR/zap-report.xml"
+    DEFECTDOJO_SCAN_FILE: "zap-report.xml"
     DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
@@ -59,16 +59,9 @@
         echo "Starting ZAP baseline scan on $DETECTED_URL..."
         zap-baseline.py -t "$DETECTED_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP baseline scan encountered issues"
       fi
-
-      # Copy report to project dir
-      if [ -f "zap-report.xml" ]; then
-        cp zap-report.xml "$CI_PROJECT_DIR/" || { echo "❌ Copy report failed"; exit 1; }
-      else
-        echo "❌ Report not found"
-        exit 1
-      fi
       echo "✅ ZAP scan completed"
-    - cat "$CI_PROJECT_DIR/zap-report.xml"
+    - zap-config.conf
+    - cat "zap-report.xml"
     - !reference [.defectdojo_upload, script]
   tags:
     - docker

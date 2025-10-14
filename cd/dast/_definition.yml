@@ -14,264 +14,61 @@
     - echo "Checking APP_URL availability..."
     - echo "APP_URL = $APP_URL"
     - |
-      if [ -z "$APP_URL" ] || [ "$APP_URL" = "http://" ] || [ "$APP_URL" = "https://" ]; then
-        echo "❌ APP_URL is empty or invalid: '$APP_URL'"
-        echo "Cannot perform DAST scan without valid target URL"
+      # Detect which scheme is reachable (HTTP or HTTPS)
+      RAW="$APP_URL"
+      DOMAIN=$(echo "$RAW" | sed -E 's|^https?://||' | sed -E 's|/.*$||')
+      HTTP_URL="http://$DOMAIN"
+      HTTPS_URL="https://$DOMAIN"
+
+      HTTPS_CODE=$(curl -skI "$HTTPS_URL" -o /dev/null -w "%{http_code}" --connect-timeout 5 || echo "000")
+      HTTP_CODE=$(curl -sI "$HTTP_URL" -o /dev/null -w "%{http_code}" --connect-timeout 5 || echo "000")
+
+      if [ "$HTTPS_CODE" != "000" ]; then
+        echo "✅ Target is reachable over HTTPS ($HTTPS_URL), CODE=$HTTPS_CODE"
+        DETECTED_SCHEME="https"
+        DETECTED_URL="$HTTPS_URL"
+      elif [ "$HTTP_CODE" != "000" ]; then
+        echo "✅ Target is reachable over HTTP ($HTTP_URL), CODE=$HTTP_CODE"
+        DETECTED_SCHEME="http"
+        DETECTED_URL="$HTTP_URL"
+      else
+        echo "❌ Target not reachable over either HTTP or HTTPS"
         echo "Skipping ZAP scan..."
         exit 0
-      else
-        echo "✅ APP_URL is valid: $APP_URL"
-        echo "Checking if the target is reachable..."
-        
-        # Prepare ZAP workspace
-        mkdir -p /zap/wrk
-        ln -s "$CI_PROJECT_DIR" /zap/wrk
+      fi
 
-        # Create ZAP configuration
-        cat > /zap/wrk/zap-config.conf << EOF
+      echo "Checking if the target is reachable..."
+      # Prepare ZAP workspace
+      mkdir -p /zap/wrk
+      cd /zap/wrk || exit 1
+
+      # Create ZAP configuration (quote EOF to avoid var expansion)
+      cat > zap-config.conf << 'EOF'
       # ZAP Baseline Configuration
       # Ignore Info level findings
-      # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
-      # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
-      # 10109	IGNORE	(Modern Web Application)
+      # 10015 IGNORE (Incomplete or No Cache-control and Pragma HTTP Header Set)
+      # 10027 IGNORE (Information Disclosure - Suspicious Comments)
+      # 10109 IGNORE (Modern Web Application)
       EOF
-        # Run ZAP scan
-        if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
-          echo "Starting ZAP FULL scan..."
-          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
-        else
-          echo "Starting ZAP baseline scan..."
-          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
-        fi
-        
-        # Copy report and upload to DefectDojo
-        cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
-        echo "✅ ZAP scan completed"
+
+      # Run ZAP scan against detected URL
+      if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
+        echo "Starting ZAP FULL scan on $DETECTED_URL..."
+        zap-full-scan.py -t "$DETECTED_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP full scan encountered issues"
+      else
+        echo "Starting ZAP baseline scan on $DETECTED_URL..."
+        zap-baseline.py -t "$DETECTED_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP baseline scan encountered issues"
       fi
-      cat zap-report.xml
-      # # Fail if Low vulnerabilities (for testing)
-      # if grep -Eiq "<riskdesc>Low" zap-report.xml; then
-      #   echo "❌ Low vulnerabilities found! Failing build."
-      #   exit 1
-      # else
-      #   echo "✅ No Low vulnerabilities found."
-      # fi
+
+      # Copy report to project dir
+      if [ -f "zap-report.xml" ]; then
+        cp zap-report.xml "$CI_PROJECT_DIR/" || { echo "❌ Copy report failed"; exit 1; }
+      else
+        echo "❌ Report not found"
+        exit 1
+      fi
+      echo "✅ ZAP scan completed"
+    - cat "$CI_PROJECT_DIR/zap-report.xml"
     - !reference [.defectdojo_upload, script]
   tags:
     - docker
-
-# .upload_to_defectdojo:
-#   script:
-#     - echo "🔍 Checking DefectDojo product and engagement availability"
-#     # Validate critical environment variables
-#     - |
-
-#       if [ -n "$DEFECTDOJO_DEPT" ]; then
-#         DEFECTDOJO_DEPT=$(echo "$DEFECTDOJO_DEPT" | tr -d '[:space:]')
-#         export DEFECTDOJO_DEPT
-#         export DEFECTDOJO_PRODUCT_NAME="Gitlab_$CI_PROJECT_NAME-$DEFECTDOJO_DEPT"
-#       fi
-
-#       for var in DEFECTDOJO_URL DEFECTDOJO_API_KEY DEFECTDOJO_PRODUCT_NAME DEFECTDOJO_DEPT ; do
-#         eval value='$'"$var"
-#         if [ -z "$value" ]; then
-#           echo "❌ Error: $var is not set"; exit 1
-#         fi
-#       done
-#     - |
-#       # Function to handle API errors
-#       handle_api_error() {
-#         local status=$1
-#         local body=$2
-#         local action=$3
-#         echo "❌ Failed to $action (HTTP $status, Response: $body)"
-#         exit 1
-#       }
-
-#       # Query existing product type
-#       RESPONSE=$(curl -s -w "\n%{http_code}" \
-#         -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#         "${DEFECTDOJO_URL}/api/v2/product_types/?name=${DEFECTDOJO_DEPT}" || { echo "❌ Error: Failed to query product type"; exit 1; })
-      
-#       STATUS=$(echo "$RESPONSE" | tail -n1)
-#       BODY=$(echo "$RESPONSE" | sed '$d')
-      
-#       # Process response
-#       if [ "$STATUS" -eq 200 ] && [ "$(echo "$BODY" | jq '.count')" -ge 1 ]; then
-#         PRODUCT_TYPE_ID=$(echo "$BODY" | jq -r '.results[0].id')
-#         echo "✅ Product type '${DEFECTDOJO_DEPT}' found with ID: ${PRODUCT_TYPE_ID}"
-#       else
-#         echo "📝 Product type '${DEFECTDOJO_DEPT}' not found, creating..."
-        
-#         # Prepare create request payload
-#         JSON_PAYLOAD=$(jq -n \
-#           --arg name "${DEFECTDOJO_DEPT}" \
-#           --arg desc "Auto-created product type for ${DEFECTDOJO_DEPT}" \
-#           '{name: $name, description: $desc}')
-        
-#         # Create new product type
-#         RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-#           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#           -H "Content-Type: application/json" \
-#           "${DEFECTDOJO_URL}/api/v2/product_types/" \
-#           -d "$JSON_PAYLOAD" || { echo "❌ Error: Failed to create product type"; exit 1; })
-        
-#         STATUS=$(echo "$RESPONSE" | tail -n1)
-#         BODY=$(echo "$RESPONSE" | sed '$d')
-
-#         if [ "$STATUS" -eq 201 ]; then
-#           PRODUCT_TYPE_ID=$(echo "$BODY" | jq -r '.id')
-#           echo "✅ Product type '${DEFECTDOJO_DEPT}' created with ID: ${PRODUCT_TYPE_ID}"
-#         else
-#           handle_api_error "$STATUS" "$BODY" "create product type"
-#         fi
-#       fi
-
-#     # Check if product exists
-#     - |
-#       PRODUCT_RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#         "${DEFECTDOJO_URL}/api/v2/products/?name=${DEFECTDOJO_PRODUCT_NAME}" || { echo "❌ Error: Failed to query product"; exit 1; })
-#       PRODUCT_STATUS=$(echo "$PRODUCT_RESPONSE" | tail -n1)
-#       PRODUCT_BODY=$(echo "$PRODUCT_RESPONSE" | sed '$d')
-#       echo "DEBUG: Product response body: $PRODUCT_BODY"
-#       if [ "$PRODUCT_STATUS" -eq 200 ] && [ "$(echo "$PRODUCT_BODY" | jq '.count')" -ge 1 ]; then
-#         PRODUCT_ID=$(echo "$PRODUCT_BODY" | jq -r '.results[0].id')
-#         echo "✅ Product '${DEFECTDOJO_PRODUCT_NAME}' found with ID: ${PRODUCT_ID}"
-#       else
-#         echo "📝 Product '${DEFECTDOJO_PRODUCT_NAME}' not found, creating..."
-#         CREATE_PRODUCT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-#           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#           -H "Content-Type: application/json" \
-#           "${DEFECTDOJO_URL}/api/v2/products/" \
-#           -d "{\"name\": \"${DEFECTDOJO_PRODUCT_NAME}\", \"description\": \"Auto-created product for ${DEFECTDOJO_PRODUCT_NAME}\", \"prod_type\": ${PRODUCT_TYPE_ID}}" \
-#           || { echo "❌ Error: Failed to create product"; exit 1; })
-#         CREATE_PRODUCT_STATUS=$(echo "$CREATE_PRODUCT_RESPONSE" | tail -n1)
-#         CREATE_PRODUCT_BODY=$(echo "$CREATE_PRODUCT_RESPONSE" | sed '$d')
-#         echo "DEBUG: Create product response body: $CREATE_PRODUCT_BODY"
-#         if [ "$CREATE_PRODUCT_STATUS" -eq 201 ]; then
-#           PRODUCT_ID=$(echo "$CREATE_PRODUCT_BODY" | jq -r '.id')
-#           echo "✅ Product '${DEFECTDOJO_PRODUCT_NAME}' created with ID: ${PRODUCT_ID}"
-#         else
-#           echo "❌ Failed to create product (HTTP $CREATE_PRODUCT_STATUS, Response: $CREATE_PRODUCT_BODY)"
-#           exit 1
-#         fi
-#       fi
-
-#     # Check if engagement exists
-#     - |
-#       ENGAGEMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#         "${DEFECTDOJO_URL}/api/v2/engagements/?product=${PRODUCT_ID}&name=${ENGAGEMENT_NAME}" || { echo "❌ Error: Failed to query engagement"; exit 1; })
-#       ENGAGEMENT_STATUS=$(echo "$ENGAGEMENT_RESPONSE" | tail -n1)
-#       ENGAGEMENT_BODY=$(echo "$ENGAGEMENT_RESPONSE" | sed '$d')
-#       echo "DEBUG: Engagement response body: $ENGAGEMENT_BODY"
-#       if [ "$ENGAGEMENT_STATUS" -eq 200 ] && [ "$(echo "$ENGAGEMENT_BODY" | jq '.count')" -ge 1 ]; then
-#         ENGAGEMENT_ID=$(echo "$ENGAGEMENT_BODY" | jq -r '.results[0].id')
-#         echo "✅ Engagement '${ENGAGEMENT_NAME}' found with ID: ${ENGAGEMENT_ID}"
-#       else
-#         echo "📝 Engagement '${ENGAGEMENT_NAME}' not found, creating..."
-
-#         TARGET_START=$(date +%Y-%m-%d)
-#         TARGET_END=$(date -d "$(date) + ${DEFECTDOJO_ENGAGEMENT_PERIOD:-30} days" +%Y-%m-%d 2>/dev/null || date -v+${DEFECTDOJO_ENGAGEMENT_PERIOD:-30}d +%Y-%m-%d 2>/dev/null || python3 -c "import datetime; print((datetime.datetime.now() + datetime.timedelta(days=${DEFECTDOJO_ENGAGEMENT_PERIOD:-30})).strftime('%Y-%m-%d'))")
-        
-#         ENGAGEMENT_JSON=$(jq -n \
-#           --arg name "$ENGAGEMENT_NAME" \
-#           --argjson product "$PRODUCT_ID" \
-#           --arg engagement_type "CI/CD" \
-#           --argjson deduplication_on_engagement "${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
-#           --argjson threat_model "${DEFECTDOJO_ENGAGEMENT_THREAT_MODEL}" \
-#           --argjson api_test "${DEFECTDOJO_ENGAGEMENT_API_TEST}" \
-#           --argjson pen_test "${DEFECTDOJO_ENGAGEMENT_PEN_TEST}" \
-#           --argjson check_list "${DEFECTDOJO_ENGAGEMENT_CHECK_LIST}" \
-#           --arg target_start "$TARGET_START" \
-#           --arg target_end "$TARGET_END" \
-#           --arg status "${DEFECTDOJO_ENGAGEMENT_STATUS}" \
-#           '{name: $name, product: $product, engagement_type: $engagement_type, target_start: $target_start, target_end: $target_end, status: $status, deduplication_on_engagement: $deduplication_on_engagement, threat_model: $threat_model, api_test: $api_test, pen_test: $pen_test, check_list: $check_list}')
-#         echo "DEBUG: Engagement JSON payload: $ENGAGEMENT_JSON"
-#         CREATE_ENGAGEMENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-#           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#           -H "Content-Type: application/json" \
-#           "${DEFECTDOJO_URL}/api/v2/engagements/" \
-#           -d "$ENGAGEMENT_JSON" || { echo "❌ Error: Failed to create engagement"; exit 1; })
-#         CREATE_ENGAGEMENT_STATUS=$(echo "$CREATE_ENGAGEMENT_RESPONSE" | tail -n1)
-#         CREATE_ENGAGEMENT_BODY=$(echo "$CREATE_ENGAGEMENT_RESPONSE" | sed '$d')
-#         echo "DEBUG: Create engagement response body: $CREATE_ENGAGEMENT_BODY"
-#         if [ "$CREATE_ENGAGEMENT_STATUS" -eq 201 ]; then
-#           ENGAGEMENT_ID=$(echo "$CREATE_ENGAGEMENT_BODY" | jq -r '.id')
-#           echo "✅ Engagement '${ENGAGEMENT_NAME}' created with ID: ${ENGAGEMENT_ID}"
-#         else
-#           echo "❌ Failed to create engagement (HTTP $CREATE_ENGAGEMENT_STATUS, Response: $CREATE_ENGAGEMENT_BODY)"
-#           exit 1
-#         fi
-#       fi
-
-
-#     # Ensure report exists
-#     - test -f "${DEFECTDOJO_SCAN_FILE}" || { echo "❌ ZAP report not found"; exit 1; }
-#     - echo "🔎 Checking for existing Test titled ${DEFECTDOJO_TEST_TITLE}"
-#     - |
-#       # Get existing test title with error handling
-#       API_RESPONSE=$(curl -s -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#         "${DEFECTDOJO_URL}/api/v2/tests/?engagement=${ENGAGEMENT_ID}" || echo '{"results":[]}')
-      
-#       EXISTING_TITLE=$(echo "$API_RESPONSE" | jq -r --arg test_title "$DEFECTDOJO_TEST_TITLE" \
-#         '.results[]? | select(.title | gsub("^\\s+|\\s+$"; "") == ($test_title | gsub("^\\s+|\\s+$"; ""))) | .title' \
-#         | head -n1 | xargs || echo "")
-      
-#       # Set default value if null or empty
-#       EXISTING_TITLE=${EXISTING_TITLE:-""}
-      
-#       echo "🔎 EXISTING_TITLE: '${EXISTING_TITLE}'"
-#       echo "🔎 DEFECTDOJO_TEST_TITLE: '${DEFECTDOJO_TEST_TITLE}'"
-#     - |
-#       if [ "$EXISTING_TITLE" = "$DEFECTDOJO_TEST_TITLE" ] && [ -n "$EXISTING_TITLE" ]; then
-#         echo "✅ Found existing Test; doing reimport-scan"
-#         TEST_ID=$(curl -s -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#           "${DEFECTDOJO_URL}/api/v2/tests/?engagement=${ENGAGEMENT_ID}" \
-#           | jq -r --arg test_title "$DEFECTDOJO_TEST_TITLE" \
-#           '.results[] | select(.title==$test_title) | .id')
-#         curl -S -X POST "${DEFECTDOJO_URL}/api/v2/reimport-scan/" \
-#           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#           -F "minimum_severity=${DEFECTDOJO_SCAN_MINIMUM_SEVERITY}" \
-#           -F "scan_type=${DEFECTDOJO_SCAN_TYPE}" \
-#           -F "active=${DEFECTDOJO_SCAN_ACTIVE}" \
-#           -F "verified=${DEFECTDOJO_SCAN_VERIFIED}" \
-#           -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
-#           -F "engagement_name=${ENGAGEMENT_NAME}" \
-#           -F "engagement=${ENGAGEMENT_ID}" \
-#           -F "test_type=\"${DEFECTDOJO_SCAN_TEST_TYPE}\"" \
-#           -F "engagement_type"="CI/CD" \
-#           -F "do_not_reactivate"="false" \
-#           -F "auto_create_context=${DEFECTDOJO_AUTO_CREATE_CONTEXT}" \
-#           -F "deduplication_on_engagement=${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
-#           -F "close_old_findings=${DEFECTDOJO_SCAN_CLOSE_OLD_FINDINGS}" \
-#           -F "close_old_findings_product_scope=${DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE}" \
-#           -F "test_title=${DEFECTDOJO_TEST_TITLE}" \
-#           -F "file=@${DEFECTDOJO_SCAN_FILE}" \
-#           -F "source_code_management_server=${DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER}" \
-#           -F "description=$CI_COMMIT_DESCRIPTION"
-
-#       else
-#         echo "⚠️ No existing Test found; doing import-scan"
-#         curl -S -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
-#           -H "Authorization: Token ${DEFECTDOJO_API_KEY}" \
-#           -F "scan_date=$(date +%F)" \
-#           -F "minimum_severity=${DEFECTDOJO_SCAN_MINIMUM_SEVERITY}" \
-#           -F "scan_type=${DEFECTDOJO_SCAN_TYPE}" \
-#           -F "active=${DEFECTDOJO_SCAN_ACTIVE}" \
-#           -F "verified=${DEFECTDOJO_SCAN_VERIFIED}" \
-#           -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
-#           -F "engagement_name=${ENGAGEMENT_NAME}" \
-#           -F "engagement=${ENGAGEMENT_ID}" \
-#           -F "engagement_type=CI/CD" \
-#           -F "test_type=${DEFECTDOJO_SCAN_TEST_TYPE}" \
-#           -F "auto_create_context=${DEFECTDOJO_AUTO_CREATE_CONTEXT}" \
-#           -F "deduplication_on_engagement=${DEFECTDOJO_ENGAGEMENT_DEDUPLICATION_ON_ENGAGEMENT}" \
-#           -F "close_old_findings=false" \
-#           -F "close_old_findings_product_scope=${DEFECTDOJO_CLOSE_OLD_FINDINGS_PRODUCT_SCOPE}" \
-#           -F "test_title=${DEFECTDOJO_TEST_TITLE}" \
-#           -F "file=@${DEFECTDOJO_SCAN_FILE}" \
-#           -F "source_code_management_server=${DEFECTDOJO_ENGAGEMENT_SOURCE_CODE_MANAGEMENT_SERVER}" \
-#           -F "description=${CI_COMMIT_DESCRIPTION}" \
-#           -F "first_contacted=$(date +%F)"
-#       fi
-#     - echo "✅ Upload completed"

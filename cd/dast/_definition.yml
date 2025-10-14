@@ -27,23 +27,14 @@
         mkdir -p /zap/wrk
         ln -s "$CI_PROJECT_DIR" /zap/wrk
 
-        # Create ZAP configuration with proper format
-        cat > /zap/wrk/zap-config.conf << EOF
-        10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
-        10027	IGNORE	(Information Disclosure - Suspicious Comments)
-        10109	IGNORE	(Modern Web Application)
-        10021	IGNORE	(X-Content-Type-Options Header Missing)
-        10020	IGNORE	(X-Frame-Options Header)
-        EOF
-
         # Run ZAP scan with error handling
         ZAP_EXIT_CODE=0
         if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
           echo "Starting ZAP FULL scan..."
-          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf || ZAP_EXIT_CODE=$?
+          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I || ZAP_EXIT_CODE=$?
         else
           echo "Starting ZAP baseline scan..."
-          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf || ZAP_EXIT_CODE=$?
+          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I || ZAP_EXIT_CODE=$?
         fi
         
         # Check ZAP scan results

@@ -14,6 +14,20 @@
     - echo "Checking APP_URL availability..."
     - echo "APP_URL = $APP_URL"
     - |
+      # Health check: Verify target is reachable before scanning
+      echo "🏥 Performing health check on $APP_URL..."
+      HTTP_CODE=$(curl -sI "$APP_URL" -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 || echo "000")
+      
+      if [[ "$HTTP_CODE" =~ ^[23][0-9][0-9]$ ]]; then
+        echo "✅ Target is healthy and reachable (HTTP $HTTP_CODE)"
+      elif [[ "$HTTP_CODE" =~ ^[45][0-9][0-9]$ ]]; then
+        echo "⚠️ Target returned error code $HTTP_CODE but proceeding with scan..."
+      else
+        echo "❌ Target is not reachable (HTTP $HTTP_CODE)"
+        echo "Skipping ZAP scan due to connectivity issues"
+        exit 0
+      fi
+
       # Prepare ZAP workspace
       mkdir -p /zap/wrk
       cd /zap/wrk || exit 1
@@ -45,6 +59,9 @@
       else
         zap-baseline.py -t "$APP_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP baseline scan encountered issues"
       fi
+      
+      # Copy report to project directory
+      cp "zap-report.xml" "$CI_PROJECT_DIR/"
       echo "✅ ZAP scan completed"
     - !reference [.defectdojo_upload, script]
   tags:

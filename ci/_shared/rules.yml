@@ -111,6 +111,11 @@
       changes:
         - "*ockerfile"
         - "*/*ockerfile"
+  create_mr:
+    - *ci_never_rules
+    - if: '$CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_MESSAGE =~ /#mr/ || $CI_COMMIT_TAG =~ /^#mr-/'
   notify_failure:
     - *ci_never_rules
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

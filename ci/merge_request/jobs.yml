@@ -1,0 +1,6 @@
+include:
+  - ci/merge_request/_definition.yml
+
+create_mr:
+  extends: .create_mr
+  rules: !reference [.ci_rules, create_mr]

@@ -5,6 +5,7 @@ include:
   - ci/integration_test/jobs.yml
   - ci/sonarqube/jobs.yml
   - ci/.post/jobs.yml
+  - ci/merge_request/jobs.yml
   - cd/_shared/*.yml
   - cd/.pre/jobs.yml
   - cd/.post/jobs.yml

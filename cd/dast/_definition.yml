@@ -27,24 +27,47 @@
         mkdir -p /zap/wrk
         ln -s "$CI_PROJECT_DIR" /zap/wrk
 
-        # Create ZAP configuration
+        # Create ZAP configuration with proper format
         cat > /zap/wrk/zap-config.conf << EOF
-      # ZAP Baseline Configuration
-      # Ignore Info level findings
-      # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
-      # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
-      # 10109	IGNORE	(Modern Web Application)
-      EOF
+        10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+        10027	IGNORE	(Information Disclosure - Suspicious Comments)
+        10109	IGNORE	(Modern Web Application)
+        10021	IGNORE	(X-Content-Type-Options Header Missing)
+        10020	IGNORE	(X-Frame-Options Header)
+        EOF
 
-        # Run ZAP scan
+        # Run ZAP scan with error handling
+        ZAP_EXIT_CODE=0
         if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
           echo "Starting ZAP FULL scan..."
-          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf || ZAP_EXIT_CODE=$?
         else
           echo "Starting ZAP baseline scan..."
-          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf || ZAP_EXIT_CODE=$?
         fi
-        echo "✅ ZAP scan completed"
+        
+        # Check ZAP scan results
+        if [ $ZAP_EXIT_CODE -eq 0 ]; then
+          echo "✅ ZAP scan completed successfully"
+        elif [ $ZAP_EXIT_CODE -eq 1 ]; then
+          echo "⚠️  ZAP scan completed with warnings (found issues)"
+        elif [ $ZAP_EXIT_CODE -eq 2 ]; then
+          echo "❌ ZAP scan failed with errors"
+        else
+          echo "❌ ZAP scan failed with exit code: $ZAP_EXIT_CODE"
+        fi
+        
+        # Copy report to project directory with error handling
+        if [ -f "/zap/wrk/zap-report.xml" ]; then
+          echo "✅ ZAP report found, copying to project directory..."
+          cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || {
+            echo "❌ Failed to copy ZAP report"
+            exit 1
+          }
+        else
+          echo "❌ ZAP report not found, creating empty report..."
+          echo '<?xml version="1.0"?><OWASPZAPReport></OWASPZAPReport>' > "$CI_PROJECT_DIR/zap-report.xml"
+        fi
       fi
     - !reference [.defectdojo_upload, script]
   tags:

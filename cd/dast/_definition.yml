@@ -60,7 +60,7 @@
         zap-baseline.py -t "$DETECTED_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP baseline scan encountered issues"
       fi
       echo "✅ ZAP scan completed"
-    - zap-config.conf
+    - cat zap-config.conf
     - cat "zap-report.xml"
     - !reference [.defectdojo_upload, script]
   tags:

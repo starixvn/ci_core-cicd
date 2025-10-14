@@ -44,6 +44,6 @@
         cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
         echo "✅ ZAP scan completed"
       fi
-    - !reference [.upload_to_defectdojo, script]
+    - !reference [.defectdojo_upload, script]
   tags:
     - docker

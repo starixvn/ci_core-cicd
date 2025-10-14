@@ -1,9 +1,4 @@
 .zap_scan:
-  variables:
-    #Defect Dojo Variable
-    DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
-    DEFECTDOJO_SCAN_FILE: "zap-report.xml"
-    DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
   before_script:
@@ -14,38 +9,41 @@
     - echo "Checking APP_URL availability..."
     - echo "APP_URL = $APP_URL"
     - |
-      # Prepare ZAP workspace
-      mkdir -p /zap/wrk
-      cd /zap/wrk || exit 1
-      # Create ZAP configuration to filter unnecessary findings
-      cat > zap-config.conf << 'EOF'
-      # ZAP Configuration - Focus on High/Critical findings
-      # Format: RULE_ID	ACTION	DESCRIPTION
-      # Use TAB separation between fields
-
-      # Ignore Info level findings
-      10015	IGNORE	Incomplete or No Cache-control and Pragma HTTP Header Set
-      10027	IGNORE	Information Disclosure - Suspicious Comments
-      10109	IGNORE	Modern Web Application
-      10021	IGNORE	X-Content-Type-Options Header Missing
-      10020	IGNORE	X-Frame-Options Header
-      10038	IGNORE	Content Security Policy CSP Header Not Set
-      10094	IGNORE	Base64 Disclosure
-
-      # Ignore common Low level findings
-      10017	IGNORE	Cross-Domain JavaScript Source File Inclusion
-      10024	IGNORE	Information Disclosure - Sensitive Information in URL
-      10025	IGNORE	Information Disclosure - Sensitive Information in HTTP Referrer Header
-      EOF
-      # Run ZAP scan against APP_URL
-      echo "🔍 Starting ZAP scan on $APP_URL..."
-      if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
-        zap-full-scan.py -t "$APP_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP full scan encountered issues"
+      if [ -z "$APP_URL" ] || [ "$APP_URL" = "http://" ] || [ "$APP_URL" = "https://" ]; then
+        echo "❌ APP_URL is empty or invalid: '$APP_URL'"
+        echo "Cannot perform DAST scan without valid target URL"
+        echo "Skipping ZAP scan..."
+        exit 0
       else
-        zap-baseline.py -t "$APP_URL" -x "zap-report.xml" -I -c "zap-config.conf" || echo "⚠️ ZAP baseline scan encountered issues"
+        echo "✅ APP_URL is valid: $APP_URL"
+        echo "Checking if the target is reachable..."
+        
+        # Prepare ZAP workspace
+        mkdir -p /zap/wrk
+        ln -s "$CI_PROJECT_DIR" /zap/wrk
+
+        # Create ZAP configuration
+        cat > /zap/wrk/zap-config.conf << EOF
+      # ZAP Baseline Configuration
+      # Ignore Info level findings
+      # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+      # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
+      # 10109	IGNORE	(Modern Web Application)
+      EOF
+
+        # Run ZAP scan
+        if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
+          echo "Starting ZAP FULL scan..."
+          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+        else
+          echo "Starting ZAP baseline scan..."
+          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
+        fi
+        
+        # Copy report and upload to DefectDojo
+        cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
+        echo "✅ ZAP scan completed"
       fi
-    - !reference [.defectdojo_upload, script]
+    - !reference [.upload_to_defectdojo, script]
   tags:
     - docker
-
-

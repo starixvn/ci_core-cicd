@@ -10,7 +10,7 @@
     - echo "Starting ZAP scan preparation"
     - echo "Target URL - $APP_URL"
     - echo "Full scan enabled - $ZAP_FULL_SCAN_ENABLED"
-    # Extract site_url from APP_URL for DefectDojo naming
+    - echo "Extract site_url from APP_URL for DefectDojo naming"
     - export site_url=$(echo "$APP_URL" | sed 's|^https\?://||' | sed 's|/.*||')
     - echo "Extracted site_url for DefectDojo: $site_url"
   script:

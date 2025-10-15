@@ -6,6 +6,10 @@
     DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
+  before_script:
+    - echo "Starting ZAP scan preparation"
+    - echo "Target URL - $APP_URL"
+    - echo "Full scan enabled - $ZAP_FULL_SCAN_ENABLED"  
   script:
     - echo "Checking if the target is reachable..."
     - mkdir -p /zap/wrk
@@ -28,9 +32,5 @@
       fi
     - cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
     - !reference [.defectdojo_upload, script]
-  artifacts:
-    paths:
-      - zap-report.xml
-  allow_failure: true
   tags:
     - docker

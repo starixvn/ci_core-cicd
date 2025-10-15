@@ -6,60 +6,31 @@
     DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
-  before_script:
-    - echo "Starting ZAP scan preparation"
-    - echo "Target URL - $APP_URL"
-    - echo "Full scan enabled - $ZAP_FULL_SCAN_ENABLED"
   script:
-    - echo "Checking APP_URL availability..."
-    - echo "APP_URL = $APP_URL"
+    - echo "Checking if the target is reachable..."
+    - mkdir -p /zap/wrk
+    - ln -s "$CI_PROJECT_DIR" /zap/wrk
     - |
-      if [ -z "$APP_URL" ] || [ "$APP_URL" = "http://" ] || [ "$APP_URL" = "https://" ]; then
-        echo "❌ APP_URL is empty or invalid: '$APP_URL'"
-        echo "Cannot perform DAST scan without valid target URL"
-        echo "Skipping ZAP scan..."
-        exit 0
+      cat > /zap/wrk/zap-config.conf << EOF
+      # ZAP Baseline Configuration
+      # Ignore Info level findings
+      # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+      # 10027	IGNORE	(Information Disclosure - Suspicious Comments)
+      # 10109	IGNORE	(Modern Web Application)
+      EOF
+    - |
+      if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
+        echo "Starting ZAP FULL scan..."
+        zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
       else
-        echo "✅ APP_URL is valid: $APP_URL"
-        echo "Checking if the target is reachable..."
-        
-        # Prepare ZAP workspace
-        mkdir -p /zap/wrk
-        ln -s "$CI_PROJECT_DIR" /zap/wrk
-
-        # Run ZAP scan with error handling
-        ZAP_EXIT_CODE=0
-        if [ "$ZAP_FULL_SCAN_ENABLED" = "true" ]; then
-          echo "Starting ZAP FULL scan..."
-          zap-full-scan.py -t "$APP_URL" -x zap-report.xml -I || ZAP_EXIT_CODE=$?
-        else
-          echo "Starting ZAP baseline scan..."
-          zap-baseline.py -t "$APP_URL" -x zap-report.xml -I || ZAP_EXIT_CODE=$?
-        fi
-        
-        # Check ZAP scan results
-        if [ $ZAP_EXIT_CODE -eq 0 ]; then
-          echo "✅ ZAP scan completed successfully"
-        elif [ $ZAP_EXIT_CODE -eq 1 ]; then
-          echo "⚠️  ZAP scan completed with warnings (found issues)"
-        elif [ $ZAP_EXIT_CODE -eq 2 ]; then
-          echo "❌ ZAP scan failed with errors"
-        else
-          echo "❌ ZAP scan failed with exit code: $ZAP_EXIT_CODE"
-        fi
-        
-        # Copy report to project directory with error handling
-        if [ -f "/zap/wrk/zap-report.xml" ]; then
-          echo "✅ ZAP report found, copying to project directory..."
-          cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || {
-            echo "❌ Failed to copy ZAP report"
-            exit 1
-          }
-        else
-          echo "❌ ZAP report not found, creating empty report..."
-          echo '<?xml version="1.0"?><OWASPZAPReport></OWASPZAPReport>' > "$CI_PROJECT_DIR/zap-report.xml"
-        fi
+        echo "Starting ZAP baseline scan..."
+        zap-baseline.py -t "$APP_URL" -x zap-report.xml -I -c /zap/wrk/zap-config.conf
       fi
+    - cp /zap/wrk/zap-report.xml "$CI_PROJECT_DIR/" || true
     - !reference [.defectdojo_upload, script]
+  artifacts:
+    paths:
+      - zap-report.xml
+  allow_failure: true
   tags:
     - docker

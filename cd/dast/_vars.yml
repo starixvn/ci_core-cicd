@@ -5,7 +5,7 @@ variables:
   # DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
 
   # ZAP Variables
-  APP_URL: http://$site_url
+  APP_URL: https://$site_url
   ZAP_SCAN_ENABLED: true
   ZAP_FULL_SCAN_ENABLED: true
   HEALTH_CHECK_RETRIES: 5

@@ -1,6 +1,5 @@
 include:
   - cd/build_docker/linux/report_defectdojo/_definition.yml
-  - cd/build_docker/linux/report_defectdojo/_vars.yml
   - cd/dast/_definition.yml
   - cd/dast/_vars.yml
 

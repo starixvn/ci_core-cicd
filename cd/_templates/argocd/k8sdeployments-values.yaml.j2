@@ -109,6 +109,15 @@ k8sdeployments:
     timeoutSeconds: {{services[0].healthcheck_timeout | default(5) | replace('s','')}}
     startupFailureThreshold: 30
 
+  {% if services[0].shared_configs is defined and services[0].shared_configs | length > 0 %}
+  sharedConfigs:
+    {% for config in services[0].shared_configs %}
+    - configMapName: "{{ project_name }}-{{ config.configmap }}-{{ environment | lower | replace('_','') }}"
+      configFileName: "{{ config.container_file_name }}"
+      configFilePath: "{{ container_root_path }}/{{ config.container_file_path }}"
+    {% endfor %}
+  {% endif %}
+
   {% if config_file is defined %}
   configFile:
     path: "{{ container_root_path }}/{{ config_container_path }}"

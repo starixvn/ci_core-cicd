@@ -78,6 +78,12 @@
 .if_not_publish_nuget: &if_not_publish_nuget
   if: $PUBLISH_NUGET != "true"
 
+.if_sync_argocd_shared_configmaps_app: &if_sync_argocd_shared_configmaps_app
+  if: $SYNC_ARGOCD_SHARED_CONFIGMAPS_APP == "true"
+
+.if_not_sync_argocd_shared_configmaps_app: &if_not_sync_argocd_shared_configmaps_app
+  if: $SYNC_ARGOCD_SHARED_CONFIGMAPS_APP != "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -179,6 +185,11 @@
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
         - $PROJECT_FOLDER/**/*.csproj
+  sync_argocd_shared_configmaps_app:
+    - <<: *if_not_sync_argocd_shared_configmaps_app
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: always
 
 .trigger_cd_rules:
   rules:
@@ -187,6 +198,8 @@
     - <<: *if_publish_nuget
       when: never
     - if: $ENABLE_SONAR_SQL == "true"
+      when: never
+    - <<: *if_sync_argocd_shared_configmaps_app
       when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: always

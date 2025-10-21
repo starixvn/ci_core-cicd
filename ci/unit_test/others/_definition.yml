@@ -27,6 +27,7 @@
     when: always
     paths:
       - ./**/lcov.info
+      - ./**/test-report.xml
     expire_in: 1 day
 
 .unit_test_dotnet:

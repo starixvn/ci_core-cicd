@@ -36,21 +36,30 @@
     - echo $SRC_PATH
     - echo $TEST_PATH
   script:
-    - sonar-scanner
-      -X
-      -Dsonar.host.url=$SONAR_HOST_URL
-      -Dsonar.token=$SONAR_TOKEN
-      -Dsonar.sourceEncoding=UTF-8
-      -Dsonar.qualitygate.wait=true
-      -Dsonar.projectKey=$PROJECT_NAME
-      -Dsonar.projectName="$SONAR_PROJECT_NAME"
-      -Dsonar.projectVersion="${CI_COMMIT_REF_NAME}"
-      -Dproject.settings=./sonarqube.analysis.properties
-      -Dsonar.javascript.lcov.reportPaths=**/lcov.info
-      -Dsonar.sources=${SRC_PATH}
-      -Dsonar.tests=${TEST_PATH}
-      -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
-      -Dsonar.scanner.skipJreProvisioning=true
+    - |
+      SONAR_CMD="sonar-scanner -X \
+        -Dsonar.host.url=$SONAR_HOST_URL \
+        -Dsonar.token=$SONAR_TOKEN \
+        -Dsonar.sourceEncoding=UTF-8 \
+        -Dsonar.qualitygate.wait=true \
+        -Dsonar.projectKey=$PROJECT_NAME \
+        -Dsonar.projectName=\"$SONAR_PROJECT_NAME\" \
+        -Dsonar.projectVersion=\"${CI_COMMIT_REF_NAME}\" \
+        -Dproject.settings=./sonarqube.analysis.properties \
+        -Dsonar.javascript.lcov.reportPaths=**/lcov.info \
+        -Dsonar.sources=${SRC_PATH} \
+        -Dsonar.tests=${TEST_PATH} \
+        -Dsonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.test.tsx,**/*.spec.tsx,**/*.spec.ts \
+        -Dsonar.scanner.skipJreProvisioning=true"
+
+      if [ -f "${SRC_PATH}/test-report.xml" ]; then
+        echo "Found test-report.xml, adding to SonarQube analysis"
+        SONAR_CMD="$SONAR_CMD -Dsonar.testExecutionReportPaths=${SRC_PATH}/test-report.xml"
+      else
+        echo "Warning: test-report.xml not found at ${SRC_PATH}/test-report.xml, skipping test execution report"
+      fi
+
+      eval $SONAR_CMD
 
 .sonar_dotnet:
   extends: .sonar_common
@@ -104,20 +113,30 @@
       else
         echo "Warning: lcov.info file not found at $SRC_PATH/reports/coverage/lcov.info"
       fi
-    - dotnet sonarscanner begin /k:$PROJECT_NAME /n:"$SONAR_PROJECT_NAME"
-      /v:"${CI_COMMIT_REF_NAME}"
-      /d:sonar.token=$SONAR_TOKEN
-      /d:sonar.host.url=$SONAR_HOST_URL
-      /d:sonar.qualitygate.wait=true
-      /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml
-      /d:sonar.cs.vstest.reportsPaths=**/*.trx
-      /d:sonar.javascript.lcov.reportPaths=**/lcov.info
-      /d:sonar.sources=${SRC_PATH}
-      /d:sonar.tests=${TEST_PATH}
-      /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.spec.tsx,**/*.spec.ts
-      /d:sonar.sourceEncoding=UTF-8
-      /d:sonar.scanner.skipJreProvisioning=true
-      /d:sonar.projectBaseDir="$CI_PROJECT_DIR/$SONAR_PROJECT_BASE_DIR"
+
+      SONAR_PARAMS="/k:$PROJECT_NAME /n:\"$SONAR_PROJECT_NAME\" \
+        /v:\"${CI_COMMIT_REF_NAME}\" \
+        /d:sonar.token=$SONAR_TOKEN \
+        /d:sonar.host.url=$SONAR_HOST_URL \
+        /d:sonar.qualitygate.wait=true \
+        /d:sonar.cs.opencover.reportsPaths=**/*.coverage.opencover.xml \
+        /d:sonar.cs.vstest.reportsPaths=**/*.trx \
+        /d:sonar.javascript.lcov.reportPaths=**/lcov.info \
+        /d:sonar.sources=${SRC_PATH} \
+        /d:sonar.tests=${TEST_PATH} \
+        /d:sonar.test.inclusions=**/__tests__/**,**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx,**/*Tests.cs \
+        /d:sonar.sourceEncoding=UTF-8 \
+        /d:sonar.scanner.skipJreProvisioning=true \
+        /d:sonar.projectBaseDir=\"$CI_PROJECT_DIR/$SONAR_PROJECT_BASE_DIR\""
+
+      if [ -f "${SRC_PATH}/test-report.xml" ]; then
+        echo "Found test-report.xml, adding to SonarQube analysis"
+        SONAR_PARAMS="$SONAR_PARAMS /d:sonar.testExecutionReportPaths=${SRC_PATH}/test-report.xml"
+      else
+        echo "Warning: test-report.xml not found at ${SRC_PATH}/test-report.xml, skipping test execution report"
+      fi
+
+      eval "dotnet sonarscanner begin $SONAR_PARAMS"
     - echo $SOLUTION_NAME
     - dotnet build $SOLUTION_NAME
     - dotnet sonarscanner end /d:sonar.token=$SONAR_TOKEN

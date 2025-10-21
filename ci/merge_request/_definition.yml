@@ -24,12 +24,12 @@
 
         # Create merge request using GitLab API
         curl --request POST \
-          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          --header "PRIVATE-TOKEN: $BOT_MR_TOKEN" \
           --header "Content-Type: application/json" \
           --data "{
             \"source_branch\": \"$SOURCE_BRANCH\",
             \"target_branch\": \"$CI_DEFAULT_BRANCH\",
-            \"title\": \"Auto MR: $SOURCE_BRANCH\",
+            \"title\": \"Review MR: $SOURCE_BRANCH\",
             \"remove_source_branch\": true
           }" \
           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests"

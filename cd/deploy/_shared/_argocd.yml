@@ -300,9 +300,10 @@
     sync_argocd_app() {
       local stack_name="$1"
       local app_name="$2"
-      local force_sync="${3:-false}"
+      local env_name="$3"
+      local force_sync="$4"
 
-      local argocd_app_name=$stack_name-$app_name
+      local argocd_app_name=$stack_name-$app_name-$env_name
 
       if [ "$force_sync" == "true" ] || ! argocd app diff $argocd_app_name --exit-code > /dev/null;
       then
@@ -318,6 +319,23 @@
       argocd app wait $argocd_app_name --sync --health --timeout $ARGOCD_SYNC_TIMEOUT
     }
 
+.delete_argocd_app_helper: &delete_argocd_app_helper
+  - |
+    delete_argocd_app() {
+      local stack_name="$1"
+      local app_name="$2"
+      local env_name="$3"
+
+      local argocd_app_name=$stack_name-$app_name-$env_name
+
+      echo "===== $argocd_app_name: Deleting application... ====="
+      retry_command "argocd app delete $argocd_app_name"
+      if [ $? -ne 0 ]; then
+        echo "Failed to delete ArgoCD application $argocd_app_name after retries"
+        exit 1
+      fi
+    }
+
 .declare_argocd_repo_exist_var_helper: &declare_argocd_repo_exist_var_helper
   - |
     declare_argocd_repo_exist_var() {
@@ -331,6 +349,136 @@
 
       declare -g "${var_name}=$([ -n "$project_exists" ] && echo "true" || echo "false")"
     }
+
+# region: Shared configmaps
+.add_file_to_group_helper: &add_file_to_group_helper
+  - |
+    add_file_to_group() {
+      local files_group_data="$1"
+      local stack="$2"
+      local type="$3"
+      local version="$4"
+      local cluster="$5"
+      local file_name="$6"
+      local file_content="$7"
+
+      echo "$files_group_data" | jq \
+        --arg key "${stack}-${type}-${version}" \
+        --arg stack "$stack" \
+        --arg type "$type" \
+        --arg version "$version" \
+        --arg cluster "$cluster" \
+        --arg file_name "$file_name" \
+        --argjson file_content "$file_content" '
+        if (map(select(.key == $key)) | length) == 0 then
+          . + [{
+            key: $key,
+            stack: $stack,
+            type: $type,
+            version: $version,
+            cluster: $cluster,
+            files: [{name: $file_name, content: $file_content}]
+          }]
+        else
+          map(
+            if .key == $key then
+              .files += [{name: $file_name, content: $file_content}]
+            else . end
+          )
+        end
+      '
+    }
+
+.group_versions_helper: &group_versions_helper
+  - |
+    group_versions() {
+      local changed_files="$1"
+      local versions_group="[]"
+      local file dir_path type stack file_name version
+
+      while IFS= read -r file; do
+        [[ ! "$file" =~ ^$SHARED_CONFIGMAPS_ROOT_FOLDER/ ]] && continue
+
+        dir_path=$(dirname "$file")
+        type=$(echo "$dir_path" | cut -d '/' -f 2)
+        stack=$(echo "$dir_path" | cut -d '/' -f 3)
+        file_name=$(basename "$file")
+        version=$(echo "$file_name" | cut -d '.' -f 2 | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+
+        versions_group=$(echo "$versions_group" | jq \
+          --arg key "${stack}-${type}" \
+          --arg stack "$stack" \
+          --arg type "$type" \
+          --arg version "$version" '
+          if (map(select(.key == $key)) | length) == 0 then
+            . + [{key: $key, stack: $stack, type: $type, versions: [$version]}]
+          else
+            map(
+              if .key == $key then
+                .versions += (if (.versions | index($version)) then [] else [$version] end)
+              else . end
+            )
+          end
+        ')
+      done <<< "$changed_files"
+
+      echo "$versions_group"
+    }
+
+.group_files_helper: &group_files_helper
+  - |
+    group_files() {
+      local deleted_files="$1"
+      local grouped_versions_data="$2"
+      local files_group="[]"
+      local app stack type version environment cluster
+      local config_file config_file_name file_version config_file_content
+      local deleted_file dir_path file_type file_stack file_name
+
+      while IFS= read -r app; do
+        stack=$(echo "$app" | jq -r '.stack')
+        type=$(echo "$app" | jq -r '.type')
+
+        while IFS= read -r version; do
+          environment=$(echo "$version" | sed 's/[0-9]//g')
+          cluster=$(echo "$ARGOCD_CLUSTERS" | jq -r --arg env "$environment" '.[] | select(.env == $env) | .name')
+
+          # Process regular files
+          for config_file in $SHARED_CONFIGMAPS_ROOT_FOLDER/$type/$stack/*.*.*; do
+            [ ! -f "$config_file" ] || [ ! -s "$config_file" ] && continue
+
+            config_file_name=$(basename "$config_file")
+            file_version=$(echo "$config_file_name" | cut -d '.' -f 2 | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+
+            [ "$file_version" != "$version" ] && continue
+
+            config_file_content=$(cat "$config_file" | jq -Rs .)
+            files_group=$(add_file_to_group "$files_group" "$stack" "$type" "$version" "$cluster" "$config_file_name" "$config_file_content")
+          done
+
+          # Process deleted files
+          while IFS= read -r deleted_file; do
+            [[ ! "$deleted_file" =~ ^$SHARED_CONFIGMAPS_ROOT_FOLDER/ ]] && continue
+
+            dir_path=$(dirname "$deleted_file")
+            file_type=$(echo "$dir_path" | cut -d '/' -f 2)
+            file_stack=$(echo "$dir_path" | cut -d '/' -f 3)
+
+            [ "$file_type" != "$type" ] || [ "$file_stack" != "$stack" ] && continue
+
+            file_name=$(basename "$deleted_file")
+            file_version=$(echo "$file_name" | cut -d '.' -f 2 | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
+
+            [ "$file_version" != "$version" ] && continue
+
+            files_group=$(add_file_to_group "$files_group" "$stack" "$type" "$version" "$cluster" "$file_name" '""')
+          done <<< "$deleted_files"
+        done < <(echo "$app" | jq -r '.versions[]')
+      done < <(echo "$grouped_versions_data" | jq -c '.[]')
+
+      echo "$files_group"
+    }
+# endregion
 # endregion
 
 # region: Actions
@@ -358,6 +506,7 @@
   - *push_to_argocd_repo_helper
   - *create_argocd_app_helper
   - *sync_argocd_app_helper
+  - *delete_argocd_app_helper
 
 .declare_argocd_repo_exist_var: &declare_argocd_repo_exist_var
   - |
@@ -443,8 +592,8 @@
 
 .sync_argocd_app: &sync_argocd_app
   - |
-    sync_argocd_app "${FORMATTED_STACK_NAME}" "${ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_NAME}-${FORMATTED_ENV_NAME}"
-    sync_argocd_app "${FORMATTED_STACK_NAME}" "${FORMATTED_APP_NAME}-${ENV_VERSION_NAME}" "true"
+    sync_argocd_app "${FORMATTED_STACK_NAME}" "${ARGOCD_NAMESPACE_IMAGE_PULL_SECRETS_APP_NAME}" "${FORMATTED_ENV_NAME}"
+    sync_argocd_app "${FORMATTED_STACK_NAME}" "${FORMATTED_APP_NAME}" "${ENV_VERSION_NAME}" "true"
 
 .process_sync_argocd_application: &process_sync_argocd_application
   - *create_argocd_repo
@@ -457,109 +606,39 @@
   - *sync_argocd_app
 
 # region: Shared configmaps
+.prepare_shared_configmaps_helpers: &prepare_shared_configmaps_helpers
+  - *prepare_helpers
+  - *add_file_to_group_helper
+  - *group_versions_helper
+  - *group_files_helper
+
 .fetch_shared_configmaps_changed_files: &fetch_shared_configmaps_changed_files
   - |
     echo "Fetching changed config files..."
-    compare_commit_sha="$CI_COMMIT_BEFORE_SHA"
 
-    if [ "$compare_commit_sha" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$compare_commit_sha" 2>/dev/null; then
-      compare_commit_sha=HEAD~1
+    if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$CI_COMMIT_BEFORE_SHA" 2>/dev/null; then
+      CI_COMMIT_BEFORE_SHA=HEAD~1
     fi
 
-    CHANGED_FILES=$(git diff --name-only "$compare_commit_sha")
+    CHANGED_FILES=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA")
     echo "$CHANGED_FILES"
+
+    DELETED_FILES=$(git diff --name-only --diff-filter=D "$CI_COMMIT_BEFORE_SHA")
 
 .group_shared_configmaps_files: &group_shared_configmaps_files
   - |
     echo "Grouping versions..."
-    apps_array="[]"
-
-    for file in $CHANGED_FILES; do
-      [ ! -f "$file" ] || [[ ! "$file" =~ ^configs/ ]] && continue
-
-      dir_path=$(dirname "$file")
-      type=$(echo "$dir_path" | cut -d '/' -f 2)
-      stack=$(echo "$dir_path" | cut -d '/' -f 3)
-      file_name=$(basename "$file")
-      version=$(echo "$file_name" | cut -d '.' -f 2 | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-
-      apps_array=$(echo "$apps_array" | jq \
-        --arg key "${stack}-${type}" \
-        --arg stack "$stack" \
-        --arg type "$type" \
-        --arg version "$version" '
-        if (map(select(.key == $key)) | length) == 0 then
-          . + [{key: $key, stack: $stack, type: $type, versions: [$version]}]
-        else
-          map(
-            if .key == $key then
-              .versions += (if (.versions | index($version)) then [] else [$version] end)
-            else . end
-          )
-        end
-      ')
-    done
-    echo "$apps_array" | jq -c '.[] | {key: .key, versions: [.versions[]]}'
-
-    GROUPED_APPS_DATA="$apps_array"
+    GROUPED_VERSIONS_DATA=$(group_versions "$CHANGED_FILES")
+    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[] | {key: .key, versions: [.versions[]]}'
   - |
     echo "Grouping files..."
-    versions_array="[]"
-
-    while IFS= read -r app; do
-      stack=$(echo "$app" | jq -r '.stack')
-      type=$(echo "$app" | jq -r '.type')
-
-      while IFS= read -r version; do
-        environment=$(echo "$version" | sed 's/[0-9]//g')
-        cluster=$(echo "$ARGOCD_CLUSTERS" | jq -r --arg env "$environment" '.[] | select(.env == $env) | .name')
-
-        for config_file in configs/$type/$stack/*.*.*; do
-          [ ! -f "$config_file" ] || [ ! -s "$config_file" ] && continue
-
-          config_file_name=$(basename "$config_file")
-          file_version=$(echo "$config_file_name" | cut -d '.' -f 2 | tr '[:upper:]' '[:lower:]' | sed 's/_//g')
-
-          [ "$file_version" != "$version" ] && continue
-
-          config_file_content=$(cat "$config_file" | jq -Rs .)
-
-          versions_array=$(echo "$versions_array" | jq \
-            --arg key "${stack}-${type}-${version}" \
-            --arg stack "$stack" \
-            --arg type "$type" \
-            --arg version "$version" \
-            --arg cluster "$cluster" \
-            --arg file_name "$config_file_name" \
-            --argjson file_content "$config_file_content" '
-            if (map(select(.key == $key)) | length) == 0 then
-              . + [{
-                key: $key,
-                stack: $stack,
-                type: $type,
-                version: $version,
-                cluster: $cluster,
-                files: [{name: $file_name, content: $file_content}]
-              }]
-            else
-              map(
-                if .key == $key then
-                  .files += [{name: $file_name, content: $file_content}]
-                else . end
-              )
-            end
-          ')
-        done
-      done < <(echo "$app" | jq -r '.versions[]')
-    done < <(echo "$GROUPED_APPS_DATA" | jq -c '.[]')
-    echo "$versions_array" | jq -c '.[] | {key: .key, files: [.files[] | .name]}'
-
-    GROUPED_VERSIONS_DATA="$versions_array"
+    GROUPED_FILES_DATA=$(group_files "$DELETED_FILES" "$GROUPED_VERSIONS_DATA")
+    echo "$GROUPED_FILES_DATA" | jq -c '.[] | {key: .key, files: [.files[] | .name]}'
 
 .generate_argocd_shared_configmaps_template_file: &generate_argocd_shared_configmaps_template_file
   - |
     download_file "$ARGOCD_APP_TEMPLATE_FILE_PATH" "${ARGOCD_APP_TEMPLATE_FILE_NAME}.j2"
-    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
@@ -574,7 +653,7 @@
 .generate_argocd_shared_configmaps_chart_file: &generate_argocd_shared_configmaps_chart_file
   - |
     download_file "$ARGOCD_APP_CHART_FILE_PATH" "${ARGOCD_APP_CHART_FILE_NAME}.j2"
-    echo "$GROUPED_APPS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
 
@@ -587,7 +666,7 @@
 .generate_argocd_shared_configmaps_values_file: &generate_argocd_shared_configmaps_values_file
   - |
     download_file "$ARGOCD_SHARED_CONFIGMAPS_FILE_PATH" "${ARGOCD_SHARED_CONFIGMAPS_FILE_NAME}.j2"
-    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
@@ -611,7 +690,7 @@
 
 .create_argocd_shared_configmaps_repo: &create_argocd_shared_configmaps_repo
   - |
-    echo "$GROUPED_APPS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
 
@@ -622,7 +701,7 @@
 
 .clone_argocd_shared_configmaps_repo: &clone_argocd_shared_configmaps_repo
   - |
-    echo "$GROUPED_APPS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
 
@@ -633,7 +712,7 @@
 
 .copy_shared_configmaps_template_file: &copy_shared_configmaps_template_file
   - |
-    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
@@ -646,7 +725,7 @@
 
 .copy_shared_configmaps_values_file: &copy_shared_configmaps_values_file
   - |
-    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
@@ -659,7 +738,7 @@
 
 .copy_shared_configmaps_chart_file: &copy_shared_configmaps_chart_file
   - |
-    echo "$GROUPED_APPS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
 
@@ -671,7 +750,7 @@
 
 .push_to_argocd_shared_configmaps_repo: &push_to_argocd_shared_configmaps_repo
   - |
-    echo "$GROUPED_APPS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       versions=$(echo "$group" | jq -r '.versions[]' | tr '\n' '-' | sed 's/-$//')
@@ -683,7 +762,7 @@
 
 .create_argocd_shared_configmaps_app: &create_argocd_shared_configmaps_app
   - |
-    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
@@ -696,14 +775,30 @@
 
 .sync_argocd_shared_configmaps_app: &sync_argocd_shared_configmaps_app
   - |
-    echo "$GROUPED_VERSIONS_DATA" | jq -c '.[]' | while read -r group; do
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
       stack=$(echo "$group" | jq -r '.stack')
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
 
-      app_name=$ARGOCD_SHARED_CONFIGMAPS_APP_NAME-$type-$version
+      app_name=$ARGOCD_SHARED_CONFIGMAPS_APP_NAME-$type
 
-      sync_argocd_app "$stack" "$app_name" "true"
+      sync_argocd_app "$stack" "$app_name" "$version" "true"
+    done
+
+.delete_argocd_shared_configmaps_app: &delete_argocd_shared_configmaps_app
+  - |
+    echo "$GROUPED_FILES_DATA" | jq -c '.[]' | while read -r group; do
+      stack=$(echo "$group" | jq -r '.stack')
+      type=$(echo "$group" | jq -r '.type')
+      version=$(echo "$group" | jq -r '.version')
+
+      is_all_files_empty=$(echo "$group" | jq '[.files[] | .content == ""] | all')
+
+      if [ "$is_all_files_empty" == "true" ]; then
+        app_name=$ARGOCD_SHARED_CONFIGMAPS_APP_NAME-$type
+
+        delete_argocd_app "$stack" "$app_name" "$version"
+      fi
     done
 # endregion
 # endregion
@@ -734,7 +829,7 @@
   script:
     - echo "===== PREPARING ARGOCD SHARED CONFIGMAPS VALUES FILE ... ====="
     - *prepare_variables
-    - *prepare_helpers
+    - *prepare_shared_configmaps_helpers
     - *fetch_shared_configmaps_changed_files
     - *group_shared_configmaps_files
     - *generate_argocd_shared_configmaps_chart_file
@@ -778,4 +873,5 @@
     - *push_to_argocd_shared_configmaps_repo
     - *create_argocd_shared_configmaps_app
     - *sync_argocd_shared_configmaps_app
+    - *delete_argocd_shared_configmaps_app
 # endregion

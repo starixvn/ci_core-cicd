@@ -3,10 +3,10 @@ shared-configmaps:
   {% if files is defined and files | length > 0 %}
   configFiles:
   {% for file in files %}
+    {% if file.content | length > 1 %}
     - name: "{{ file.name.split('.')[0] }}.{{ file.name.split('.')[2] }}"
-      {% if file.content | length > 1 %}
       content: |
         {{ file.content | indent(8) }}
-      {% endif %}
+    {% endif %}
   {% endfor %}
   {% endif %}

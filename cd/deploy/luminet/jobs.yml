@@ -43,3 +43,9 @@ sync_argocd_app:
   rules:
     - !reference [.cd_rules, deploy_k8s_argocd]
     - !reference [.cd_rules, sync_argocd_app]
+
+sync_argocd_shared_configmaps_app:
+  extends:
+    - .base_sync_argocd_shared_configmaps_app
+  rules:
+    - !reference [.cd_rules, sync_argocd_shared_configmaps_app]

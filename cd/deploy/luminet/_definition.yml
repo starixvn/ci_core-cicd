@@ -63,3 +63,11 @@ include:
   script:
     - !reference [.prepare_argocd_values_file, script]
     - !reference [.sync_argocd_application, script]
+
+.base_sync_argocd_shared_configmaps_app:
+  stage: deploy
+  script:
+    - !reference [.prepare_argocd_shared_configmaps_values_file, script]
+    - !reference [.sync_argocd_shared_configmaps_application, script]
+  tags:
+    - docker

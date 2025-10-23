@@ -673,7 +673,7 @@
       files_json=$(echo "$group" | jq -c '{
         files: [
           .files[] | {
-            name: .name,
+            name: (.name | split(".") | if length > 2 then .[0] + "." + .[2] else join(".") end),
             content: .content
           }
         ]

@@ -4,7 +4,7 @@ shared-configmaps:
   configFiles:
   {% for file in files %}
     {% if file.content | length > 1 %}
-    - name: "{{ file.name.split('.')[0] }}.{{ file.name.split('.')[2] }}"
+    - name: "{{ file.name }}"
       content: |
         {{ file.content | indent(8) }}
     {% endif %}

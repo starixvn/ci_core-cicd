@@ -617,7 +617,13 @@
     echo "Fetching changed config files..."
 
     if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$CI_COMMIT_BEFORE_SHA" 2>/dev/null; then
-      CI_COMMIT_BEFORE_SHA=HEAD~1
+      if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+        echo "Invalid previous commit, compare with HEAD~1"
+        CI_COMMIT_BEFORE_SHA=HEAD~1
+      else
+        echo "First commit, compare with empty tree"
+        CI_COMMIT_BEFORE_SHA=$(git hash-object -t tree /dev/null)
+      fi
     fi
 
     CHANGED_FILES=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA")

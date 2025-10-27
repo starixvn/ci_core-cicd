@@ -4,3 +4,7 @@ include:
 notify_failure:
   extends: .notify_failure
   rules: !reference [.ci_rules, notify_failure]
+
+notify_success:
+  extends: .notify_success
+  rules: !reference [.ci_rules, notify_success]

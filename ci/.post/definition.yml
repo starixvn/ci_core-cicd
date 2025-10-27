@@ -1,4 +1,4 @@
-.notify_failure:
+.notify_common:
   stage: .post  
   tags:
     - ci
@@ -19,7 +19,7 @@
   script:
     - |
       # Prepare message with all relevant details
-      MESSAGE="### ❌ CI Pipeline Failed
+      MESSAGE="### $MESSAGE_TITLE
       > Project: **$CI_PROJECT_NAME**
       > Pipeline URL: [$CI_PIPELINE_URL]($CI_PIPELINE_URL)
       > Branch: **$CI_COMMIT_REF_NAME**
@@ -39,3 +39,13 @@
         echo "Slack message sent successfully"
       fi
   allow_failure: true
+
+.notify_failure:
+  extends: .notify_common
+  variables:
+    MESSAGE_TITLE: "❌ CI Pipeline Failed"
+
+.notify_success:
+  extends: .notify_common
+  variables:
+    MESSAGE_TITLE: "✅ CI Pipeline Passed"

@@ -16,13 +16,28 @@
           git fetch --all --tags
           echo "Getting branch name from commit hash: $CI_COMMIT_SHA"
           SOURCE_BRANCH=$(git branch -r --contains $CI_COMMIT_SHA | head -1 | sed 's/origin\///' | xargs)
-          echo "Source branch: $SOURCE_BRANCH"
         else
           SOURCE_BRANCH="$CI_COMMIT_BRANCH"
-          echo "Source branch: $SOURCE_BRANCH"
         fi
 
+        # Validate SOURCE_BRANCH is non-empty
+        if [[ -z "$SOURCE_BRANCH" ]]; then
+          echo "❌ ERROR: SOURCE_BRANCH is empty or could not be determined"
+          echo "This can happen when:"
+          echo "  - The commit hash does not exist in any remote branch"
+          echo "  - Git fetch failed to retrieve branch information"
+          echo "  - The branch resolution logic failed"
+          echo "Aborting merge request creation to prevent API errors."
+          exit 1
+        fi
+
+        echo "✅ SOURCE_BRANCH validation passed: '$SOURCE_BRANCH'"
+
         # Create merge request using GitLab API
+        # Use temporary files to separate HTTP status and response body
+        TEMP_STATUS_FILE=$(mktemp)
+        TEMP_RESPONSE_FILE=$(mktemp)
+        
         curl --request POST \
           --header "PRIVATE-TOKEN: $BOT_MR_TOKEN" \
           --header "Content-Type: application/json" \
@@ -32,9 +47,32 @@
             \"title\": \"Review MR: $SOURCE_BRANCH\",
             \"remove_source_branch\": true
           }" \
-          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests"
+          --write-out "%{http_code}" \
+          --output "$TEMP_RESPONSE_FILE" \
+          --silent \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests" > "$TEMP_STATUS_FILE"
         
-        echo "Merge request creation attempted"
+        # Read HTTP status code and response body from separate files
+        HTTP_STATUS=$(cat "$TEMP_STATUS_FILE")
+        RESPONSE_BODY=$(cat "$TEMP_RESPONSE_FILE")
+        
+        # Clean up temporary files
+        rm -f "$TEMP_STATUS_FILE" "$TEMP_RESPONSE_FILE"
+        
+        # Check if the API call was successful
+        if [ "$HTTP_STATUS" -eq 201 ]; then
+          echo "✅ Merge request created successfully!"
+          
+          # Extract MR URL from response using jq to parse JSON properly
+          MR_URL=$(echo "$RESPONSE_BODY" | jq -r '.web_url // empty')
+          if [[ -n "$MR_URL" ]]; then
+            echo "🔗 Merge Request Link: $MR_URL"
+          fi
+        else
+          echo "❌ Failed to create merge request (HTTP Status: $HTTP_STATUS)"
+          echo "Error details: $RESPONSE_BODY"
+          exit 1
+        fi
       else
         echo "No #mr found in commit message or tag name, skipping merge request creation"
       fi

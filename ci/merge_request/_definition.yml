@@ -6,12 +6,12 @@
   before_script: []
   script:
     - |
-      # Check if commit message contains #mr or if there's a tag starting with #mr-
-      if [[ "$CI_COMMIT_MESSAGE" =~ \#mr ]] || [[ "$CI_COMMIT_TAG" =~ ^\#mr- ]]; then
+      # Check if commit message contains #mr or if there's a tag containing #mr
+      if [[ "$CI_COMMIT_MESSAGE" =~ \#mr ]] || [[ "$CI_COMMIT_TAG" =~ \#mr ]]; then
         echo "Auto-creating merge request..."
 
         # Determine source branch
-        if [[ "$CI_COMMIT_TAG" =~ ^\#mr-(.+)$ ]]; then
+        if [[ "$CI_COMMIT_TAG" =~ \#mr ]]; then
           # Get branch name from commit hash
           git fetch --all --tags
           echo "Getting branch name from commit hash: $CI_COMMIT_SHA"
@@ -36,6 +36,6 @@
         
         echo "Merge request creation attempted"
       else
-        echo "No #mr tag found in commit message or tag, skipping merge request creation"
+        echo "No #mr found in commit message or tag name, skipping merge request creation"
       fi
   allow_failure: true

@@ -1,5 +1,7 @@
 ############# shared-configmaps values #############
 shared-configmaps:
+  name: "{{ name }}"
+
   {% if files is defined and files | length > 0 %}
   configFiles:
   {% for file in files %}

@@ -112,7 +112,7 @@ k8sdeployments:
   {% if services[0].shared_configs is defined and services[0].shared_configs | length > 0 %}
   sharedConfigs:
     {% for config in services[0].shared_configs %}
-    - configMapName: "{{ project_name }}-{{ config.configmap }}-{{ environment | lower | replace('_','') }}"
+    - configMapName: "{{ project_name }}-shared-{{ config.configmap }}-{{ environment | lower | replace('_','') }}"
       configFileName: "{{ config.container_file_name }}"
       configFilePath: "{{ container_root_path }}/{{ config.container_file_path }}"
     {% endfor %}

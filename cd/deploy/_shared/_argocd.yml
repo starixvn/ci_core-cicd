@@ -677,6 +677,7 @@
       type=$(echo "$group" | jq -r '.type')
       version=$(echo "$group" | jq -r '.version')
       files_json=$(echo "$group" | jq -c '{
+        name: (.stack + "-" + "shared" + "-" + .type + "-" + .version),
         files: [
           .files[] | {
             name: (.name | split(".") | if length > 2 then .[0] + "." + .[2] else join(".") end),

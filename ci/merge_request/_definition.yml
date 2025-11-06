@@ -33,6 +33,15 @@
 
         echo "✅ SOURCE_BRANCH validation passed: '$SOURCE_BRANCH'"
 
+        # Determine assignee (commit author or tag pusher)
+        # GITLAB_USER_ID is the user who triggered the pipeline (pusher)
+        ASSIGNEE_IDS="[]"
+        if [[ -n "$GITLAB_USER_ID" ]]; then
+          ASSIGNEE_IDS="[$GITLAB_USER_ID]"
+          echo "📌 Assigning MR to user: $GITLAB_USER_LOGIN"
+        else
+          echo "⚠️  GITLAB_USER_LOGIN not available, MR will not be assigned"
+        fi
         # Create merge request using GitLab API
         # Use temporary files to separate HTTP status and response body
         TEMP_STATUS_FILE=$(mktemp)
@@ -45,7 +54,8 @@
             \"source_branch\": \"$SOURCE_BRANCH\",
             \"target_branch\": \"$CI_DEFAULT_BRANCH\",
             \"title\": \"Review MR: $SOURCE_BRANCH\",
-            \"remove_source_branch\": true
+            \"remove_source_branch\": true,
+            \"assignee_ids\": $ASSIGNEE_IDS
           }" \
           --write-out "%{http_code}" \
           --output "$TEMP_RESPONSE_FILE" \

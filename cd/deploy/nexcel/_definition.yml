@@ -45,6 +45,7 @@ include:
   extends:
     - .env
   script:
+    - !reference [.create_image_tags, script]
     - !reference [.login-registry, script]
     - !reference [.generate-and-sync-docker-compose, script]
     - !reference [.sync-config, script]
@@ -62,6 +63,7 @@ include:
   extends:
     - .env
   script:
+    - !reference [.create_image_tags, script]
     - !reference [.prepare_k8s_deployments_values, script]
     - !reference [.sync-config, script]
     - *import-connection-string
@@ -76,6 +78,7 @@ include:
   extends:
     - .env
   script:
+    - !reference [.create_image_tags, script]
     - *import-connection-string
     - *change-sp-version
     - !reference [.prepare_argocd_app_file, script]

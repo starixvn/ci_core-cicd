@@ -84,6 +84,9 @@
 .if_not_sync_argocd_shared_configmaps_app: &if_not_sync_argocd_shared_configmaps_app
   if: $SYNC_ARGOCD_SHARED_CONFIGMAPS_APP != "true"
 
+.if_image_exists_in_registry: &if_image_exists_in_registry
+  if: $IMAGE_EXISTS_IN_REGISTRY == "true"
+
 .cd_rules:
   build_multistage:
     - <<: *if_not_multi_stage
@@ -99,6 +102,8 @@
       when: never
   build_linux:
     - <<: *if_platform_not_linux
+      when: never
+    - <<: *if_image_exists_in_registry
       when: never
   build_windows:
     - <<: *if_platform_not_windows

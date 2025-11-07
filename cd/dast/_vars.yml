@@ -1,5 +1,5 @@
 variables:
-  DefectDojo Variables
+  # DefectDojo Variables
   DEFECTDOJO_ENGAGEMENT_BUILD_SERVER: null
   DEFECTDOJO_ENGAGEMENT_ORCHESTRATION_ENGINE: null
   DEFECTDOJO_SCAN_ACTIVE: true

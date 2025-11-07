@@ -25,6 +25,10 @@
         export site_url
       fi
     - |
+      # Đặt test title ổn định để lần đầu import tạo đúng Test
+      DEFECTDOJO_TEST_TITLE="${CI_COMMIT_REF_NAME}_${site_url}"
+      export DEFECTDOJO_TEST_TITLE
+      echo "🔖 DEFECTDOJO_TEST_TITLE: ${DEFECTDOJO_TEST_TITLE}"
       cat > /zap/wrk/zap-config.conf << EOF
       # ZAP Baseline Configuration
       # Ignore Info level findings

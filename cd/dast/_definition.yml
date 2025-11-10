@@ -25,7 +25,6 @@
         export site_url
       fi
     - |
-      echo "🔖 DEFECTDOJO_TEST_TITLE: ${DEFECTDOJO_TEST_TITLE}"
       cat > /zap/wrk/zap-config.conf << EOF
       # ZAP Baseline Configuration
       # Ignore Info level findings

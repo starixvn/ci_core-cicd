@@ -45,14 +45,25 @@
         fi
         
         set_step "get_engagement_name"
-        # Set DEFECTDOJO_TEST_TITLE based on scan type
         DEFECTDOJO_TEST_TITLE=$(curl -s --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
-                "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
-                | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
-        if [ "$DEFECTDOJO_SCAN_TYPE" = "ZAP Scan" ]; then
-            DEFECTDOJO_TEST_TITLE="${DEFECTDOJO_TEST_TITLE}_${APP_URL}"
+            "$GITLAB_API_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/refs?type=branch" \
+            | jq -r '.[0].name // "'$CI_COMMIT_REF_NAME'"')
+
+        SCAN_TYPE_NORMALIZED=$(echo "${DEFECTDOJO_SCAN_TYPE}" | tr '[:upper:]' '[:lower:]')
+        if [ "$SCAN_TYPE_NORMALIZED" = "zap scan" ] || [ "$SCAN_TYPE_NORMALIZED" = "zap" ]; then
+          if [ -n "$site_url" ]; then
+            host="$site_url"
+          else
+            host=$(echo "$APP_URL" | sed -E 's|^https?://||' | sed 's|/.*||')
+          fi
+          DEFECTDOJO_TEST_TITLE="${DEFECTDOJO_TEST_TITLE}_${host}"
+          echo "🔖 Using ZAP title: ${DEFECTDOJO_TEST_TITLE}"
+        elif [ "$SCAN_TYPE_NORMALIZED" = "trivy scan" ] || [ "$SCAN_TYPE_NORMALIZED" = "trivy" ]; then
+          env_label="${DEFECTDOJO_SCAN_ENVIRONMENT:-${ENV_NAME:-unknown}}"
+          DEFECTDOJO_TEST_TITLE="${DEFECTDOJO_TEST_TITLE}_${env_label}"
+          echo "🔖 Using Trivy title: ${DEFECTDOJO_TEST_TITLE}"
         else
-            echo "✅ Using branch name for Trivy Scan: $DEFECTDOJO_TEST_TITLE"
+          echo "ℹ️ Unknown scan type '${DEFECTDOJO_SCAN_TYPE}', using branch-only title: ${DEFECTDOJO_TEST_TITLE}"
         fi
 
         if [ -n "$DEFECTDOJO_DEPT" ]; then

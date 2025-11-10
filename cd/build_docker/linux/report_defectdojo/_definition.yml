@@ -216,6 +216,7 @@
             -F "environment=${DEFECTDOJO_SCAN_ENVIRONMENT}" \
             -F "tags=env:${DEFECTDOJO_SCAN_ENVIRONMENT}" \
             -F "description=$CI_COMMIT_DESCRIPTION" \
+            -F "minimum_severity=${DEFECTDOJO_SCAN_MINIMUM_SEVERITY}" \
             2>/dev/null) || { soft_fail "reimport-scan request error"; }
           [ "${REIMPORT_CODE}" -ge 200 ] && [ "${REIMPORT_CODE}" -lt 300 ] || soft_fail "reimport-scan failed (${REIMPORT_CODE})"
         else

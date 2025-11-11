@@ -1,8 +1,8 @@
 .zap_scan:
   variables:
-    DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
-    DEFECTDOJO_SCAN_FILE: "zap-report.xml"
-    DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
+    # DEFECTDOJO_SCAN_TEST_TYPE: "ZAP Scan"
+    # DEFECTDOJO_SCAN_FILE: "zap-report.xml"
+    # DEFECTDOJO_SCAN_TYPE: "ZAP Scan"
   stage: dast
   image: $DOCKER_REG_LOCAL_URL/docker-hub/zaproxy/zap-stable:2.16.1
   before_script:

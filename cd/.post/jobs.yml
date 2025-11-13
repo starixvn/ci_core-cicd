@@ -1,6 +1,17 @@
 include:
   - cd/.post/_definition.yml
+  - ci/merge_request/_definition.yml
 
-cleanup:
+post_cd:
   extends: .cleanup
+  before_script:
+    - |
+      if [[ "$CI_COMMIT_TAG" =~ -sit ]] || [[ "$CI_COMMIT_TAG" =~ -uat ]]; then
+        export ENABLE_CREATE_MR=true
+      else
+        export ENABLE_CREATE_MR=false
+      fi
+  script:
+    - !reference [.cleanup, script]
+    - !reference [.create_mr, script]
   rules: !reference [.cd_rules, cleanup]

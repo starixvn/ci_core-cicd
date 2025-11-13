@@ -3,21 +3,208 @@
   tags:
     - ci
   needs: []
-  before_script: []
+  before_script:
+    - export ENABLE_CREATE_MR=true
   script:
     - |
-      # Check if commit message contains #mr or if there's a tag containing #mr
-      if [[ "$CI_COMMIT_MESSAGE" =~ \#mr ]] || [[ "$CI_COMMIT_TAG" =~ \#mr ]]; then
+      # Function to determine reviewer from commit message or tag (pattern: #mr-{reviewer})
+      determine_reviewer() {
+        local reviewer_ids="[]"
+        
+        # Skip for deploy tags
+        if [[ "$CI_COMMIT_TAG" =~ ^deploy- ]]; then
+          echo "$reviewer_ids|"
+          return
+        fi
+        
+        # Extract reviewer pattern from commit message or tag
+        local search_text=""
+        if [[ -n "$CI_COMMIT_TAG" ]]; then
+          # Search in tag name
+          search_text="$CI_COMMIT_TAG"
+          echo "Searching for reviewer pattern in tag: $CI_COMMIT_TAG" >&2
+        else
+          # Search in commit message
+          search_text="$CI_COMMIT_MESSAGE"
+          echo "Searching for reviewer pattern in commit message" >&2
+        fi
+        
+        # Extract reviewer username from pattern #mr-{reviewer}
+        if [[ "$search_text" =~ \#mr-([a-zA-Z0-9_.]+) ]]; then
+          local reviewer_username="${BASH_REMATCH[1]}"
+          echo "Found reviewer pattern: #mr-$reviewer_username" >&2
+          
+          # Search for active user by username and extract both ID and username
+          local user_response=$(curl --get \
+            --data-urlencode "search=$reviewer_username" \
+            --data-urlencode "active=true" \
+            --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+            --silent \
+            --max-time 20 \
+            "$CI_API_V4_URL/users")
+          
+          # Get user with most recent activity from active users
+          local active_user=$(echo "$user_response" | jq 'sort_by(.last_activity_on // "") | reverse | .[0]')
+          
+          if [[ -n "$active_user" && "$active_user" != "null" ]]; then
+            local reviewer_id=$(echo "$active_user" | jq -r '.id // empty')
+            local reviewer_actual_username=$(echo "$active_user" | jq -r '.username // empty')
+            
+            if [[ -n "$reviewer_id" && "$reviewer_id" != "null" ]]; then
+              reviewer_ids="[$reviewer_id]"
+              echo "👁️  Adding reviewer (User ID: $reviewer_id, User Name: $reviewer_actual_username)" >&2
+              # Output both IDs and username separated by | for parsing (avoid subshell variable issue)
+              echo "$reviewer_ids|$reviewer_actual_username"
+              return
+            fi
+          fi
+          
+          echo "⚠️  Could not find active user ID for reviewer: $reviewer_username" >&2
+        else
+          echo "ℹ️  No reviewer pattern (#mr-{reviewer}) found" >&2
+        fi
+        
+        echo "$reviewer_ids|"
+      }
+
+      # Function to determine assignee (commit author or tag pusher)
+      determine_assignee() {
+        local assignee_ids="[]"
+        
+        if [[ "$CI_COMMIT_TAG" =~ ^deploy- ]]; then
+          # For deploy tags, use commit author
+          echo "Deploy tag detected, fetching commit author..." >&2
+          local commit_author_name=$(curl --request GET \
+            --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+            --silent \
+            --max-time 20 \
+            "$CI_API_V4_URL/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA" | jq -r '.author_name // empty')
+          
+          if [[ -n "$commit_author_name" ]]; then
+            # Get active user ID and name from users API
+            local user_response=$(curl --get \
+              --data-urlencode "search=$commit_author_name" \
+              --data-urlencode "active=true" \
+              --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+              --silent \
+              --max-time 20 \
+              "$CI_API_V4_URL/users")
+            
+            # Get user with most recent activity from active users
+            local active_user=$(echo "$user_response" | jq 'sort_by(.last_activity_on // "") | reverse | .[0]')
+            
+            if [[ -n "$active_user" && "$active_user" != "null" ]]; then
+              local commit_author_id=$(echo "$active_user" | jq -r '.id // empty')
+              local assignee_actual_name=$(echo "$active_user" | jq -r '.name // .username // empty')
+              
+              if [[ -n "$commit_author_id" && "$commit_author_id" != "null" ]]; then
+                assignee_ids="[$commit_author_id]"
+                echo "📌 Adding assignee (User ID: $commit_author_id, User Name: $assignee_actual_name)" >&2
+                # Output both IDs and name separated by | for parsing (avoid subshell variable issue)
+                echo "$assignee_ids|$assignee_actual_name"
+                return
+              fi
+            fi
+            
+            echo "⚠️  Could not find active user ID for commit author ($commit_author_name), MR will not be assigned" >&2
+          else
+            echo "⚠️  Could not fetch commit author ($commit_author_name), MR will not be assigned" >&2
+          fi
+        elif [[ -n "$GITLAB_USER_ID" ]]; then
+          # For other tags, use pipeline triggerer (tag pusher)
+          assignee_ids="[$GITLAB_USER_ID]"
+          echo "📌 Adding assignee (User ID: $GITLAB_USER_ID, User Name: $GITLAB_USER_LOGIN)" >&2
+          # Output both IDs and name separated by | for parsing (avoid subshell variable issue)
+          echo "$assignee_ids|$GITLAB_USER_LOGIN"
+          return
+        else
+          echo "⚠️  GITLAB_USER_ID not available, MR will not be assigned" >&2
+        fi
+        
+        echo "$assignee_ids|"
+      }
+
+      # Function to send Slack notification to reviewer
+      send_slack_notification_to_reviewer() {
+        local reviewer_username="$1"
+        local assignee_name="$2"
+        local mr_url="$3"
+        local project_name="$4"
+        local source_branch="$5"
+        local target_branch="$6"
+        local commit_sha="$7"
+        
+        if [[ -z "$reviewer_username" ]]; then
+          echo "⚠️  Reviewer username not available, skipping Slack notification" >&2
+          return 1
+        fi
+        
+        echo "Sending Slack notification to reviewer..." >&2
+        
+        # Construct reviewer email
+        local reviewer_email="${reviewer_username}@${COMPANY_DOMAIN}"
+        echo "Reviewer email: $reviewer_email" >&2
+        
+        # Get Slack user ID
+        local slack_response=$(curl -s --max-time 20 -X GET \
+          -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
+          "https://slack.com/api/users.lookupByEmail?email=$reviewer_email")
+        
+        if ! echo "$slack_response" | jq -e '.ok == true' > /dev/null; then
+          echo "⚠️  Could not find Slack user ID for reviewer: $(echo "$slack_response" | jq -r '.error // "Unknown error"')" >&2
+          return 1
+        fi
+        
+        local slack_user_id=$(echo "$slack_response" | jq -r '.user.id')
+        echo "Slack user ID: $slack_user_id" >&2
+        
+        # Prepare Slack message
+        local slack_message=""
+        if [[ -n "$assignee_name" ]]; then
+          slack_message="### 🔔 New Merge Request for Review
+      > Project: **$project_name**
+      > Branch: **$source_branch**
+      > Target: **$target_branch**
+      > Assignee: **$assignee_name**
+      > Merge Request: [$mr_url]($mr_url)
+      > Commit: $commit_sha"
+        else
+          slack_message="### 🔔 New Merge Request for Review
+      > Project: **$project_name**
+      > Branch: **$source_branch**
+      > Target: **$target_branch**
+      > Merge Request: [$mr_url]($mr_url)
+      > Commit: $commit_sha"
+        fi
+        
+        # Send Slack message
+        local slack_post_response=$(curl -s --max-time 20 -X POST \
+          -H "Authorization: Bearer $SLACK_SKYNEX_BOT_TOKEN" \
+          -H 'Content-type: application/json' \
+          --data "{\"channel\":\"$slack_user_id\",\"markdown_text\":\"$slack_message\"}" \
+          https://slack.com/api/chat.postMessage)
+        
+        if echo "$slack_post_response" | jq -e '.ok == true' > /dev/null; then
+          echo "✅ Slack notification sent successfully to reviewer" >&2
+          return 0
+        else
+          echo "⚠️  Failed to send Slack message: $(echo "$slack_post_response" | jq -r '.error // "Unknown error"')" >&2
+          return 1
+        fi
+      }
+    - |
+      if [ "$ENABLE_CREATE_MR" == "true" ]; then       
         echo "Auto-creating merge request..."
 
         # Determine source branch
-        if [[ "$CI_COMMIT_TAG" =~ \#mr ]]; then
-          # Get branch name from commit hash
+        if [[ -n "$CI_COMMIT_BRANCH" ]]; then
+          # Running on a branch - use branch name directly
+          SOURCE_BRANCH="$CI_COMMIT_BRANCH"
+        else
+          # Running on a tag - get branch name from commit hash
           git fetch --all --tags
           echo "Getting branch name from commit hash: $CI_COMMIT_SHA"
           SOURCE_BRANCH=$(git branch -r --contains $CI_COMMIT_SHA | head -1 | sed 's/origin\///' | xargs)
-        else
-          SOURCE_BRANCH="$CI_COMMIT_BRANCH"
         fi
 
         # Validate SOURCE_BRANCH is non-empty
@@ -33,15 +220,34 @@
 
         echo "✅ SOURCE_BRANCH validation passed: '$SOURCE_BRANCH'"
 
-        # Determine assignee (commit author or tag pusher)
-        # GITLAB_USER_ID is the user who triggered the pipeline (pusher)
-        ASSIGNEE_IDS="[]"
-        if [[ -n "$GITLAB_USER_ID" ]]; then
-          ASSIGNEE_IDS="[$GITLAB_USER_ID]"
-          echo "📌 Assigning MR to user: $GITLAB_USER_LOGIN"
-        else
-          echo "⚠️  GITLAB_USER_LOGIN not available, MR will not be assigned"
+        # Check if MR already exists for this source branch
+        echo "Checking if MR already exists for branch: $SOURCE_BRANCH"
+        EXISTING_MR=$(curl --get \
+          --data-urlencode "source_branch=$SOURCE_BRANCH" \
+          --data-urlencode "target_branch=$CI_DEFAULT_BRANCH" \
+          --data-urlencode "state=opened" \
+          --header "PRIVATE-TOKEN: $BOT_MR_TOKEN" \
+          --silent \
+          --max-time 20 \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests" | jq -r '.[0].web_url // empty')
+        
+        if [[ -n "$EXISTING_MR" ]]; then
+          echo "ℹ️  Merge request already exists for branch '$SOURCE_BRANCH'"
+          echo "🔗 Existing MR: $EXISTING_MR"
+          echo "Skipping MR creation."
+          exit 0
         fi
+
+        # Determine assignee
+        ASSIGNEE_OUTPUT=$(determine_assignee)
+        ASSIGNEE_IDS=$(echo "$ASSIGNEE_OUTPUT" | cut -d'|' -f1)
+        ASSIGNEE_NAME=$(echo "$ASSIGNEE_OUTPUT" | cut -d'|' -f2)
+
+        # Determine reviewer
+        REVIEWER_OUTPUT=$(determine_reviewer)
+        REVIEWER_IDS=$(echo "$REVIEWER_OUTPUT" | cut -d'|' -f1)
+        REVIEWER_USERNAME=$(echo "$REVIEWER_OUTPUT" | cut -d'|' -f2)
+
         # Create merge request using GitLab API
         # Use temporary files to separate HTTP status and response body
         TEMP_STATUS_FILE=$(mktemp)
@@ -55,7 +261,8 @@
             \"target_branch\": \"$CI_DEFAULT_BRANCH\",
             \"title\": \"Review MR: $SOURCE_BRANCH\",
             \"remove_source_branch\": true,
-            \"assignee_ids\": $ASSIGNEE_IDS
+            \"assignee_ids\": $ASSIGNEE_IDS,
+            \"reviewer_ids\": $REVIEWER_IDS
           }" \
           --write-out "%{http_code}" \
           --output "$TEMP_RESPONSE_FILE" \
@@ -78,12 +285,24 @@
           if [[ -n "$MR_URL" ]]; then
             echo "🔗 Merge Request Link: $MR_URL"
           fi
+          
+          # Send Slack notification to reviewer if reviewer exists
+          if [[ "$REVIEWER_IDS" != "[]" && -n "$REVIEWER_IDS" && -n "$REVIEWER_USERNAME" ]]; then
+            send_slack_notification_to_reviewer \
+              "$REVIEWER_USERNAME" \
+              "$ASSIGNEE_NAME" \
+              "$MR_URL" \
+              "$CI_PROJECT_NAME" \
+              "$SOURCE_BRANCH" \
+              "$CI_DEFAULT_BRANCH" \
+              "$CI_COMMIT_SHORT_SHA"
+          else
+            echo "ℹ️  No reviewer specified, skipping Slack notification"
+          fi
         else
           echo "❌ Failed to create merge request (HTTP Status: $HTTP_STATUS)"
           echo "Error details: $RESPONSE_BODY"
           exit 1
-        fi
-      else
-        echo "No #mr found in commit message or tag name, skipping merge request creation"
+        fi     
       fi
   allow_failure: true

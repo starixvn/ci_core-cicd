@@ -168,10 +168,15 @@ k8sdeployments:
     {% endfor %}
   {% endif %}
 
-  {% if services[0].pvc is defined %}
-  pvc:
-    create: true
-    storage: {{ services[0].pvc.storage }}
+  {% if services[0].pvcs is defined and services[0].pvcs | length > 0 %}
+  pvcs:
+    {% for pvc in services[0].pvcs %}
+    - name: {{ pvc.name }}
+      storage: {{ pvc.storage }}
+      {% if pvc.storage_class_name is defined %}
+      storageClassName: {{ pvc.storage_class_name }}
+      {% endif %}
+    {% endfor %}
   {% endif %}
 
   {% if services[0].volumes is defined and services[0].volumes | length > 0 %}
@@ -179,7 +184,15 @@ k8sdeployments:
     {% for volume in services[0].volumes %}
     - name: {{ volume.name | replace('_', '-') }}
       mountPath: {{ volume.mount_path }}
+      {% if volume.shared_pvc is defined %}
       sharedPVC: {{ volume.shared_pvc }}
+      {% endif %}
+      {% if volume.pvc_name is defined %}
+      pvcName: {{ volume.pvc_name }}
+      {% endif %}
+      {% if volume.sub_path is defined %}
+      subPath: {{ volume.sub_path }}
+      {% endif %}
     {% endfor %}
   {% endif %}
 

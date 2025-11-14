@@ -168,7 +168,6 @@ k8sdeployments:
     {% endfor %}
   {% endif %}
 
-  {% set ns = namespace(has_storage_class=false) %}
   {% if services[0].pvcs is defined and services[0].pvcs | length > 0 %}
   pvcs:
     {% for pvc in services[0].pvcs %}
@@ -176,11 +175,9 @@ k8sdeployments:
       storage: {{ pvc.storage }}
       {% if pvc.storage_class_name is defined %}
       storageClassName: {{ pvc.storage_class_name }}
-      {% set ns.has_storage_class = true %}
       {% endif %}
     {% endfor %}
   {% endif %}
-  {% set has_storage_class = ns.has_storage_class %}
 
   {% if services[0].volumes is defined and services[0].volumes | length > 0 %}
   volumes:
@@ -233,11 +230,9 @@ k8sdeployments:
 
   podAnnotations: {}
 
-  {% if has_storage_class %}
+  {% if services[0].fs_group is defined %}
   podSecurityContext:
-    fsGroup: 1000
-  {% else %}
-  podSecurityContext: {}
+    fsGroup: {{ services[0].fs_group }}
   {% endif %}
 
   securityContext: {}

@@ -44,7 +44,7 @@
             "$CI_API_V4_URL/users")
           
           # Get user with most recent activity from active users
-          local active_user=$(echo "$user_response" | jq 'sort_by(.last_activity_on // "") | reverse | .[0]')
+          local active_user=$(echo "$user_response" | jq 'sort_by(.confirmed_at // "") | .[0]')
           
           if [[ -n "$active_user" && "$active_user" != "null" ]]; then
             local reviewer_id=$(echo "$active_user" | jq -r '.id // empty')

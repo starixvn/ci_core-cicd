@@ -28,9 +28,9 @@
 {% set enable_health_check = (true if not disable_health_check or disable_health_check == 'false' else false) | lower %}
 {#---------end enable_health_check---------#}
 
-{#---------container_port---------#}
-{% set container_port = services[0].port | default(5000) %}
-{#---------end container_port---------#}
+{#---------container_ports---------#}
+{% set container_ports = services[0].ports | default([5000]) %}
+{#---------end container_ports---------#}
 
 {#---------limit_memory---------#}
 {% set limit_memory = services[0].max_memory | default(2048) | int %}
@@ -147,9 +147,12 @@ k8sdeployments:
   service:
   # kind of types: ClusterIP, NodePort, LoadBalancer
     type: ClusterIP
-    port: {{ container_port }}
-    targetPort: {{ container_port }}
-  #  nodePort:
+    ports:
+    {% for port in container_ports %}
+      - port: {{ port }}
+        targetPort: {{ port }}
+        protocol: TCP
+    {% endfor %}
 
   {% if site_urls is defined and site_urls | length > 0 %}
   ingress:

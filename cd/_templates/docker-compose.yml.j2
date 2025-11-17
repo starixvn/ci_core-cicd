@@ -119,10 +119,10 @@ services:
         - "traefik.http.middlewares.{{service_name}}_{{ environment }}_https_stripprefix.stripprefix.prefixes=/{{services[0].path_prefix}}"
 {% endif %}
 {% endif %}
-        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.server.port={{services[0].port | default('5000')}}"
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.server.port={{services[0].ports[0] | default('5000')}}"
         ###healthcheck
         - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.path={{services[0].healthcheck_path | default('')}}"
-        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.port={{services[0].port | default('5000')}}"
+        - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.port={{services[0].ports[0] | default('5000')}}"
         - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.interval={{services[0].interval | default('2s')}}"
         - "traefik.http.services.{{service_name}}_{{ environment }}.loadbalancer.healthcheck.timeout={{services[0].timeout | default('1s')}}"
 {% endif %}
@@ -307,43 +307,43 @@ services:
 {% endif %}
 {% if env == "local" and services[0].port_local is defined %}
     ports:
-      - {{services[0].port_local}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_local}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if env == "nexprod" and services[0].port_nexprod is defined %}
     ports:
-      - {{services[0].port_nexprod}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_nexprod}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if env == "uat" and services[0].port_uat is defined %}
     ports:
-      - {{services[0].port_uat}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_uat}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if env == "sit" and services[0].port_sit is defined %}
     ports:
-      - {{services[0].port_sit}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_sit}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if (env == "prod" or env == "fpsprod" or env == "alphaprod") and services[0].port_prod is defined %}
     ports:
-      - {{services[0].port_prod}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_prod}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if env == "aws" and services[0].port_aws is defined %}
     ports:
-      - {{services[0].port_aws}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_aws}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if env == "nexaws" and services[0].port_nexaws is defined %}
     ports:
-      - {{services[0].port_nexaws}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_nexaws}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if env == "gc" and services[0].port_gc is defined %}
     ports:
-      - {{services[0].port_gc}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_gc}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if (env == "kldr" or env == "alphakldr") and services[0].port_kldr is defined %}
     ports:
-      - {{services[0].port_kldr}}:{{services[0].port | default('5000')}}
+      - {{services[0].port_kldr}}:{{services[0].ports[0] | default('5000')}}
 {% endif %}
 {% if services[0].disable_health_check is undefined or not services[0].disable_health_check or services[0].disable_health_check == 'false' %}
     healthcheck:
-      test: ['CMD', 'curl', '-f', "http://{{services[0].healthcheck_domain | default('localhost')}}:{{services[0].port | default('5000')}}{{services[0].healthcheck_path | default('')}}"]
+      test: ['CMD', 'curl', '-f', "http://{{services[0].healthcheck_domain | default('localhost')}}:{{services[0].ports[0] | default('5000')}}{{services[0].healthcheck_path | default('')}}"]
       interval: {{services[0].healthcheck_interval | default('5s')}}
       timeout: {{services[0].healthcheck_timeout | default('5s')}}
       retries: {{services[0].healthcheck_retries | default('5')}}

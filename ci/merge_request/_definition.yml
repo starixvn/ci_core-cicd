@@ -255,6 +255,18 @@
 
         echo "✅ SOURCE_BRANCH validation passed: '$SOURCE_BRANCH'"
 
+        # Skip MR creation if SOURCE_BRANCH is the default branch
+        if [[ "$SOURCE_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+          echo "Skipping merge request creation because SOURCE_BRANCH is '$SOURCE_BRANCH'"
+          
+          # Delete #mr tag if it exists
+          if [[ -n "$CI_COMMIT_TAG" ]]; then
+            delete_mr_tag "$CI_COMMIT_TAG"
+          fi
+          
+          exit 0
+        fi
+
         # Check if MR already exists for this source branch
         echo "Checking if MR already exists for branch: $SOURCE_BRANCH"
         EXISTING_MR=$(curl --get \

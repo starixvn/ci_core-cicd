@@ -368,7 +368,7 @@
       local unhealthy_pod_name=$(echo "$resource_tree" | jq -r '[.nodes[]? | select(.kind == "Pod" and .health.status != "Healthy")] | sort_by(.createdAt) | reverse | .[0].name // empty')
 
       if [ -n "$unhealthy_pod_name" ]; then
-        argocd app logs $argocd_app_name --name $unhealthy_pod_name
+        argocd app logs $argocd_app_name --name $unhealthy_pod_name --tail $ARGOCD_LOGS_TAIL_LINES
       fi
     }
 

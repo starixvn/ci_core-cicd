@@ -365,13 +365,11 @@
 
       local argocd_app_name=$stack_name-$app_name-$env_name
       local resource_tree=$(curl -s -H "Authorization: Bearer $ARGOCD_AUTH_TOKEN" "https://${ARGOCD_SERVER}/api/v1/applications/${argocd_app_name}/resource-tree")
-      local unhealthy_pods=$(echo "$resource_tree" | jq -r '.nodes[] | select(.kind == "Pod" and .health.status != "Healthy") | .name')
+      local unhealthy_pod_name=$(echo "$resource_tree" | jq -r '[.nodes[]? | select(.kind == "Pod" and .health.status != "Healthy")] | sort_by(.createdAt) | reverse | .[0].name // empty')
 
-      while IFS= read -r pod_name; do
-        echo ""
-        echo "===== Showing logs for unhealthy pod: $pod_name ====="
-        argocd app logs $argocd_app_name --name $pod_name
-      done <<< "$unhealthy_pods"
+      if [ -n "$unhealthy_pod_name" ]; then
+        argocd app logs $argocd_app_name --name $unhealthy_pod_name
+      fi
     }
 
 # region: Shared configmaps

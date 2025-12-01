@@ -242,6 +242,38 @@
 
         echo "$token"
       }
+
+      # Function to update last used date of token
+      update_token_last_used_date() {
+        local token="$1"
+        
+        if [[ -z "$token" ]]; then
+          echo "⚠️  Token not provided, skipping last used date update" >&2
+          return 0
+        fi
+        
+        local endpoint="$ROCKETOR_API_URL/api/GitLabBot/UpdateLastUsedDate"
+        local header_args=()
+        if [[ -n "$ROCKETOR_TOKEN" ]]; then
+          header_args=(-H "ROCKETOR-TOKEN:$ROCKETOR_TOKEN")
+        fi
+        
+        # URL encode the token for the query parameter
+        local encoded_token=$(printf '%s' "$token" | jq -sRr @uri)
+        
+        # Make PUT request with token as query parameter
+        local http_status=$(curl --request PUT \
+          --silent \
+          --max-time 20 \
+          --write-out "%{http_code}" \
+          --output /dev/null \
+          "${header_args[@]}" \
+          "$endpoint?token=$encoded_token")
+        
+        if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
+          echo "⚠️  Failed to update token last used date (HTTP Status: $http_status)" >&2
+        fi
+      }
     - |
       if [ "$ENABLE_CREATE_MR" == "true" ]; then       
         echo "Auto-creating merge request..."
@@ -359,6 +391,9 @@
             echo "🔗 Merge Request Link: $MR_URL"
           fi
           
+          # Update last used date of token after successful MR creation
+          update_token_last_used_date "$MR_TOKEN"
+
           # Send Slack notification to reviewer if reviewer exists
           if [[ "$REVIEWER_IDS" != "[]" && -n "$REVIEWER_IDS" && -n "$REVIEWER_USERNAME" ]]; then
             send_slack_notification_to_reviewer \
